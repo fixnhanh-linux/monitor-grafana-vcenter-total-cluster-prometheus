@@ -192,6 +192,8 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 
 ## Thêm pool mới khi dashboard đã có
 
+Xem từng lệnh và kết quả mẫu ở mục **Ví dụ chi tiết: thêm pool mới POOL30** ngay bên dưới.
+
 Dashboard luôn có uid `vmware-cluster-hcm`. Sinh lại rồi import (Overwrite) hoặc đẩy lên sẽ **cập nhật đúng dashboard
 đang có** (không tạo bản mới): các khối cũ giữ nguyên chỗ, pool mới thêm một khối 15 ô ở cuối, 3 cluster / hàng.
 
@@ -247,3 +249,153 @@ Token lưu ở `/etc/vmware-cluster-dashboard.env` (chỉ root đọc được).
 Lưu ý: cập nhật sẽ ghi đè dashboard, chỉnh sửa tay trên Grafana (đổi tên, kéo ô) sẽ mất; muốn đổi thì sửa
 `script/make_dashboard.py`. Pool mới được thêm vào lần chạy hiện tại; muốn giữ cố định thứ tự thì thêm tên vào
 `CLUSTERS`. Zabbix không cần làm gì: template tự phát hiện cluster mới.
+
+## Ví dụ chi tiết: thêm pool mới POOL30 (IP giả lập)
+
+Toàn bộ IP, tên và số liệu trong mục này là **giả lập** để minh hoạ; thay bằng giá trị thật của bạn.
+
+| Máy | IP giả lập | Vai trò |
+|---|---|---|
+| vCenter mới (chứa cluster POOL30) | `10.0.30.10` | nguồn số liệu |
+| Server exporter | `10.0.0.10` | đang chạy 4 instance port 9821–9824, thêm instance `pool30` port **9825** |
+| Prometheus HCM | `10.0.0.5:9090` | scrape exporter (job `vmware_cluster`) |
+| prometheus-all | `10.0.0.6:9090` | federation, nguồn của dashboard |
+| Grafana | `10.0.0.7:3000` | dashboard uid `vmware-cluster-hcm` |
+| Zabbix 6.0 | `10.0.0.8` | template `VMware Cluster HCM by vmware-cluster-exporter` |
+
+### Bước 1 — Cài exporter cho vCenter mới (trên server exporter `10.0.0.10`)
+
+Gói đã giải nén ở `/home/vmware-cluster-exporter` từ lần cài trước; chưa có thì chép `script/vmware-cluster-exporter-linux.zip`
+lên rồi giải nén như mục 1. Chạy script cài, trả lời như sau (mật khẩu tự gõ, không hiện):
+
+```bash
+cd /home/vmware-cluster-exporter && ./install.sh
+```
+
+```text
+== Cai dat VMware cluster exporter 2026.10.16-4 ==
+Ten instance (vd: pool18, chi chu/so/-) [pool18]: pool30
+IP/hostname vCenter [10.0.0.20]: 10.0.30.10
+User vCenter (chi can quyen Read-only) [monitor@vsphere.local]: monitor@vsphere.local
+Cluster (- = tat ca cluster) [-]: -
+Port metrics (khac port esxi-host-exporter 9811-9814) [9821]: 9825
+Chu ky lay du lieu (giay) [60]:
+Mat khau vCenter:
+URL InfluxDB 2.x, vd http://10.0.0.x:8086 (Enter = khong day len InfluxDB):
+-> Chep chuong trinh vao /opt/vmware-cluster-exporter
+-> Kiem tra thu vien pyVmomi
+...
+OK - exporter dang chay.
+   Prometheus : http://10.0.0.10:9825/metrics
+```
+
+Kiểm tra port mới (số liệu là ví dụ):
+
+```bash
+curl -s localhost:9825/metrics | grep -E 'build_info|^vmware_cluster_hosts|vsan_health_score'
+```
+
+```text
+vmware_cluster_vsan_health_score{cluster="POOL30"} 97
+vmware_cluster_hosts{cluster="POOL30"} 12
+vmware_cluster_exporter_build_info{version="2026.10.16-4"} 1
+```
+
+Mở firewall nếu Prometheus ở máy khác: `ufw allow 9825/tcp` (hoặc `firewall-cmd --add-port=9825/tcp --permanent && firewall-cmd --reload`).
+
+### Bước 2 — Thêm target vào Prometheus HCM (trên `10.0.0.5`)
+
+Mở `/etc/prometheus/scrape_configs/vmware-cluster.yml`, thêm 2 dòng cuối:
+
+```yaml
+scrape_configs:
+  - job_name: vmware_cluster
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    static_configs:
+      - targets: ['10.0.0.10:9821']
+        labels: {site: HCM, pool: pool18}
+      - targets: ['10.0.0.10:9822']
+        labels: {site: HCM, pool: pool25}
+      - targets: ['10.0.0.10:9823']
+        labels: {site: HCM, pool: pool6}
+      - targets: ['10.0.0.10:9824']
+        labels: {site: HCM, pool: core}
+      - targets: ['10.0.0.10:9825']          # pool moi
+        labels: {site: HCM, pool: pool30}
+```
+
+```bash
+promtool check config /etc/prometheus/prometheus.yml && systemctl reload prometheus
+curl -s 'http://10.0.0.5:9090/api/v1/targets?state=active' | grep -o '"scrapeUrl":"http://10.0.0.10:9825[^"]*"[^}]*"health":"[a-z]*"'
+```
+
+```text
+SUCCESS: /etc/prometheus/prometheus.yml is valid prometheus config file syntax
+"scrapeUrl":"http://10.0.0.10:9825/metrics", ... "health":"up"
+```
+
+### Bước 3 — Kiểm tra prometheus-all đã thấy POOL30 (chờ 1–2 phút)
+
+Federation đã lấy mọi metric `vmware_cluster_.*` nên không sửa gì trên prometheus-all.
+
+```bash
+curl -s 'http://10.0.0.6:9090/api/v1/label/cluster/values?match[]=vmware_cluster_hosts'
+```
+
+```text
+{"status":"success","data":["CORE","POOL17","POOL18-XD","POOL25","POOL30","VC1_POOL6"]}
+```
+
+### Bước 4 — Dashboard tự có khối POOL30
+
+**Đã cài timer** (`install_auto_dashboard.sh`): không cần làm gì, tối đa 10 phút. Muốn chạy ngay:
+
+```bash
+systemctl start vmware-cluster-dashboard.service
+journalctl -u vmware-cluster-dashboard.service -n 5 --no-pager
+```
+
+```text
+Cluster moi tu Prometheus: POOL30
+Da ghi /var/lib/vmware-cluster-dashboard/vmware_cluster_hcm_grafana.json - 7 cluster x 15 o
+Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm
+```
+
+**Chưa cài timer**: chạy tay trong thư mục repo (token Grafana role Editor):
+
+```bash
+GRAFANA_TOKEN='<token>' python3 script/make_dashboard.py --prometheus http://10.0.0.6:9090 --grafana http://10.0.0.7:3000
+```
+
+Mở `http://10.0.0.7:3000/d/vmware-cluster-hcm`: khối POOL30 nằm ở hàng thứ 3, cột đầu (3 cluster / hàng, cluster mới
+thêm vào cuối):
+
+```text
+| CORE      | POOL17    | POOL18-XD |
+| POOL23    | POOL25    | VC1_POOL6 |
+| POOL30    |           |           |
+```
+
+### Bước 5 — Thêm host trong Zabbix (`10.0.0.8`)
+
+Configuration → Hosts → mở host `VMware cluster pool18` → **Full clone**:
+
+| Ô | Giá trị |
+|---|---|
+| Host name | `VMware cluster pool30` |
+| Interfaces → Agent | IP `10.0.0.10` (giữ nguyên) |
+| Macros → `{$VMC.PORT}` | `9825` |
+
+Bấm **Add**. Sau 1–2 phút, Monitoring → Latest data lọc host `VMware cluster pool30` phải thấy
+`Exporter: vCenter collection = OK` và các item `Cluster POOL30: ...` (template tự tìm cluster).
+
+### Kiểm tra nhanh toàn bộ
+
+| Kiểm tra | Kết quả đúng |
+|---|---|
+| `curl -s 10.0.0.10:9825/metrics \| grep build_info` | `version="2026.10.16-4"` |
+| Prometheus HCM → Status → Targets | `10.0.0.10:9825` **UP** |
+| prometheus-all label values | có `"POOL30"` |
+| Grafana dashboard | có khối POOL30, 15 ô có số |
+| Zabbix Latest data | host pool30 có item `Cluster POOL30: ...` |
