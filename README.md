@@ -3,10 +3,10 @@
 Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồm 15 ô màu
 (xanh = tốt, cam = cảnh báo, đỏ = lỗi), cố định 4 cột × 4 hàng (ô Cluster Status rộng gấp đôi), 3 cluster / hàng.
 
-Danh sách cluster nằm trong `CLUSTERS` của `make_dashboard.py` (tên đúng như trên vCenter):
+Danh sách cluster nằm trong `CLUSTERS` của `script/make_dashboard.py` (tên đúng như trên vCenter):
 `CORE`, `POOL17`, `POOL18-XD`, `POOL23`, `POOL25`, `VC1_POOL6`. POOL23 hiện chưa có trong exporter nào
 (9811–9814 chỉ thấy 5 cluster trên) nên khối POOL23 sẽ hiện "–" cho tới khi có vCenter chứa nó.
-Thêm/bớt/đổi tên cluster: sửa `CLUSTERS`, chạy `python make_dashboard.py`, import lại (Overwrite).
+Thêm pool mới: xem mục **Thêm pool mới khi dashboard đã có** ở cuối.
 
 Bộ này **tách riêng hoàn toàn** khỏi bộ cũ *MONITOR RESOURCE HOST ESXi* (`esxi-host-exporter`):
 exporter, service, thư mục, user, port, metric, scrape job và dashboard đều có tên riêng,
@@ -25,16 +25,20 @@ cài song song mà không đụng tới exporter cũ đang chạy trên 10.0.0.1
 
 Exporter mới chỉ lấy số liệu cấp cluster (không lấy disk health, NIC, vmk) nên nhẹ cho vCenter.
 
-| File | Dùng để |
-|---|---|
-| `vmware-cluster-exporter-linux.zip` + `.sha256` | Gói cài exporter mới (bản 2026.10.16-3) |
-| `vmware_cluster_hcm_grafana.json` | Dashboard để import vào Grafana (cũng có trong gói zip) |
-| `make_dashboard.py` | Sinh lại dashboard khi đổi ngưỡng màu / thứ tự ô |
+```
+dashboard-grafana/
+  vmware_cluster_hcm_grafana.json          dashboard để import vào Grafana
+script/
+  vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.16-4)
+  vmware-cluster-exporter-linux.zip.sha256
+  make_dashboard.py                        sinh lại dashboard, tự thêm pool mới, đẩy lên Grafana
+zabbix_template_vmware_cluster_hcm.yaml    template Zabbix 6.0
+```
 
 ## 1. Cài exporter mới trên server (song song với bộ cũ)
 
 ```bash
-scp vmware-cluster-exporter-linux.zip vmware-cluster-exporter-linux.zip.sha256 root@10.0.0.10:/home/
+scp script/vmware-cluster-exporter-linux.zip script/vmware-cluster-exporter-linux.zip.sha256 root@10.0.0.10:/home/
 ```
 
 Trên server:
@@ -109,7 +113,7 @@ InfluxDB 1.x: thay 4 dòng trên bằng `INFLUX_URL` + `INFLUX_DB` (+ `INFLUX_US
 
 ## 2b. Import dashboard
 
-Grafana → Dashboards → New → Import → upload `vmware_cluster_hcm_grafana.json` → chọn Prometheus → Import.
+Grafana → Dashboards → New → Import → upload `dashboard-grafana/vmware_cluster_hcm_grafana.json` → chọn Prometheus → Import.
 Dashboard có uid riêng `vmware-cluster-hcm` nên không ghi đè dashboard nào cũ.
 Bấm biểu tượng link cạnh tên cluster để mở dashboard **MONITOR RESOURCE HOST ESXi** đã lọc sẵn cluster đó.
 
@@ -134,8 +138,8 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | cam ≥ 30% · đỏ ≥ 35% |
 | RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | cam ≥ 76% · đỏ ≥ 80% |
 
-Ngưỡng được suy ra từ màu của dashboard mẫu. Đổi ngưỡng: sửa bảng `THRESHOLDS` trong `make_dashboard.py`,
-chạy `python make_dashboard.py`, import lại (Overwrite).
+Ngưỡng được suy ra từ màu của dashboard mẫu. Đổi ngưỡng: sửa bảng `THRESHOLDS` trong `script/make_dashboard.py`,
+chạy `python3 script/make_dashboard.py`, import lại (Overwrite).
 
 ## 4. Khác với dashboard cũ
 
@@ -177,27 +181,38 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 
 Đổi ngưỡng riêng 1 cluster bằng macro context trên host, ví dụ `{$VMC.HOST.CPU.CRIT:"POOL17"}` = 60.
 
-## Thêm pool / cluster mới vào dashboard
+## Thêm pool mới khi dashboard đã có
 
-Mỗi cluster mới cũng có một khối 15 ô giống các cluster cũ (4 cột × 4 hàng, 3 cluster / hàng); khối mới
-được thêm vào cuối. `make_dashboard.py` (có trong gói, chỉ cần Python 3) hỏi Prometheus xem cluster nào đang có
-metric `vmware_cluster_hosts`, rồi sinh lại dashboard.
+Dashboard luôn có uid `vmware-cluster-hcm`. Sinh lại rồi import (Overwrite) hoặc đẩy lên sẽ **cập nhật đúng dashboard
+đang có** (không tạo bản mới): các khối cũ giữ nguyên chỗ, pool mới thêm một khối 15 ô ở cuối, 3 cluster / hàng.
 
-1. Cài exporter cho vCenter mới (`./install.sh`, port tiếp theo, ví dụ 9825) và thêm target vào
-   `/etc/prometheus/scrape_configs/vmware-cluster.yml`.
-2. Sinh lại dashboard rồi import (Overwrite):
-
-```bash
-python3 /home/vmware-cluster-exporter/make_dashboard.py --prometheus http://<ip-prometheus>:9090
-```
-
-3. Hoặc để script tự đẩy lên Grafana (cần service account token quyền Editor, tạo ở Administration → Service
-   accounts), chạy tay hoặc đặt cron 30 phút một lần:
+1. Cài exporter cho vCenter mới trên server (`./install.sh` trong gói, port tiếp theo, vd 9825), thêm target
+   `<ip>:9825` vào `/etc/prometheus/scrape_configs/vmware-cluster.yml`, reload Prometheus. Chờ 1–2 phút rồi kiểm tra
+   Prometheus đã có cluster mới:
 
 ```bash
-GRAFANA_TOKEN='<token>' python3 /home/vmware-cluster-exporter/make_dashboard.py --prometheus http://<ip-prometheus>:9090 --grafana http://<ip-grafana>:3000
+curl -s 'http://<ip-prometheus>:9090/api/v1/label/cluster/values?match[]=vmware_cluster_hosts'
 ```
 
-Đẩy lên Grafana sẽ ghi đè dashboard uid `vmware-cluster-hcm`: chỉnh sửa tay trên Grafana (đổi tên, kéo ô) sẽ mất,
-nên sửa trong `make_dashboard.py` thay vì sửa trên Grafana. Cluster không còn số liệu vẫn giữ khối (hiện "–"); bỏ
-hẳn thì xoá tên khỏi `CLUSTERS`.
+2. Sinh lại dashboard (máy nào có Python 3 và gọi được Prometheus, trong thư mục repo này):
+
+```bash
+python3 script/make_dashboard.py --prometheus http://<ip-prometheus>:9090
+```
+
+   Script in `Cluster moi tu Prometheus: <tên>` và ghi đè `dashboard-grafana/vmware_cluster_hcm_grafana.json`.
+
+3. Đưa lên Grafana, chọn 1 trong 2 cách:
+   - Import tay: Dashboards → New → Import → upload `dashboard-grafana/vmware_cluster_hcm_grafana.json` →
+     **Import (Overwrite)**.
+   - Tự đẩy: tạo token ở Administration → Service accounts (role Editor), rồi:
+
+```bash
+GRAFANA_TOKEN='<token>' python3 script/make_dashboard.py --prometheus http://<ip-prometheus>:9090 --grafana http://<ip-grafana>:3000
+```
+
+   In `Da day len Grafana: success` là xong. Đặt cron chạy lệnh này 30 phút một lần thì pool mới tự hiện.
+
+Lưu ý: cập nhật sẽ ghi đè dashboard, chỉnh sửa tay trên Grafana (đổi tên, kéo ô) sẽ mất; muốn đổi thì sửa
+`script/make_dashboard.py`. Pool mới được thêm vào lần chạy hiện tại; muốn giữ cố định thứ tự thì thêm tên vào
+`CLUSTERS`. Zabbix không cần làm gì: template tự phát hiện cluster mới.

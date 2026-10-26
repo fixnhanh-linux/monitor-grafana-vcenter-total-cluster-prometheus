@@ -195,8 +195,11 @@ dash = {
     "panels": panels,
 }
 
-here = args.out or os.path.dirname(os.path.abspath(__file__))
-outs = [os.path.join(here, "vmware_cluster_hcm_grafana.json")]
+here = os.path.dirname(os.path.abspath(__file__))
+outdir = args.out or here
+if not args.out and os.path.isdir(os.path.join(here, "..", "dashboard-grafana")):
+    outdir = os.path.normpath(os.path.join(here, "..", "dashboard-grafana"))  # repo: script/ -> dashboard-grafana/
+outs = [os.path.join(outdir, "vmware_cluster_hcm_grafana.json")]
 if not args.out and os.path.isdir(os.path.join(here, "vmware-cluster-exporter")):
     outs.append(os.path.join(here, "vmware-cluster-exporter", "vmware_cluster_hcm_grafana.json"))
 for out in outs:
