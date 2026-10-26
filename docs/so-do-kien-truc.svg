@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 860 480" width="860" height="480" role="img" aria-label="Sơ đồ VMWARE CLUSTER HCM: vCenter, exporter, Prometheus, Grafana, Zabbix">
+  <style>
+    .bg { fill: #ffffff; }
+    .box { fill: #f6f8fa; stroke: #8c959f; stroke-width: 1.4; }
+    .main { fill: #ddf4ff; stroke: #0969da; stroke-width: 2.2; }
+    .opt { fill: none; stroke: #8c959f; stroke-width: 1.4; stroke-dasharray: 6 5; }
+    .name { font: 600 15px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1f2328; text-anchor: middle; }
+    .sub { font: 12px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; text-anchor: middle; }
+    .lbl { font: 12px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #57606a; }
+    .title { font: 600 17px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; fill: #1f2328; }
+    .flow { fill: none; stroke-width: 2.2; stroke-dasharray: 7 6; animation: run 0.9s linear infinite; }
+    .data { stroke: #0969da; }  .zbx { stroke: #1a7f37; }  .script { stroke: #bf8700; }  .influx { stroke: #8c959f; }
+    .dot-data { fill: #0969da; } .dot-zbx { fill: #1a7f37; } .dot-script { fill: #bf8700; } .dot-influx { fill: #8c959f; }
+    @keyframes run { from { stroke-dashoffset: 26; } to { stroke-dashoffset: 0; } }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; }
+      .box { fill: #161b22; stroke: #6e7681; }
+      .main { fill: #0c2d6b; stroke: #4493f8; }
+      .opt { stroke: #6e7681; }
+      .name, .title { fill: #e6edf3; }
+      .sub, .lbl { fill: #9198a1; }
+      .data { stroke: #4493f8; } .zbx { stroke: #3fb950; } .script { stroke: #d29922; }
+      .dot-data { fill: #4493f8; } .dot-zbx { fill: #3fb950; } .dot-script { fill: #d29922; }
+    }
+  </style>
+  <defs>
+    <marker id="a-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0969da"/></marker>
+    <marker id="a-zbx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1a7f37"/></marker>
+    <marker id="a-script" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#bf8700"/></marker>
+    <marker id="a-influx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8c959f"/></marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="860" height="480" rx="12"/>
+  <text class="title" x="24" y="36">Số liệu đi từ vCenter qua exporter riêng tới Prometheus, Grafana và Zabbix</text>
+
+  <!-- Duong di (ve truoc de nam duoi cac hop) -->
+  <path id="p1" class="flow data" d="M265 120 H313" marker-end="url(#a-data)"/>
+  <path id="p2" class="flow data" d="M545 120 H593" marker-end="url(#a-data)"/>
+  <path id="p3" class="flow data" d="M710 152 V216" marker-end="url(#a-data)"/>
+  <path id="p4" class="flow influx" d="M470 152 V216" marker-end="url(#a-influx)"/>
+  <path id="p5" class="flow zbx" d="M380 152 V184 H150 V216" marker-end="url(#a-zbx)"/>
+  <path id="p6" class="flow script" d="M670 282 V380 H547" marker-end="url(#a-script)"/>
+  <path id="p7" class="flow script" d="M315 380 H267" marker-end="url(#a-script)"/>
+  <path id="p8" class="flow data" d="M750 282 V446 H150 V414" marker-end="url(#a-data)"/>
+
+  <!-- Cham chay theo duong -->
+  <circle r="4.5" class="dot-data"><animateMotion dur="1.4s" repeatCount="indefinite"><mpath xlink:href="#p1"/></animateMotion></circle>
+  <circle r="4.5" class="dot-data"><animateMotion dur="1.4s" begin="0.4s" repeatCount="indefinite"><mpath xlink:href="#p2"/></animateMotion></circle>
+  <circle r="4.5" class="dot-data"><animateMotion dur="1.6s" begin="0.8s" repeatCount="indefinite"><mpath xlink:href="#p3"/></animateMotion></circle>
+  <circle r="4" class="dot-influx"><animateMotion dur="1.8s" begin="0.6s" repeatCount="indefinite"><mpath xlink:href="#p4"/></animateMotion></circle>
+  <circle r="4.5" class="dot-zbx"><animateMotion dur="2.2s" begin="0.5s" repeatCount="indefinite"><mpath xlink:href="#p5"/></animateMotion></circle>
+  <circle r="4.5" class="dot-script"><animateMotion dur="2.2s" begin="1s" repeatCount="indefinite"><mpath xlink:href="#p6"/></animateMotion></circle>
+  <circle r="4.5" class="dot-script"><animateMotion dur="1.2s" begin="1.6s" repeatCount="indefinite"><mpath xlink:href="#p7"/></animateMotion></circle>
+  <circle r="4.5" class="dot-data"><animateMotion dur="3.2s" begin="1.2s" repeatCount="indefinite"><mpath xlink:href="#p8"/></animateMotion></circle>
+
+  <!-- Hop -->
+  <rect class="box" x="35" y="88" width="230" height="64" rx="10"/>
+  <text class="name" x="150" y="116">vCenter</text>
+  <text class="sub" x="150" y="136">pool18, pool25, pool6, core</text>
+
+  <rect class="main" x="315" y="88" width="230" height="64" rx="10"/>
+  <text class="name" x="430" y="116">vmware-cluster-exporter</text>
+  <text class="sub" x="430" y="136">10.0.0.10 · port 9821–9824</text>
+
+  <rect class="box" x="595" y="88" width="230" height="64" rx="10"/>
+  <text class="name" x="710" y="116">Prometheus HCM</text>
+  <text class="sub" x="710" y="136">job vmware_cluster, 60 giây</text>
+
+  <rect class="box" x="35" y="218" width="230" height="64" rx="10"/>
+  <text class="name" x="150" y="246">Zabbix 6.0</text>
+  <text class="sub" x="150" y="266">template tự tìm cluster</text>
+
+  <rect class="opt" x="355" y="218" width="230" height="64" rx="10"/>
+  <text class="name" x="470" y="246">InfluxDB 2.x</text>
+  <text class="sub" x="470" y="266">tuỳ chọn</text>
+
+  <rect class="box" x="595" y="218" width="230" height="64" rx="10"/>
+  <text class="name" x="710" y="246">prometheus-all</text>
+  <text class="sub" x="710" y="266">nguồn của dashboard</text>
+
+  <rect class="box" x="35" y="348" width="230" height="64" rx="10"/>
+  <text class="name" x="150" y="376">Grafana</text>
+  <text class="sub" x="150" y="396">VMWARE CLUSTER HCM</text>
+
+  <rect class="box" x="315" y="348" width="230" height="64" rx="10"/>
+  <text class="name" x="430" y="376">make_dashboard.py</text>
+  <text class="sub" x="430" y="396">thêm khối cho pool mới</text>
+
+  <!-- Nhan duong -->
+  <text class="lbl" x="289" y="76" text-anchor="middle">HTTPS 443</text>
+  <text class="lbl" x="569" y="76" text-anchor="middle">/metrics</text>
+  <text class="lbl" x="265" y="176" text-anchor="middle">HTTP agent /metrics</text>
+  <text class="lbl" x="480" y="192">đẩy</text>
+  <text class="lbl" x="720" y="192">federation</text>
+  <text class="lbl" x="608" y="370" text-anchor="middle">danh sách cluster</text>
+  <text class="lbl" x="291" y="338" text-anchor="middle">API</text>
+  <text class="lbl" x="450" y="466" text-anchor="middle">Grafana đọc metric vmware_cluster_*</text>
+</svg>

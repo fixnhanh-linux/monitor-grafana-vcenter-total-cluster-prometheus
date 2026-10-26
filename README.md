@@ -5,19 +5,7 @@ Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồ
 
 ## Sơ đồ
 
-```mermaid
-flowchart TB
-    VC["vCenter<br/>pool18, pool25, pool6, core"] -- "HTTPS 443, Read-only" --> EX["vmware-cluster-exporter<br/>10.0.0.10 · port 9821–9824"]
-    EX -- "/metrics" --> PH["Prometheus HCM<br/>job vmware_cluster, 60 giây"]
-    EX -- "HTTP agent /metrics" --> ZB["Zabbix 6.0<br/>template tự tìm cluster"]
-    EX -. "đẩy (tuỳ chọn)" .-> IF["InfluxDB 2.x"]
-    PH -- "federation" --> PA["prometheus-all<br/>nguồn của dashboard"]
-    PA -- "metric vmware_cluster_*" --> GF["Grafana<br/>VMWARE CLUSTER HCM"]
-    PA -- "danh sách cluster" --> MD["script/make_dashboard.py<br/>thêm khối cho pool mới"]
-    MD -- "API, ghi đè uid vmware-cluster-hcm" --> GF
-    style EX stroke-width:2px
-    style IF stroke-dasharray: 5 4
-```
+<p align="center"><img src="docs/so-do-kien-truc.svg" alt="Sơ đồ VMWARE CLUSTER HCM" width="100%"></p>
 
 Exporter đăng nhập vCenter bằng user Read-only, mỗi 60 giây lấy số liệu cấp cluster và mở ở `/metrics`.
 Prometheus đọc về, prometheus-all lấy lại để Grafana hiển thị; Zabbix đọc thẳng `/metrics`. Khi có pool mới,
