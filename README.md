@@ -44,6 +44,33 @@ script/
 zabbix_template_vmware_cluster_hcm.yaml    template Zabbix 6.0
 ```
 
+## Tải về và chạy nhanh (git clone)
+
+Trên server Linux (server exporter hoặc server Prometheus), cần `git`, `unzip`, `python3`:
+
+```bash
+apt install -y git unzip python3          # RHEL/Rocky: dnf install -y git unzip python3
+cd /opt && git clone https://github.com/fixnhanh-linux/monitor-grafana-vcenter-total-cluster-prometheus.git
+cd monitor-grafana-vcenter-total-cluster-prometheus
+```
+
+Không có git: tải zip của repo rồi giải nén:
+
+```bash
+curl -L -o repo.zip https://github.com/fixnhanh-linux/monitor-grafana-vcenter-total-cluster-prometheus/archive/refs/heads/main.zip
+unzip repo.zip && cd monitor-grafana-vcenter-total-cluster-prometheus-main
+```
+
+| Việc | Lệnh (trong thư mục repo) |
+|---|---|
+| Cài exporter (mỗi vCenter chạy 1 lần) | `cd script && sha256sum -c vmware-cluster-exporter-linux.zip.sha256 && unzip -o vmware-cluster-exporter-linux.zip && cd vmware-cluster-exporter && sudo ./install.sh` |
+| Thêm job Prometheus | `cp script/vmware-cluster-exporter/prometheus-vmware-cluster.yml /etc/prometheus/scrape_configs/vmware-cluster.yml` (sửa IP/port) |
+| Dashboard Grafana | Import `dashboard-grafana/vmware_cluster_hcm_grafana.json` |
+| Template Zabbix | Import `zabbix_template_vmware_cluster_hcm.yaml` |
+| Tự thêm khối pool mới | `cd script && sudo bash install_auto_dashboard.sh` |
+
+Lấy bản mới về sau này: `git pull` trong thư mục repo, rồi cập nhật exporter theo mục **1b**.
+
 ## 1. Cài exporter mới trên server (song song với bộ cũ)
 
 ```bash
