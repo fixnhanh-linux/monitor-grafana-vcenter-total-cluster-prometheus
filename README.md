@@ -3,6 +3,26 @@
 Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồm 15 ô màu
 (xanh = tốt, cam = cảnh báo, đỏ = lỗi), cố định 4 cột × 4 hàng (ô Cluster Status rộng gấp đôi), 3 cluster / hàng.
 
+## Sơ đồ
+
+```mermaid
+flowchart LR
+    VC["vCenter<br/>pool18, pool25, pool6, core"] -- "HTTPS 443, Read-only" --> EX["vmware-cluster-exporter<br/>10.0.0.10 · port 9821–9824"]
+    EX -- "/metrics" --> PH["Prometheus HCM<br/>job vmware_cluster, 60 giây"]
+    EX -- "HTTP agent /metrics" --> ZB["Zabbix 6.0<br/>template tự tìm cluster"]
+    EX -. "đẩy (tuỳ chọn)" .-> IF["InfluxDB 2.x"]
+    PH -- "federation" --> PA["prometheus-all<br/>nguồn của dashboard"]
+    PA -- "metric vmware_cluster_*" --> GF["Grafana<br/>VMWARE CLUSTER HCM"]
+    PA -- "danh sách cluster" --> MD["script/make_dashboard.py<br/>thêm khối cho pool mới"]
+    MD -- "API, ghi đè uid vmware-cluster-hcm" --> GF
+    style EX stroke-width:2px
+    style IF stroke-dasharray: 5 4
+```
+
+Exporter đăng nhập vCenter bằng user Read-only, mỗi 60 giây lấy số liệu cấp cluster và mở ở `/metrics`.
+Prometheus đọc về, prometheus-all lấy lại để Grafana hiển thị; Zabbix đọc thẳng `/metrics`. Khi có pool mới,
+`make_dashboard.py` hỏi prometheus-all danh sách cluster rồi ghi đè dashboard để thêm khối mới.
+
 Danh sách cluster nằm trong `CLUSTERS` của `script/make_dashboard.py` (tên đúng như trên vCenter):
 `CORE`, `POOL17`, `POOL18-XD`, `POOL23`, `POOL25`, `VC1_POOL6`. POOL23 hiện chưa có trong exporter nào
 (9811–9814 chỉ thấy 5 cluster trên) nên khối POOL23 sẽ hiện "–" cho tới khi có vCenter chứa nó.
