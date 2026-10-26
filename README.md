@@ -6,7 +6,7 @@ Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồ
 ## Sơ đồ
 
 ```mermaid
-flowchart LR
+flowchart TB
     VC["vCenter<br/>pool18, pool25, pool6, core"] -- "HTTPS 443, Read-only" --> EX["vmware-cluster-exporter<br/>10.0.0.10 · port 9821–9824"]
     EX -- "/metrics" --> PH["Prometheus HCM<br/>job vmware_cluster, 60 giây"]
     EX -- "HTTP agent /metrics" --> ZB["Zabbix 6.0<br/>template tự tìm cluster"]
