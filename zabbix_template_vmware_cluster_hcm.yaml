@@ -1,0 +1,950 @@
+zabbix_export:
+  version: '6.0'
+  date: '2026-10-17T00:00:00Z'
+  groups:
+  - uuid: d1ea2541d477442392b39f0c9944890f
+    name: Templates/VMware
+  templates:
+  - uuid: 796759aa193848d88344eeff7f8358fe
+    template: VMware Cluster HCM by vmware-cluster-exporter
+    name: VMware Cluster HCM by vmware-cluster-exporter
+    description: |-
+      Per-cluster VMware totals from vmware-cluster-exporter (vmware_cluster_* metrics).
+      One host per exporter instance: set macro {$VMC.PORT} (9821 pool18, 9822 pool25, 9823 pool6, 9824 core) and an interface with IP 10.0.0.10.
+      Thresholds are macros matching the Grafana dashboard VMWARE CLUSTER HCM colors.
+    groups:
+    - name: Templates/VMware
+    items:
+    - uuid: 977be66544c544ab82d49f3275df920f
+      name: 'Exporter: /metrics'
+      type: HTTP_AGENT
+      key: vmc.metrics
+      delay: 1m
+      history: '0'
+      trends: '0'
+      value_type: TEXT
+      timeout: 15s
+      url: 'http://{HOST.CONN}:{$VMC.PORT}/metrics'
+      description: 'Master item: all metrics from vmware-cluster-exporter (no history kept)'
+      tags:
+      - tag: component
+        value: raw
+    - uuid: 714599446e984168af2a68c9b098346f
+      name: 'Exporter: vCenter collection'
+      type: DEPENDENT
+      key: vmc.exporter.up
+      delay: '0'
+      history: 7d
+      value_type: UNSIGNED
+      master_item:
+        key: vmc.metrics
+      valuemap:
+        name: Exporter up
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - vmware_cluster_exporter_up
+        - value
+        - ''
+      tags:
+      - tag: component
+        value: exporter
+      triggers:
+      - uuid: cd14aa1262314927b9f61daa65fb540a
+        expression: last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up)=0
+        name: 'Exporter: cannot collect data from vCenter'
+        priority: HIGH
+        description: 'Check the log: journalctl -u vmware-cluster-exporter@<instance> -n 50'
+        dependencies:
+        - name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
+          expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+      - uuid: 2643626c4abb401d990f953cfe8c196b
+        expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+        name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
+        priority: HIGH
+        description: 'Check the vmware-cluster-exporter service and firewall port {$VMC.PORT}'
+    - uuid: 325ce3de586445e588f79c4e6a436c41
+      name: 'Exporter: last successful collection'
+      type: DEPENDENT
+      key: vmc.exporter.last_success
+      delay: '0'
+      history: 7d
+      value_type: UNSIGNED
+      units: unixtime
+      master_item:
+        key: vmc.metrics
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - vmware_cluster_exporter_last_success_timestamp_seconds
+        - value
+        - ''
+      tags:
+      - tag: component
+        value: exporter
+      triggers:
+      - uuid: 6dc1d81cbbb1470781f595ccab2ce545
+        expression: 'fuzzytime(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.last_success,10m)=0'
+        name: 'Exporter: data older than 10 minutes'
+        priority: WARNING
+        dependencies:
+        - name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
+          expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+    - uuid: 3cdae75694924bcbb638f96725a56bb3
+      name: 'Exporter: collection duration'
+      type: DEPENDENT
+      key: vmc.exporter.duration
+      delay: '0'
+      history: 7d
+      value_type: FLOAT
+      units: s
+      master_item:
+        key: vmc.metrics
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - vmware_cluster_exporter_collect_duration_seconds
+        - value
+        - ''
+      tags:
+      - tag: component
+        value: exporter
+    - uuid: 347ad14198ac4b1ab04042bede4ec93b
+      name: 'Exporter: version'
+      type: DEPENDENT
+      key: vmc.exporter.version
+      delay: '0'
+      history: 7d
+      trends: '0'
+      value_type: CHAR
+      master_item:
+        key: vmc.metrics
+      preprocessing:
+      - type: PROMETHEUS_PATTERN
+        parameters:
+        - vmware_cluster_exporter_build_info
+        - label
+        - version
+      - type: DISCARD_UNCHANGED_HEARTBEAT
+        parameters:
+        - 1d
+      tags:
+      - tag: component
+        value: exporter
+    discovery_rules:
+    - uuid: af7200965b4d4e6281fbecddc07b3a9c
+      name: Cluster discovery
+      type: DEPENDENT
+      key: vmc.cluster.discovery
+      delay: '0'
+      master_item:
+        key: vmc.metrics
+      lifetime: 7d
+      preprocessing:
+      - type: PROMETHEUS_TO_JSON
+        parameters:
+        - vmware_cluster_hosts
+      lld_macro_paths:
+      - lld_macro: '{#CLUSTER}'
+        path: $.labels.cluster
+      item_prototypes:
+      - uuid: f579aead8fff41fb939285b1073d89e3
+        name: 'Cluster {#CLUSTER}: vCenter status'
+        type: DEPENDENT
+        key: 'vmc.cluster.status[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_status{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        description: Cluster overallStatus reported by vCenter
+        valuemap:
+          name: VMware color status
+        trigger_prototypes:
+        - uuid: c6a72186c23b48ff95fb8dd4a93f43a3
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.status[{#CLUSTER}])=2'
+          name: 'Cluster {#CLUSTER}: vCenter reports status red'
+          priority: AVERAGE
+      - uuid: a92072db8a844d42b96b63e52852dfd9
+        name: 'Cluster {#CLUSTER}: vSAN overall health'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.health[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_health{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        description: vSAN Skyline Health overallHealth - red as soon as one check is red
+        valuemap:
+          name: vSAN health
+        trigger_prototypes:
+        - uuid: 7c04756e30ea4a7a9648891cc1710483
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.health[{#CLUSTER}])=2'
+          name: 'Cluster {#CLUSTER}: vSAN Skyline Health has a red check'
+          priority: INFO
+          description: vSAN overall health is red (at least one Unhealthy finding). Main alerting uses the health score.
+      - uuid: 7b55b3b0dbd2444484b72c8f0910c43e
+        name: 'Cluster {#CLUSTER}: vSAN health score'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.score[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_health_score{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        description: 'Cluster health score (0-100) shown in vCenter > Monitor > vSAN > Skyline Health'
+        trigger_prototypes:
+        - uuid: 1c5cd241014d4a7183b864b9e5aa39dd
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.CRIT}'
+          priority: HIGH
+          description: 'Check vCenter > Cluster > Monitor > vSAN > Skyline Health'
+        - uuid: 6b6c373c86b640d09eb42e5961758cef
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.WARN}'
+          priority: WARNING
+          dependencies:
+          - name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.CRIT}'
+            expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
+      - uuid: 82dcf37ab5764d87b65a586c6d8918c9
+        name: 'Cluster {#CLUSTER}: DRS'
+        type: DEPENDENT
+        key: 'vmc.cluster.drs[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_drs_mode{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        valuemap:
+          name: VMware DRS mode
+        trigger_prototypes:
+        - uuid: ea5692fca91c4613b7b6b0a34478e5d7
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.drs[{#CLUSTER}])=0'
+          name: 'Cluster {#CLUSTER}: DRS is disabled'
+          priority: INFO
+      - uuid: 50fb114e2d564fdbbf356ee93df1ad09
+        name: 'Cluster {#CLUSTER}: Hosts'
+        type: DEPENDENT
+        key: 'vmc.cluster.hosts[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_hosts{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: ff87eda26e9f4bc5ba67995b346844ca
+        name: 'Cluster {#CLUSTER}: Effective hosts'
+        type: DEPENDENT
+        key: 'vmc.cluster.hosts.effective[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_hosts_effective{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: 7f6ee2bd37164a8a849a6f167e33dcb9
+        name: 'Cluster {#CLUSTER}: Total VMs'
+        type: DEPENDENT
+        key: 'vmc.cluster.vms[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vms_total{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        description: Includes powered-off VMs
+      - uuid: 2c062fd6ca22481c94f594a86227744b
+        name: 'Cluster {#CLUSTER}: Powered-off VMs'
+        type: DEPENDENT
+        key: 'vmc.cluster.vms.off[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vms_powered_off{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: 1b0ab2750a764920a4baf9b9241ec194
+        name: 'Cluster {#CLUSTER}: CPU total'
+        type: DEPENDENT
+        key: 'vmc.cluster.cpu.total[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_cpu_total_hz{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: Hz
+      - uuid: 9b2f3335f7294308a6166076d70928e8
+        name: 'Cluster {#CLUSTER}: CPU used'
+        type: DEPENDENT
+        key: 'vmc.cluster.cpu.used[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_cpu_used_hz{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: Hz
+      - uuid: 4a0c2532e0b9428da0cb0a8191a54740
+        name: 'Cluster {#CLUSTER}: Memory total'
+        type: DEPENDENT
+        key: 'vmc.cluster.mem.total[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_mem_total_bytes{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: B
+      - uuid: 279966378ed44f4784e160fa987bf2c3
+        name: 'Cluster {#CLUSTER}: Memory used'
+        type: DEPENDENT
+        key: 'vmc.cluster.mem.used[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_mem_used_bytes{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: B
+      - uuid: 14ee9cab4ae343d7b8c484f2a596a169
+        name: 'Cluster {#CLUSTER}: vSAN capacity'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.total[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_capacity_bytes{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: B
+      - uuid: 638d4f93ab9040d7a12a213f0ca3d3e7
+        name: 'Cluster {#CLUSTER}: vSAN free'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.free[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_free_bytes{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: B
+      - uuid: 7b33a4e2c1ee43b187d3d3528849a989
+        name: 'Cluster {#CLUSTER}: vSAN resync'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.resync.bytes[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_resync_bytes{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: B
+        description: Bytes left to resync
+        trigger_prototypes:
+        - uuid: 4c25c070091e4186af4a8392467d4a2e
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.resync.bytes[{#CLUSTER}],{$VMC.RESYNC.TIME})>0'
+          name: 'Cluster {#CLUSTER}: vSAN resync running longer than {$VMC.RESYNC.TIME}'
+          priority: WARNING
+      - uuid: c656ef3d873442a2b88574d0503529ae
+        name: 'Cluster {#CLUSTER}: vSAN resync objects'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.resync.objects[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_vsan_resync_objects{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: 303b854c16e941c980d4fc8e470758f5
+        name: 'Cluster {#CLUSTER}: Longest host uptime'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.uptime.max[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: UNSIGNED
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_host_uptime_max_seconds{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: uptime
+      - uuid: b5c1d04ede274a769ea188a4124be124
+        name: 'Cluster {#CLUSTER}: Busiest host CPU'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.cpu.max[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_host_cpu_max_percent{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: '%'
+      - uuid: 165c52f3e602457780d562cdfa7e688e
+        name: 'Cluster {#CLUSTER}: Busiest host memory'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.mem.max[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_host_mem_max_percent{cluster="{#CLUSTER}"}'
+          - value
+          - ''
+          error_handler: DISCARD_VALUE
+        master_item:
+          key: vmc.metrics
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        units: '%'
+      - uuid: 92f2a1d8610942609680c4624a6ed04c
+        name: 'Cluster {#CLUSTER}: Busiest host CPU - name'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.cpu.max.name[{#CLUSTER}]'
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: CHAR
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_busiest_host_info{cluster="{#CLUSTER}",kind="cpu"}'
+          - label
+          - host
+          error_handler: DISCARD_VALUE
+        tags:
+        - tag: component
+          value: host
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: 49d3b95f55d04a87b3c4bc1353558887
+        name: 'Cluster {#CLUSTER}: Busiest host memory - name'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.mem.max.name[{#CLUSTER}]'
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: CHAR
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_busiest_host_info{cluster="{#CLUSTER}",kind="mem"}'
+          - label
+          - host
+          error_handler: DISCARD_VALUE
+        tags:
+        - tag: component
+          value: host
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: c6b579542086466e89f0c72cb8e93575
+        name: 'Cluster {#CLUSTER}: Longest uptime host - name'
+        type: DEPENDENT
+        key: 'vmc.cluster.host.uptime.max.name[{#CLUSTER}]'
+        delay: '0'
+        history: 7d
+        trends: '0'
+        value_type: CHAR
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: PROMETHEUS_PATTERN
+          parameters:
+          - 'vmware_cluster_busiest_host_info{cluster="{#CLUSTER}",kind="uptime"}'
+          - label
+          - host
+          error_handler: DISCARD_VALUE
+        tags:
+        - tag: component
+          value: host
+        - tag: cluster
+          value: '{#CLUSTER}'
+      - uuid: a2e4388c4b9343f084d5b6db524dae52
+        name: 'Cluster {#CLUSTER}: CPU usage (%)'
+        type: DEPENDENT
+        key: 'vmc.cluster.cpu.pused[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        units: '%'
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var get = function (n) {
+              var c = '{#CLUSTER}'.replace(/[^A-Za-z0-9_-]/g, '\\$&');
+              var r = new RegExp('^' + n + '\\{cluster="' + c + '"\\} (\\S+)', 'm').exec(value);
+              if (!r) throw 'missing ' + n;
+              return parseFloat(r[1]);
+            };
+            var t = get('vmware_cluster_cpu_total_hz');
+            if (!t) throw 'total = 0';
+            return get('vmware_cluster_cpu_used_hz') / t * 100;
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        trigger_prototypes:
+        - uuid: 060a3bcff02347de8633ead092ef61e4
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
+          priority: HIGH
+        - uuid: 098dd7aab4d14f45b1fbd97e9e73c27f
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.WARN:"{#CLUSTER}"}%'
+          priority: WARNING
+          dependencies:
+          - name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
+            expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
+      - uuid: 16c725a0870b4628ba2b32d605350bb1
+        name: 'Cluster {#CLUSTER}: Memory usage (%)'
+        type: DEPENDENT
+        key: 'vmc.cluster.mem.pused[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        units: '%'
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var get = function (n) {
+              var c = '{#CLUSTER}'.replace(/[^A-Za-z0-9_-]/g, '\\$&');
+              var r = new RegExp('^' + n + '\\{cluster="' + c + '"\\} (\\S+)', 'm').exec(value);
+              if (!r) throw 'missing ' + n;
+              return parseFloat(r[1]);
+            };
+            var t = get('vmware_cluster_mem_total_bytes');
+            if (!t) throw 'total = 0';
+            return get('vmware_cluster_mem_used_bytes') / t * 100;
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        trigger_prototypes:
+        - uuid: 7bc945439e97496c8f5db6d77c3c8105
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
+          priority: HIGH
+        - uuid: 2c3d4b2579dc4e949d8993695353bddc
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.WARN:"{#CLUSTER}"}%'
+          priority: WARNING
+          dependencies:
+          - name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
+            expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
+      - uuid: d220f55d1184416eb92d4c42cd73dea6
+        name: 'Cluster {#CLUSTER}: vSAN used (%)'
+        type: DEPENDENT
+        key: 'vmc.cluster.vsan.pused[{#CLUSTER}]'
+        delay: '0'
+        history: 30d
+        value_type: FLOAT
+        units: '%'
+        master_item:
+          key: vmc.metrics
+        preprocessing:
+        - type: JAVASCRIPT
+          parameters:
+          - |-
+            var get = function (n) {
+              var c = '{#CLUSTER}'.replace(/[^A-Za-z0-9_-]/g, '\\$&');
+              var r = new RegExp('^' + n + '\\{cluster="' + c + '"\\} (\\S+)', 'm').exec(value);
+              if (!r) throw 'missing ' + n;
+              return parseFloat(r[1]);
+            };
+            var t = get('vmware_cluster_vsan_capacity_bytes');
+            if (!t) throw 'total = 0';
+            return (t - get('vmware_cluster_vsan_free_bytes')) / t * 100;
+        tags:
+        - tag: component
+          value: cluster
+        - tag: cluster
+          value: '{#CLUSTER}'
+        trigger_prototypes:
+        - uuid: cfad50b8ac484c05b540805f8ff84caf
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
+          priority: HIGH
+        - uuid: cdf783f0d4e240b684e1b3b3b8de9cb1
+          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.WARN:"{#CLUSTER}"}%'
+          priority: WARNING
+          dependencies:
+          - name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
+            expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
+      trigger_prototypes:
+      - uuid: f6bf7e6edf1f4c36b7555c2abecaba39
+        expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.hosts.effective[{#CLUSTER}])<last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.hosts[{#CLUSTER}])'
+        name: 'Cluster {#CLUSTER}: some hosts are not effective'
+        priority: AVERAGE
+        description: 'Effective hosts < total hosts: a host is disconnected, in maintenance or not responding'
+      - uuid: 1f390f0cdc404cc98fa24f8bcaa207a2
+        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        priority: AVERAGE
+      - uuid: 5a98c96d7b3545a3ada28b8f69905271
+        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.WARN:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        priority: WARNING
+        dependencies:
+        - name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+      - uuid: 0e0d852aa0c44a3ea72334a9c6ef63b6
+        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        priority: AVERAGE
+      - uuid: 3eaeed3a5ac5433d8bd0b4c3740017fb
+        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.WARN:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        priority: WARNING
+        dependencies:
+        - name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+      - uuid: 67e328fe9db14fe2b575047677f192fc
+        expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.uptime.max[{#CLUSTER}])>={$VMC.UPTIME.MAX:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.uptime.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} up longer than {$VMC.UPTIME.MAX} (now {ITEM.LASTVALUE1})'
+        priority: INFO
+        description: Long-running hosts should be patched / rebooted
+      graph_prototypes:
+      - uuid: 2773db3b851b4b4296e033f013ca1d1e
+        name: 'Cluster {#CLUSTER}: resource usage (%)'
+        ymin_type_1: FIXED
+        ymax_type_1: FIXED
+        yaxismax: '100'
+        graph_items:
+        - sortorder: '0'
+          color: 1A7C11
+          item:
+            host: VMware Cluster HCM by vmware-cluster-exporter
+            key: 'vmc.cluster.cpu.pused[{#CLUSTER}]'
+        - sortorder: '1'
+          color: 2774A4
+          item:
+            host: VMware Cluster HCM by vmware-cluster-exporter
+            key: 'vmc.cluster.mem.pused[{#CLUSTER}]'
+        - sortorder: '2'
+          color: F63100
+          item:
+            host: VMware Cluster HCM by vmware-cluster-exporter
+            key: 'vmc.cluster.vsan.pused[{#CLUSTER}]'
+        - sortorder: '3'
+          color: A54F10
+          item:
+            host: VMware Cluster HCM by vmware-cluster-exporter
+            key: 'vmc.cluster.host.cpu.max[{#CLUSTER}]'
+        - sortorder: '4'
+          color: 6C59DC
+          item:
+            host: VMware Cluster HCM by vmware-cluster-exporter
+            key: 'vmc.cluster.host.mem.max[{#CLUSTER}]'
+    tags:
+    - tag: class
+      value: virtualization
+    - tag: target
+      value: vmware-cluster
+    macros:
+    - macro: '{$VMC.PORT}'
+      value: '9821'
+      description: 'Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824'
+    - macro: '{$VMC.SCORE.WARN}'
+      value: '80'
+      description: 'vSAN Skyline Health score below this -> Warning'
+    - macro: '{$VMC.SCORE.CRIT}'
+      value: '60'
+      description: 'vSAN Skyline Health score below this -> High'
+    - macro: '{$VMC.CPU.WARN}'
+      value: '20'
+      description: 'Cluster CPU usage (%) -> Warning'
+    - macro: '{$VMC.CPU.CRIT}'
+      value: '50'
+      description: 'Cluster CPU usage (%) -> High'
+    - macro: '{$VMC.MEM.WARN}'
+      value: '80'
+      description: 'Cluster memory usage (%) -> Warning'
+    - macro: '{$VMC.MEM.CRIT}'
+      value: '90'
+      description: 'Cluster memory usage (%) -> High'
+    - macro: '{$VMC.VSAN.WARN}'
+      value: '70'
+      description: 'vSAN used space (%) -> Warning'
+    - macro: '{$VMC.VSAN.CRIT}'
+      value: '80'
+      description: 'vSAN used space (%) -> High'
+    - macro: '{$VMC.HOST.CPU.WARN}'
+      value: '30'
+      description: 'Busiest host CPU (%) -> Warning'
+    - macro: '{$VMC.HOST.CPU.CRIT}'
+      value: '35'
+      description: 'Busiest host CPU (%) -> Average'
+    - macro: '{$VMC.HOST.MEM.WARN}'
+      value: '76'
+      description: 'Busiest host memory (%) -> Warning'
+    - macro: '{$VMC.HOST.MEM.CRIT}'
+      value: '80'
+      description: 'Busiest host memory (%) -> Average'
+    - macro: '{$VMC.UPTIME.MAX}'
+      value: 180d
+      description: 'Host uptime above this -> Info (needs patching)'
+    - macro: '{$VMC.RESYNC.TIME}'
+      value: 30m
+      description: 'vSAN resync running longer than this -> Warning'
+    - macro: '{$VMC.NODATA}'
+      value: 5m
+      description: 'No data from /metrics for this long -> High'
+    valuemaps:
+    - uuid: 759b8bc5e579409c8ebdef12d9d46512
+      name: VMware color status
+      mappings:
+      - value: '0'
+        newvalue: green
+      - value: '1'
+        newvalue: yellow
+      - value: '2'
+        newvalue: red
+      - value: '3'
+        newvalue: gray
+    - uuid: a593ecdd9109419eb32c90dfab62836a
+      name: vSAN health
+      mappings:
+      - value: '0'
+        newvalue: green
+      - value: '1'
+        newvalue: yellow
+      - value: '2'
+        newvalue: red
+      - value: '3'
+        newvalue: unknown
+    - uuid: 4107480c24564944a2007bac5cec937b
+      name: VMware DRS mode
+      mappings:
+      - value: '0'
+        newvalue: Disabled
+      - value: '1'
+        newvalue: Manual
+      - value: '2'
+        newvalue: Partially Automated
+      - value: '3'
+        newvalue: Fully Automated
+    - uuid: 23d29fd0628544df970ca89852a7d3f9
+      name: Exporter up
+      mappings:
+      - value: '0'
+        newvalue: Error
+      - value: '1'
+        newvalue: OK
