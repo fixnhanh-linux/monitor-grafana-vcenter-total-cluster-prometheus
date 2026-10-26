@@ -40,6 +40,7 @@ script/
   vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.16-4)
   vmware-cluster-exporter-linux.zip.sha256
   make_dashboard.py                        sinh lại dashboard, tự thêm pool mới, đẩy lên Grafana
+  install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
 zabbix_template_vmware_cluster_hcm.yaml    template Zabbix 6.0
 ```
 
@@ -219,7 +220,29 @@ python3 script/make_dashboard.py --prometheus http://<ip-prometheus>:9090
 GRAFANA_TOKEN='<token>' python3 script/make_dashboard.py --prometheus http://<ip-prometheus>:9090 --grafana http://<ip-grafana>:3000
 ```
 
-   In `Da day len Grafana: success` là xong. Đặt cron chạy lệnh này 30 phút một lần thì pool mới tự hiện.
+   In `Da day len Grafana: success` là xong.
+
+### Tự động: chỉ cần thêm target vào Prometheus
+
+Cài một lần trên máy Linux có Python 3, gọi được Prometheus và Grafana (vd server Prometheus). Script hỏi URL
+Prometheus (nguồn của dashboard, vd prometheus-all), URL Grafana và token (role Editor, nhập ẩn), kiểm tra kết nối,
+rồi cài systemd timer `vmware-cluster-dashboard` chạy mỗi 10 phút:
+
+```bash
+cd script && sudo bash install_auto_dashboard.sh
+```
+
+Mỗi lần chạy, timer hỏi Prometheus danh sách cluster; **chỉ khi có cluster mới** mới đẩy dashboard lên Grafana
+(không có gì mới thì bỏ qua, không ghi đè). Từ đó thêm pool mới chỉ còn bước 1 (cài exporter + thêm target vào
+Prometheus); 10 phút sau dashboard tự có khối mới.
+
+```bash
+journalctl -u vmware-cluster-dashboard.service -n 20     # xem lần chạy gần nhất
+systemctl start vmware-cluster-dashboard.service          # chạy ngay, không chờ 10 phút
+sudo bash install_auto_dashboard.sh --uninstall           # gỡ timer (dashboard giữ nguyên)
+```
+
+Token lưu ở `/etc/vmware-cluster-dashboard.env` (chỉ root đọc được).
 
 Lưu ý: cập nhật sẽ ghi đè dashboard, chỉnh sửa tay trên Grafana (đổi tên, kéo ô) sẽ mất; muốn đổi thì sửa
 `script/make_dashboard.py`. Pool mới được thêm vào lần chạy hiện tại; muốn giữ cố định thứ tự thì thêm tên vào

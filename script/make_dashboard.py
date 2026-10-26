@@ -150,6 +150,7 @@ ap.add_argument("--prometheus", help="URL Prometheus de tu tim cluster moi, vd h
 ap.add_argument("--grafana", help="URL Grafana de day dashboard len (token lay tu bien GRAFANA_TOKEN)")
 ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu muc hien tai / General)")
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
+ap.add_argument("--state", help="File nho danh sach cluster da day len Grafana; khong doi -> bo qua (dung cho timer)")
 args = ap.parse_args()
 if args.prometheus:
     found = prometheus_clusters(args.prometheus)
@@ -157,6 +158,12 @@ if args.prometheus:
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
     CLUSTERS += new  # cluster cu giu nguyen thu tu, cluster moi them vao cuoi
+STATE = "\n".join(CLUSTERS) + "\n"
+if args.state and args.grafana and os.path.isfile(args.state):
+    with open(args.state, encoding="utf-8") as f:
+        if f.read() == STATE:
+            print("Khong co cluster moi (%d cluster) - khong day lai Grafana" % len(CLUSTERS))
+            sys.exit(0)
 
 panels = [{"id": 1, "type": "row", "title": TITLE, "collapsed": False,
            "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1}, "panels": []}]
@@ -212,3 +219,6 @@ if args.grafana:
         sys.exit("Thieu bien moi truong GRAFANA_TOKEN (service account token, quyen Editor)")
     r = push_grafana(args.grafana, token, dash, args.folder_uid)
     print("Da day len Grafana:", r.get("status"), r.get("url"))
+    if args.state:
+        with open(args.state, "w", encoding="utf-8") as f:
+            f.write(STATE)
