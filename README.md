@@ -197,9 +197,38 @@ Xem từng lệnh và kết quả mẫu ở mục **Ví dụ chi tiết: thêm p
 Dashboard luôn có uid `vmware-cluster-hcm`. Sinh lại rồi import (Overwrite) hoặc đẩy lên sẽ **cập nhật đúng dashboard
 đang có** (không tạo bản mới): các khối cũ giữ nguyên chỗ, pool mới thêm một khối 15 ô ở cuối, 3 cluster / hàng.
 
-1. Cài exporter cho vCenter mới trên server (`./install.sh` trong gói, port tiếp theo, vd 9825), thêm target
-   `<ip>:9825` vào `/etc/prometheus/scrape_configs/vmware-cluster.yml`, reload Prometheus. Chờ 1–2 phút rồi kiểm tra
-   Prometheus đã có cluster mới:
+1. **Cài service exporter cho pool mới** trên server exporter. Mỗi pool (vCenter) là một service riêng
+   `vmware-cluster-exporter@<tên>`; `install.sh` tự tạo file cấu hình, bật và chạy service đó, không đụng các pool đang chạy.
+
+```bash
+cd /home/vmware-cluster-exporter && ./install.sh
+# Ten instance: pool30 | IP vCenter: <ip-vcenter-moi> | User: <user read-only> | Cluster: - | Port: 9825 | mat khau tu go
+```
+
+   Script làm lần lượt:
+
+| Việc | Kết quả |
+|---|---|
+| Ghi cấu hình pool mới | `/etc/vmware-cluster-exporter/pool30.env` (VC, user, port 9825, mật khẩu; chỉ root đọc) |
+| Cài / cập nhật unit dùng chung | `/etc/systemd/system/vmware-cluster-exporter@.service` |
+| Bật + chạy service pool mới | `systemctl enable --now vmware-cluster-exporter@pool30` |
+| Chờ lấy dữ liệu lần đầu | in `OK - exporter dang chay.` |
+
+   Kiểm tra service pool mới và các pool cũ vẫn chạy:
+
+```bash
+systemctl status vmware-cluster-exporter@pool30 --no-pager | grep Active      # active (running)
+systemctl list-units 'vmware-cluster-exporter@*' --no-legend                    # pool18, pool25, pool6, core, pool30
+curl -s localhost:9825/metrics | grep -E 'build_info|^vmware_cluster_hosts'    # co cluster cua pool moi
+journalctl -u vmware-cluster-exporter@pool30 -n 20 --no-pager                  # xem log neu loi
+```
+
+   Lỗi `Dang nhap that bai` (service dừng, mã 3) = sai user/mật khẩu: chạy lại `./install.sh` với cùng tên `pool30`.
+   Không dùng `install.sh` thì làm tay: chép `/etc/vmware-cluster-exporter/pool18.env` thành `pool30.env`, sửa `VC`,
+   `VC_USER`, `PORT=9825`, `VC_PASS`, rồi `systemctl enable --now vmware-cluster-exporter@pool30`.
+
+   Sau đó thêm target `<ip-server-exporter>:9825` vào `/etc/prometheus/scrape_configs/vmware-cluster.yml`, reload
+   Prometheus, chờ 1–2 phút rồi kiểm tra Prometheus đã có cluster mới:
 
 ```bash
 curl -s 'http://<ip-prometheus>:9090/api/v1/label/cluster/values?match[]=vmware_cluster_hosts'
