@@ -165,6 +165,94 @@ def get_grafana(url, token, uid):
     return data["dashboard"], data.get("meta", {}).get("folderUid") or None
 
 
+DS_CACHE = {}
+
+
+def grafana_json(path):
+    req = urllib.request.Request(args.grafana.rstrip("/") + path, headers={"Authorization": "Bearer " + TOKEN})
+    with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
+        return json.load(r)
+
+
+def grafana_datasources():
+    """{uid: ten} cac datasource Prometheus tren Grafana (rong neu token khong duoc xem danh sach)."""
+    if "_list" not in DS_CACHE:
+        try:
+            DS_CACHE["_list"] = {d["uid"]: d.get("name", "") for d in grafana_json("/api/datasources")
+                                 if d.get("type") == "prometheus"}
+        except Exception:
+            DS_CACHE["_list"] = {}
+    return DS_CACHE["_list"]
+
+
+def resolve_ds(dash, uid):
+    """uid that: ${datasource} -> gia tri dang chon cua bien; ten datasource -> uid."""
+    if str(uid).startswith("$"):
+        uid = None
+        for v in dash.get("templating", {}).get("list", []):
+            if v.get("type") == "datasource":
+                cur = v.get("current") or {}
+                uid = cur.get("value") or cur.get("text")
+    names = {name: u for u, name in grafana_datasources().items()}
+    return names.get(uid, uid)
+
+
+def ds_clusters(uid):
+    """Cac cluster co tren datasource (hoi qua Grafana); None = khong hoi duoc."""
+    if uid not in DS_CACHE:
+        try:
+            q = urllib.parse.urlencode({"match[]": "vmware_cluster_hosts"})
+            data = grafana_json("/api/datasources/proxy/uid/%s/api/v1/label/cluster/values?%s" % (uid, q))
+            DS_CACHE[uid] = set(data.get("data") or [])
+        except Exception:
+            DS_CACHE[uid] = None
+    return DS_CACHE[uid]
+
+
+def pick_datasource(dash, cluster, preferred):
+    """Datasource cho khoi cua cluster: uu tien `preferred` (datasource cua hang) neu no co cluster do,
+    khong thi datasource Prometheus khac tren Grafana co cluster do (vd Prometheus site HN). Khong ro -> preferred."""
+    cands = [preferred]
+    seen = {resolve_ds(dash, preferred)}
+    others = list(grafana_datasources()) + [p["datasource"]["uid"] for p in all_panels(dash)
+                                            if isinstance(p.get("datasource"), dict)
+                                            and not str(p["datasource"].get("uid", "$")).startswith("$")]
+    for u in others:
+        if u not in seen:
+            seen.add(u)
+            cands.append(u)
+    for u in cands:
+        names = ds_clusters(resolve_ds(dash, u))
+        if names and cluster in names:
+            return u
+    return preferred
+
+
+def fix_datasources(dash):
+    """O nao query 1 cluster ma datasource cua o khong co cluster do (o hien '-') -> doi sang datasource co no."""
+    changed = {}
+    for p in all_panels(dash):
+        names = {c for t in p.get("targets", []) for c in re.findall(r'cluster="([^"]+)"', t.get("expr", ""))}
+        if len(names) != 1 or not isinstance(p.get("datasource"), dict):
+            continue
+        cluster = names.pop()
+        cur = p["datasource"].get("uid", "${datasource}")
+        have = ds_clusters(resolve_ds(dash, cur))
+        if have is None or cluster in have:
+            continue
+        new = pick_datasource(dash, cluster, cur)
+        if new == cur:
+            continue
+        for obj in [p] + p.get("targets", []):
+            if "datasource" in obj:
+                obj["datasource"] = {"type": "prometheus", "uid": new}
+        changed.setdefault(cluster, [new, 0])[1] += 1
+    for cluster, (uid, n) in sorted(changed.items()):
+        name = grafana_datasources().get(uid, "")
+        print("  ~ %s: %d o -> datasource %s%s" % (cluster, n, uid, " (%s)" % name if name else ""))
+    return bool(changed)
+
+
 def all_panels(dash):
     for p in dash.get("panels", []):
         yield p
@@ -249,16 +337,18 @@ def add_blocks(dash, clusters, row_title=None):
                     p["gridPos"]["y"] += shift
             end += shift
         block = block_panels(pid, cluster, bx, by)
+        cuid = pick_datasource(dash, cluster, uid)  # Prometheus thuc su co cluster nay (vd site HN)
         for p in block:
             for obj in [p] + p.get("targets", []):
                 if "datasource" in obj:
-                    obj["datasource"] = {"type": "prometheus", "uid": uid}
+                    obj["datasource"] = {"type": "prometheus", "uid": cuid}
         (row["panels"] if collapsed else panels).extend(block)
         if not collapsed:
             section.extend(block)
         pid += len(block)
-        print("  + %s -> hang '%s' (x=%d, y=%d, datasource %s)" % (cluster, row.get("title") if row else "-",
-                                                                 bx, by, uid))
+        name = grafana_datasources().get(resolve_ds(dash, cuid), "")
+        print("  + %s -> hang '%s' (x=%d, y=%d, datasource %s%s)" % (
+            cluster, row.get("title") if row else "-", bx, by, cuid, " = %s" % name if name else ""))
 
 
 def remove_clusters(dash, clusters):
@@ -315,6 +405,8 @@ ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu mu
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
 ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
 ap.add_argument("--row", help="Chen cluster moi vao hang (row) co tieu de chua chuoi nay, vd HN (mac dinh hang dau)")
+ap.add_argument("--fix-datasource", action="store_true",
+                help="Khoi nao hien '-' vi datasource khong co cluster do -> doi sang Prometheus tren Grafana co cluster")
 ap.add_argument("--list", action="store_true", help="Liet ke hang / datasource / cluster tren dashboard roi thoat")
 ap.add_argument("--remove", nargs="+", metavar="CLUSTER",
                 help="Xoa khoi cua cluster khoi dashboard tren Grafana roi thoat, vd --remove POOL5")
@@ -378,14 +470,20 @@ if existing is not None:
     present = clusters_on(existing)
     new = sorted(c for c in found if c not in present)
     hidden = hide_datasource_picker(existing)
-    if not new and not hidden:
-        print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
-        sys.exit(0)
     if hidden:
         print("An o chon datasource tren dashboard")
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
         add_blocks(existing, new, args.row)
+    fixed = False
+    if args.fix_datasource:
+        print("Kiem tra datasource tung khoi (o hien '-' vi datasource khong co cluster):")
+        fixed = fix_datasources(existing)
+        if not fixed:
+            print("  Khong co khoi nao can doi datasource")
+    if not new and not hidden and not fixed:
+        print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
+        sys.exit(0)
     save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
     sys.exit(0)
 

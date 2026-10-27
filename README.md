@@ -83,8 +83,9 @@ sudo bash menu.sh
 | 10 | Thêm pool mới lên dashboard ngay |
 | 11 | Xem các hàng trên dashboard, datasource và cluster từng hàng |
 | 12 | Xoá khối 1 cluster khỏi dashboard |
-| 13 | Cập nhật bản mới từ GitHub (giữ cấu hình, mật khẩu) |
-| 14 | Gỡ phần tự động dashboard |
+| 13 | Sửa datasource khối hiện `–` (gán đúng Prometheus của site có cluster đó) |
+| 14 | Cập nhật bản mới từ GitHub (giữ cấu hình, mật khẩu) |
+| 15 | Gỡ phần tự động dashboard |
 
 Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard).
 Chi tiết từng mục, câu hỏi và kết quả mẫu: xem **Hướng dẫn dùng menu (chi tiết)** ngay bên dưới.
@@ -126,9 +127,10 @@ tự chuyển sang khung ASCII `+ = |`:
 ║   [10]  Them Pool Moi Len Dashboard Ngay                         ║
 ║   [11]  Xem Hang Va Cluster Tren Dashboard                       ║
 ║   [12]  Xoa Khoi 1 Cluster Khoi Dashboard                        ║
+║   [13]  Sua Datasource Khoi Hien '-' (Dung Prometheus)           ║
 ╠══ KHAC ══════════════════════════════════════════════════════════╣
-║   [13]  Cap Nhat Ban Moi Tu GitHub                               ║
-║   [14]  Go Phan Tu Dong Dashboard                                ║
+║   [14]  Cap Nhat Ban Moi Tu GitHub                               ║
+║   [15]  Go Phan Tu Dong Dashboard                                ║
 ║   [ 0]  Thoat                                                    ║
 ╚══════════════════════════════════════════════════════════════════╝
          Ban Quyen © 2026 FIX NHANH  -  License: FIX NHANH
@@ -145,8 +147,9 @@ dừng, hoặc phần tự động dashboard chưa cài / đang tắt. Gõ số 
 | Thêm pool / vCenter mới | **1** → **7** (dán thêm dòng `- targets`) → **8** → **10** |
 | Báo sai mật khẩu, đổi mật khẩu vCenter | **3** → **2** (kiểm tra Up = 1) |
 | Ô dashboard hiện `–`, pool không lên | **2** → **8** → làm theo dòng báo vàng/đỏ |
+| Khối pool mới hiện `–` (pool thuộc Prometheus site khác) | **13** |
 | Pool vào sai hàng (HCM/HN), muốn thử lại | **12** (xoá khối) → **9** (sửa hàng) → **10** |
-| Lấy bản mới | **13** |
+| Lấy bản mới | **14** |
 
 ### [1] Cài exporter cho pool / vCenter mới
 
@@ -280,7 +283,10 @@ Cách chèn khối:
 
 - Khối mới vào **chỗ trống đầu tiên** của hàng đã chọn (3 khối / hàng khối), không đè lên ô nào đang có; hết chỗ
   thì mở hàng khối mới và đẩy các hàng bên dưới xuống. Hàng đang thu gọn cũng chèn được.
-- Các ô của khối mới dùng **datasource của hàng đó** (vd hàng HN đang dùng Prometheus HN thì khối mới cũng vậy).
+- Các ô của khối mới **tự dùng đúng Prometheus có cluster đó**: script hỏi từng datasource Prometheus trên Grafana
+  (qua Grafana, bằng token) xem datasource nào có cluster; ưu tiên datasource của hàng, không có thì dùng datasource
+  khác có cluster (vd pool5 chỉ có trên Prometheus HN → khối dùng Prometheus HN dù nằm ở hàng HCM).
+- Mỗi lần chạy, timer cũng tự sửa khối đang hiện `–` vì datasource không có cluster đó (giống mục 13).
 - Giữ nguyên tiêu đề dashboard, các hàng, khối tự sửa tay, thư mục chứa dashboard; ẩn ô chọn datasource ở đầu
   dashboard (giá trị đang chọn giữ nguyên).
 - Cluster đã có ở bất kỳ hàng nào thì không thêm lần nữa.
@@ -318,13 +324,28 @@ Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
 Cluster còn trên Prometheus thì timer **tự thêm lại** trong ≤ 10 phút (dùng để thử lại / chuyển sang hàng khác:
 mục 12 → mục 9 đổi hàng → mục 10). Muốn bỏ hẳn: xoá target của pool trong Prometheus trước, rồi mục 12.
 
-### [13] Cập nhật bản mới từ GitHub
+### [13] Sửa datasource khối hiện `–`
+
+Khối của 1 cluster hiện toàn `–` thường vì ô đang đọc Prometheus của site khác (vd khối POOL5 dùng Prometheus HCM
+trong khi POOL5 chỉ có trên Prometheus HN). Mục này kiểm tra từng ô: datasource của ô không có cluster đó mà
+datasource Prometheus khác trên Grafana có → đổi sang datasource đó. Ô đang hiện số không bị đụng tới.
+
+```text
+Kiem tra datasource tung khoi (o hien '-' vi datasource khong co cluster):
+  ~ POOL5: 15 o -> datasource ab12cd34E (Prometheus HN)
+Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
+```
+
+Bấm F5 trên dashboard. Báo `Khong co khoi nao can doi datasource` mà vẫn `–`: không datasource nào trên Grafana có
+cluster đó → Prometheus chưa scrape pool (mục 7, mục 8), hoặc Grafana chưa có datasource trỏ tới Prometheus đó.
+
+### [14] Cập nhật bản mới từ GitHub
 
 `git pull` → giải nén gói exporter mới → cập nhật script dashboard của timer → chạy lại từng exporter với
 **cấu hình và mật khẩu cũ** (không hỏi gì). Mỗi pool in `OK` hoặc 5 dòng lỗi. `git pull loi (co file sua tay?)`:
 chạy `git -C /opt/monitor-grafana-vcenter-total-cluster-prometheus status` xem file nào bị sửa trên server.
 
-### [14] Gỡ phần tự động dashboard
+### [15] Gỡ phần tự động dashboard
 
 Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard trên Grafana giữ nguyên.
 
@@ -336,7 +357,7 @@ Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard tr
 | Mục 9 báo `curl: (28) ... Connection timed out` tới Prometheus | firewall chặn máy này tới port 9090 | dùng IP Prometheus nội bộ, hoặc mở firewall, hoặc cài mục 9 trên chính server Prometheus |
 | Mục 9 báo `SSL certificate problem: self-signed certificate` | Grafana https chứng chỉ tự ký | trả lời `y` khi được hỏi (hoặc `sudo GRAFANA_INSECURE=1 bash menu.sh`) |
 | Mọi ô dashboard hiện `–` | dashboard đang dùng datasource không có metric `vmware_cluster_*` | Grafana → Explore → chọn datasource → chạy `vmware_cluster_hosts`; dùng datasource có kết quả |
-| Khối pool mới hiện `–` | pool vào hàng có datasource khác Prometheus đang scrape pool đó | mục 12 → mục 9 chọn đúng hàng → mục 10 |
+| Khối pool mới hiện `–` | khối đọc Prometheus của site khác | mục **13** (timer cũng tự sửa trong ≤ 10 phút) |
 | Pool vừa xoá lại xuất hiện | timer tự thêm cluster còn trên Prometheus | xoá target trong Prometheus trước |
 | `bash: http://...: No such file or directory` | dán URL vào terminal như lệnh | dùng `curl -s <url>` |
 
@@ -518,6 +539,7 @@ khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` 
 | `--row HN` | chèn cluster mới vào hàng có tên chứa `HN`, ô dùng datasource của hàng đó |
 | `--list` | in các hàng, datasource, cluster trên dashboard và cluster còn thiếu |
 | `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
+| `--fix-datasource` | khối hiện `–` vì datasource không có cluster → đổi sang Prometheus trên Grafana có cluster đó |
 | `--insecure` | Grafana / Prometheus https chứng chỉ tự ký |
 | `--datasource <tên>` | datasource dùng khi tạo dashboard mới (chưa có trên Grafana) |
 | `--rebuild` | sinh lại toàn bộ dashboard từ đầu |

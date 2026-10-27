@@ -93,7 +93,7 @@ ensure_pkg() {  # giai nen goi exporter canh script/ (lan dau hoac khi zip moi h
     echo "-> Giai nen goi exporter"
     if [ -f "$ZIP.sha256" ]; then
       ( cd "$SCRIPT" && sha256sum -c "$(basename "$ZIP").sha256" >/dev/null ) \
-        || { err "Zip khong khop sha256 - tai lai repo (muc 13)"; return 1; }
+        || { err "Zip khong khop sha256 - tai lai repo (muc 14)"; return 1; }
     fi
     ( cd "$SCRIPT" && unzip -oq "$(basename "$ZIP")" ) || { err "Giai nen loi"; return 1; }
     chmod +x "$PKG"/*.sh
@@ -348,6 +348,14 @@ m_update() {
   done
 }
 
+m_dash_fix() {  # khoi hien '-' vi datasource khong co cluster -> doi sang Prometheus (site) co cluster do
+  dash_ready || return
+  install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
+  run_dash --fix-datasource
+  echo
+  echo "Bam F5 tren dashboard. Timer cung tu sua moi 10 phut."
+}
+
 m_remove_auto() {
   [ -f "$SCRIPT/install_auto_dashboard.sh" ] && bash "$SCRIPT/install_auto_dashboard.sh" --uninstall
 }
@@ -414,9 +422,10 @@ draw_menu() {
   item 10 "$M" "Them Pool Moi Len Dashboard Ngay"
   item 11 "$M" "Xem Hang Va Cluster Tren Dashboard"
   item 12 "$M" "Xoa Khoi 1 Cluster Khoi Dashboard"
+  item 13 "$M" "Sua Datasource Khoi Hien '-' (Dung Prometheus)"
   section "$BL" "KHAC"
-  item 13 "$BL" "Cap Nhat Ban Moi Tu GitHub"
-  item 14 "$BL" "Go Phan Tu Dong Dashboard"
+  item 14 "$BL" "Cap Nhat Ban Moi Tu GitHub"
+  item 15 "$BL" "Go Phan Tu Dong Dashboard"
   item 0 "$R" "Thoat"
   border "$BLc" "$BR"
   printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
@@ -437,7 +446,7 @@ header() {  # ve menu giua man hinh (ngang + doc)
 
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-14]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-15]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
@@ -452,8 +461,9 @@ while true; do
     10) fn=m_dash_now; t="Them Pool Moi Len Dashboard" ;;
     11) fn=m_dash_list; t="Hang Va Cluster Tren Dashboard" ;;
     12) fn=m_dash_remove; t="Xoa Khoi Cluster Khoi Dashboard" ;;
-    13) fn=m_update; t="Cap Nhat Ban Moi Tu GitHub" ;;
-    14) fn=m_remove_auto; t="Go Phan Tu Dong Dashboard" ;;
+    13) fn=m_dash_fix; t="Sua Datasource Khoi Hien '-'" ;;
+    14) fn=m_update; t="Cap Nhat Ban Moi Tu GitHub" ;;
+    15) fn=m_remove_auto; t="Go Phan Tu Dong Dashboard" ;;
     0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac

@@ -125,7 +125,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --datasource \${PROM_DS} --row \${ROW} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
+ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --datasource \${PROM_DS} --row \${ROW} --fix-datasource --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
 EOF
 
 cat > "/etc/systemd/system/$NAME.timer" <<EOF
