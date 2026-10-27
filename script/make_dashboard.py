@@ -888,7 +888,18 @@ if args.list:
 if args.arrange:  # sap xep vi tri khoi tren SSH, chi day len Grafana khi nguoi dung xac nhan luu
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
-    use_tui = sys.stdin.isatty() and sys.stdout.isatty() and not os.environ.get("ARRANGE_TEXT")
+    use_tui = not os.environ.get("ARRANGE_TEXT")
+    if use_tui and not (sys.stdin.isatty() and sys.stdout.isatty()):
+        # Bi goi qua pipe (vd menu can giua ket qua): mo thang terminal cua phien SSH cho giao dien keo tha
+        try:
+            tty = os.open("/dev/tty", os.O_RDWR)
+            sys.stdout.flush()
+            os.dup2(tty, 0)
+            os.dup2(tty, 1)
+            sys.stdin = open(0, "r", closefd=False)
+            sys.stdout = open(1, "w", closefd=False)
+        except OSError:
+            use_tui = False
     if use_tui:
         try:
             import curses  # noqa: F401
