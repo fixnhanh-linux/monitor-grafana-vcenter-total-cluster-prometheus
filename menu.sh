@@ -381,6 +381,13 @@ m_update() {
   else
     warn "Thu muc khong phai git clone - bo qua git pull."
   fi
+  # Phan con lai chay bang menu.sh vua tai ve (ban dang mo trong bo nho co the la ban cu)
+  bash "$REPO/menu.sh" --update-only
+  echo
+  warn "Thoat menu (0) va mo lai de dung giao dien ban moi."
+}
+
+update_rest() {  # giai nen goi moi, cap nhat script dashboard, chay lai tung exporter voi cau hinh cu
   ensure_pkg || return
   if [ -f "$DASH_APP" ]; then
     install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
@@ -490,6 +497,11 @@ header() {  # ve menu giua man hinh (ngang + doc)
   ((top > 0)) && rep $'\n' "$top"
   printf '%s\n\n' "$out"
 }
+
+if [ "${1:-}" = "--update-only" ]; then  # goi tu muc 14 sau git pull
+  update_rest
+  exit 0
+fi
 
 while true; do
   header
