@@ -37,12 +37,16 @@ else
   H="="; V="|"; TL="+"; TR="+"; BLc="+"; BR="+"; ML="+"; MR="+"; DOT="*"; CP="(c)"
 fi
 BOX_W=66        # be rong ben trong khung
-COPYRIGHT="Bản quyền $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
-[ -n "$UTF8" ] || COPYRIGHT="Ban quyen $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
+COPYRIGHT="Ban Quyen $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
 ok()   { echo "${G}$*${N}"; }
 err()  { echo "${R}$*${N}"; }
 warn() { echo "${Y}$*${N}"; }
-pause() { echo; read -r -p "${D}Enter để quay lại menu...${N}" _; }
+PAD=""
+pause() { echo; read -r -p "$PAD${D}Enter De Quay Lai Menu...${N}" _; }
+pad_out() {  # day ket qua cua chuc nang vao giua man hinh (thang le trai khung menu)
+  local l
+  while IFS= read -r l || [ -n "$l" ]; do printf '%s%s\n' "$PAD" "$l"; done
+}
 my_ip() { hostname -I 2>/dev/null | awk '{print $1}'; }
 
 # ---------- tien ich ----------
@@ -69,7 +73,7 @@ pick_instance() {  # chon 1 instance -> bien PICK
     printf "  %d) %-12s vCenter %-16s port %s\n" "$i" "$n" "$(env_get "$n" VC)" "$(env_get "$n" PORT)"
     i=$((i + 1))
   done
-  read -r -p "Chon so (Enter = huy): " choice
+  read -r -p "${PAD}Chon so (Enter = huy): " choice
   [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#list[@]} ] || return 1
   PICK=${list[$((choice - 1))]}
 }
@@ -125,14 +129,14 @@ m_install() {
   local name port
   echo "${B}Cai exporter cho 1 vCenter (pool) moi${N} - moi pool 1 ten + 1 port rieng."
   [ -n "$(instances)" ] && echo "Dang co: $(instances | tr '\n' ' ')"
-  read -r -p "Ten instance (vd pool5, chi chu/so/-): " name
+  read -r -p "${PAD}Ten instance (vd pool5, chi chu/so/-): " name
   [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || { err "Ten khong hop le"; return; }
   if [ -f "$CONF/$name.env" ]; then
     warn "$name da co - dung muc 3 de doi user/mat khau, hoac nhap ten khac."
     return
   fi
   port=$(next_port)
-  read -r -p "Port metrics [$port]: " p
+  read -r -p "${PAD}Port metrics [$port]: " p
   port=${p:-$port}
   echo "Tiep theo nhap IP vCenter, user (quyen Read-only), mat khau (go khong hien)."
   ( cd "$PKG" && NAME=$name PORT=$port ./install.sh ) || true
@@ -177,11 +181,11 @@ m_password() {
   local user
   user=$(env_get "$PICK" VC_USER)
   echo "Doi user/mat khau vCenter cho ${B}$PICK${N} (vCenter $(env_get "$PICK" VC))."
-  read -r -p "User vCenter [$user]: " u
+  read -r -p "${PAD}User vCenter [$user]: " u
   ( set -a; . "$CONF/$PICK.env"; set +a
     unset VC_PASS INFLUX_URL INFLUX_ORG INFLUX_BUCKET INFLUX_TOKEN
     NAME=$PICK VC_USER=${u:-$user}; export NAME VC_USER
-    read -r -s -p "Mat khau vCenter moi: " VC_PASS; echo
+    read -r -s -p "${PAD}Mat khau vCenter moi: " VC_PASS; echo
     [ -n "$VC_PASS" ] || { echo "Mat khau trong - huy."; exit 1; }
     export VC_PASS
     cd "$PKG" && ./install.sh ) || true
@@ -190,7 +194,7 @@ m_password() {
 m_service() {
   pick_instance || return
   echo "  1) Khoi dong lai   2) Dung   3) Chay"
-  read -r -p "Chon: " a
+  read -r -p "${PAD}Chon: " a
   case "$a" in
     1) systemctl restart "$SVC@$PICK" ;;
     2) systemctl stop "$SVC@$PICK" ;;
@@ -208,15 +212,15 @@ m_logs() {
 
 m_uninstall() {
   echo "  1) Go 1 instance   2) Go TAT CA exporter tren may nay"
-  read -r -p "Chon: " a
+  read -r -p "${PAD}Chon: " a
   case "$a" in
     1) pick_instance || return
-       read -r -p "Go $PICK? (y/N): " y
+       read -r -p "${PAD}Go $PICK? (y/N): " y
        [[ "$y" =~ ^[yY] ]] || return
        systemctl disable --now "$SVC@$PICK" 2>/dev/null
        rm -f "$CONF/$PICK.env"
        ok "Da go $PICK. Nho xoa target cua no trong Prometheus." ;;
-    2) read -r -p "Go TAT CA exporter? (go 'yes'): " y
+    2) read -r -p "${PAD}Go TAT CA exporter? (go 'yes'): " y
        [ "$y" = yes ] || return
        if [ -x /opt/vmware-cluster-exporter/uninstall.sh ]; then
          /opt/vmware-cluster-exporter/uninstall.sh
@@ -264,7 +268,7 @@ m_check() {
   done
   prom=""
   [ -f "$DASH_ENV" ] && prom=$(set -a; . "$DASH_ENV"; echo "$PROM_URL")
-  read -r -p "URL Prometheus can kiem tra [${prom:-http://<ip>:9090}]: " p
+  read -r -p "${PAD}URL Prometheus can kiem tra [${prom:-http://<ip>:9090}]: " p
   prom=${p:-$prom}
   if [ -n "$prom" ]; then
     echo "${B}2) Prometheus $prom${N}"
@@ -317,7 +321,7 @@ m_dash_remove() {
   install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
   run_dash --list
   echo
-  read -r -p "Ten cluster can xoa khoi dashboard (cach nhau dau cach, Enter = huy): " names
+  read -r -p "${PAD}Ten cluster can xoa khoi dashboard (cach nhau dau cach, Enter = huy): " names
   [ -n "$names" ] || return
   # shellcheck disable=SC2086
   run_dash --remove $names
@@ -384,36 +388,36 @@ draw_menu() {
     total=$((total + 1))
     systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
   done
-  if [ "$total" -gt 0 ] && [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total đang chạy")
-  else exp=$(badge no "$run/$total đang chạy"); fi
-  if [ ! -f "$DASH_ENV" ]; then auto=$(badge no "chưa cài")
-  elif systemctl is-active --quiet $DASH_NAME.timer; then auto=$(badge ok "đang bật")
-  else auto=$(badge no "đang tắt"); fi
+  if [ "$total" -gt 0 ] && [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total Dang Chay")
+  else exp=$(badge no "$run/$total Dang Chay"); fi
+  if [ ! -f "$DASH_ENV" ]; then auto=$(badge no "Chua Cai")
+  elif systemctl is-active --quiet $DASH_NAME.timer; then auto=$(badge ok "Dang Bat")
+  else auto=$(badge no "Dang Tat"); fi
 
   border "$TL" "$TR"
   center_row "$B${W}VMWARE CLUSTER HCM  $Y$DOT$N$B$W  MONITOR MENU$N"
-  center_row "${D}máy $(hostname)  $DOT  IP $(my_ip)$N"
+  center_row "${D}May $(hostname)  $DOT  IP $(my_ip)$N"
   border "$ML" "$MR"
-  row "  Exporter: $exp        Dashboard tự động: $auto"
-  section "$G" "EXPORTER  -  lấy số liệu vCenter"
-  item 1 "$G" "Cài exporter cho pool / vCenter mới"
-  item 2 "$G" "Xem trạng thái các exporter"
-  item 3 "$G" "Đổi user / mật khẩu vCenter của 1 pool"
-  item 4 "$G" "Khởi động lại / dừng / chạy 1 exporter"
-  item 5 "$G" "Xem log 1 exporter"
-  item 6 "$G" "Gỡ exporter"
+  row "  Exporter: $exp        Dashboard Tu Dong: $auto"
+  section "$G" "EXPORTER  -  LAY SO LIEU VCENTER"
+  item 1 "$G" "Cai Exporter Cho Pool / vCenter Moi"
+  item 2 "$G" "Xem Trang Thai Cac Exporter"
+  item 3 "$G" "Doi User / Mat Khau vCenter Cua 1 Pool"
+  item 4 "$G" "Khoi Dong Lai / Dung / Chay 1 Exporter"
+  item 5 "$G" "Xem Log 1 Exporter"
+  item 6 "$G" "Go Exporter"
   section "$Y" "PROMETHEUS"
-  item 7 "$Y" "In cấu hình Prometheus cho các exporter trên máy"
-  item 8 "$Y" "Kiểm tra kết nối exporter $ARR Prometheus $ARR Grafana"
+  item 7 "$Y" "In Cau Hinh Prometheus Cho Cac Exporter"
+  item 8 "$Y" "Kiem Tra Ket Noi Exporter $ARR Prometheus $ARR Grafana"
   section "$M" "DASHBOARD GRAFANA"
-  item 9 "$M" "Cài tự động thêm pool lên dashboard"
-  item 10 "$M" "Thêm pool mới lên dashboard ngay"
-  item 11 "$M" "Xem hàng và cluster trên dashboard"
-  item 12 "$M" "Xoá khối 1 cluster khỏi dashboard"
-  section "$BL" "KHÁC"
-  item 13 "$BL" "Cập nhật bản mới từ GitHub"
-  item 14 "$BL" "Gỡ phần tự động dashboard"
-  item 0 "$R" "Thoát"
+  item 9 "$M" "Cai Tu Dong Them Pool Len Dashboard"
+  item 10 "$M" "Them Pool Moi Len Dashboard Ngay"
+  item 11 "$M" "Xem Hang Va Cluster Tren Dashboard"
+  item 12 "$M" "Xoa Khoi 1 Cluster Khoi Dashboard"
+  section "$BL" "KHAC"
+  item 13 "$BL" "Cap Nhat Ban Moi Tu GitHub"
+  item 14 "$BL" "Go Phan Tu Dong Dashboard"
+  item 0 "$R" "Thoat"
   border "$BLc" "$BR"
   printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
 }
@@ -422,6 +426,7 @@ header() {  # ve menu giua man hinh (ngang + doc)
   local cols lines out height top
   cols=$(tput cols 2>/dev/null || echo 80); lines=$(tput lines 2>/dev/null || echo 24)
   MARGIN=$(rep ' ' $(((cols - BOX_W - 2) / 2 > 0 ? (cols - BOX_W - 2) / 2 : 0)))
+  PAD="$MARGIN  "
   out=$(draw_menu)
   height=$(printf '%s\n' "$out" | wc -l)
   top=$(((lines - height - 2) / 2))
@@ -432,25 +437,32 @@ header() {  # ve menu giua man hinh (ngang + doc)
 
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chọn chức năng [0-14]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-14]:${N} " choice || exit 0
   echo
   case "$choice" in
-    1) m_install ;;
-    2) m_status ;;
-    3) m_password ;;
-    4) m_service ;;
-    5) m_logs ;;
-    6) m_uninstall ;;
-    7) m_prometheus ;;
-    8) m_check ;;
-    9) m_auto_dash ;;
-    10) m_dash_now ;;
-    11) m_dash_list ;;
-    12) m_dash_remove ;;
-    13) m_update ;;
-    14) m_remove_auto ;;
-    0|q|Q) echo "${Y}$COPYRIGHT${N}"; exit 0 ;;
+    1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
+    2) fn=m_status; t="Trang Thai Cac Exporter" ;;
+    3) fn=m_password; t="Doi User / Mat Khau vCenter" ;;
+    4) fn=m_service; t="Khoi Dong Lai / Dung / Chay Exporter" ;;
+    5) fn=m_logs; t="Log Exporter" ;;
+    6) fn=m_uninstall; t="Go Exporter" ;;
+    7) fn=m_prometheus; t="Cau Hinh Prometheus" ;;
+    8) fn=m_check; t="Kiem Tra Ket Noi" ;;
+    9) fn=m_auto_dash; t="Cai Tu Dong Them Pool Len Dashboard" ;;
+    10) fn=m_dash_now; t="Them Pool Moi Len Dashboard" ;;
+    11) fn=m_dash_list; t="Hang Va Cluster Tren Dashboard" ;;
+    12) fn=m_dash_remove; t="Xoa Khoi Cluster Khoi Dashboard" ;;
+    13) fn=m_update; t="Cap Nhat Ban Moi Tu GitHub" ;;
+    14) fn=m_remove_auto; t="Go Phan Tu Dong Dashboard" ;;
+    0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac
+  clear 2>/dev/null || true
+  echo
+  border "$TL" "$TR"
+  center_row "$B$W[$choice]  $t$N"
+  border "$BLc" "$BR"
+  echo
+  "$fn" | pad_out
   pause
 done

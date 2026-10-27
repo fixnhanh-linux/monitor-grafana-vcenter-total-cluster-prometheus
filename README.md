@@ -101,36 +101,37 @@ Chạy trên máy cài exporter (vd `srv-exporter`), cần `git`, `unzip`, `pyth
 cd /opt/monitor-grafana-vcenter-total-cluster-prometheus && git pull && sudo bash menu.sh
 ```
 
-Không có `sudo` thì menu tự gọi lại bằng `sudo`. Menu tự căn giữa màn hình, khung màu, chữ tiếng Việt có dấu
-(terminal không hỗ trợ UTF-8 thì tự chuyển sang khung ASCII `+ = |`):
+Không có `sudo` thì menu tự gọi lại bằng `sudo`. Menu tự căn giữa màn hình (cả menu lẫn kết quả từng chức năng),
+khung màu, chữ không dấu để hiện đúng trên mọi terminal (MobaXterm, PuTTY…); terminal không hỗ trợ UTF-8 thì
+tự chuyển sang khung ASCII `+ = |`:
 
 ```text
 ╔══════════════════════════════════════════════════════════════════╗
 ║               VMWARE CLUSTER HCM  ●  MONITOR MENU                ║
-║            máy srv-exporter  ●  IP 10.0.0.10                     ║
+║            May srv-exporter  ●  IP 10.0.0.10                     ║
 ╠══════════════════════════════════════════════════════════════════╣
-║  Exporter: ● 1/1 đang chạy        Dashboard tự động: ● đang bật  ║
-╠══ EXPORTER  -  lấy số liệu vCenter ══════════════════════════════╣
-║   [ 1]  Cài exporter cho pool / vCenter mới                      ║
-║   [ 2]  Xem trạng thái các exporter                              ║
-║   [ 3]  Đổi user / mật khẩu vCenter của 1 pool                   ║
-║   [ 4]  Khởi động lại / dừng / chạy 1 exporter                   ║
-║   [ 5]  Xem log 1 exporter                                       ║
-║   [ 6]  Gỡ exporter                                              ║
+║  Exporter: ● 1/1 Dang Chay        Dashboard Tu Dong: ● Dang Bat  ║
+╠══ EXPORTER  -  LAY SO LIEU VCENTER ══════════════════════════════╣
+║   [ 1]  Cai Exporter Cho Pool / vCenter Moi                      ║
+║   [ 2]  Xem Trang Thai Cac Exporter                              ║
+║   [ 3]  Doi User / Mat Khau vCenter Cua 1 Pool                   ║
+║   [ 4]  Khoi Dong Lai / Dung / Chay 1 Exporter                   ║
+║   [ 5]  Xem Log 1 Exporter                                       ║
+║   [ 6]  Go Exporter                                              ║
 ╠══ PROMETHEUS ════════════════════════════════════════════════════╣
-║   [ 7]  In cấu hình Prometheus cho các exporter trên máy         ║
-║   [ 8]  Kiểm tra kết nối exporter → Prometheus → Grafana         ║
+║   [ 7]  In Cau Hinh Prometheus Cho Cac Exporter                  ║
+║   [ 8]  Kiem Tra Ket Noi Exporter → Prometheus → Grafana         ║
 ╠══ DASHBOARD GRAFANA ═════════════════════════════════════════════╣
-║   [ 9]  Cài tự động thêm pool lên dashboard                      ║
-║   [10]  Thêm pool mới lên dashboard ngay                         ║
-║   [11]  Xem hàng và cluster trên dashboard                       ║
-║   [12]  Xoá khối 1 cluster khỏi dashboard                        ║
-╠══ KHÁC ══════════════════════════════════════════════════════════╣
-║   [13]  Cập nhật bản mới từ GitHub                               ║
-║   [14]  Gỡ phần tự động dashboard                                ║
-║   [ 0]  Thoát                                                    ║
+║   [ 9]  Cai Tu Dong Them Pool Len Dashboard                      ║
+║   [10]  Them Pool Moi Len Dashboard Ngay                         ║
+║   [11]  Xem Hang Va Cluster Tren Dashboard                       ║
+║   [12]  Xoa Khoi 1 Cluster Khoi Dashboard                        ║
+╠══ KHAC ══════════════════════════════════════════════════════════╣
+║   [13]  Cap Nhat Ban Moi Tu GitHub                               ║
+║   [14]  Go Phan Tu Dong Dashboard                                ║
+║   [ 0]  Thoat                                                    ║
 ╚══════════════════════════════════════════════════════════════════╝
-         Bản quyền © 2026 FIX NHANH  -  License: FIX NHANH
+         Ban Quyen © 2026 FIX NHANH  -  License: FIX NHANH
 ```
 
 Dòng trạng thái: chấm **xanh** = mọi exporter đang chạy / timer dashboard đang bật; chấm **đỏ** = có exporter
