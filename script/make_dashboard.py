@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-"""Sinh dashboard Grafana "VMWARE CLUSTER HCM" - luoi o mau theo tung cluster.
+"""Dashboard Grafana "VMWARE CLUSTER HCM" - luoi o mau theo tung cluster (metric vmware_cluster_*).
 
-Chay:  python make_dashboard.py            -> ghi vmware_cluster_hcm_grafana.json (+ ban trong vmware-cluster-exporter/)
-Doi nguong mau: sua bang THRESHOLDS ben duoi roi chay lai, import lai Grafana (Overwrite).
-Du lieu: metric vmware_cluster_* cua vmware-cluster-exporter (rieng, khong dung esxi-host-exporter).
-
-Tu them pool / cluster moi (moi cluster 1 khoi 15 o, giong cac cluster cu):
-  python3 make_dashboard.py --prometheus http://<ip>:9090
-      -> hoi Prometheus danh sach cluster dang co metric vmware_cluster_hosts, them cluster moi vao cuoi
-  GRAFANA_TOKEN=<service account token> python3 make_dashboard.py --prometheus http://<ip>:9090       --grafana http://<ip-grafana>:3000
-      -> them nua: day thang len Grafana (ghi de dashboard uid vmware-cluster-hcm). Dat cron de tu dong.
-Chi dung thu vien chuan Python 3 (chay duoc tren server Linux).
+Dashboard da co tren Grafana -> GIU NGUYEN moi chinh sua tay, chi chen khoi cho cluster moi:
+  GRAFANA_TOKEN=<token Editor> python3 make_dashboard.py --prometheus http://<ip>:9090 --grafana https://<ip>:3000
+      [--row HN] [--fix-datasource] [--insecure]
+Cac viec khac (can --grafana): --list | --rows | --remove POOL5 | --move POOL5 --row HN | --arrange (keo tha)
+Chua co dashboard / --rebuild: sinh moi toan bo tu CLUSTERS + cluster tren Prometheus (datasource --datasource).
+Khong --grafana: chi ghi file JSON de import tay. Menu de dung: sudo bash menu.sh (thu muc repo).
+Chi dung thu vien chuan Python 3.
 """
 import argparse
 import json

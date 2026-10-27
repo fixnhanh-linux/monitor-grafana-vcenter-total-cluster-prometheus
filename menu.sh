@@ -389,7 +389,16 @@ m_update() {
 
 update_rest() {  # giai nen goi moi, cap nhat script dashboard, chay lai tung exporter voi cau hinh cu
   ensure_pkg || return
-  if [ -f "$DASH_APP" ]; then
+  if [ -f "$DASH_APP" ] && [ -f "$DASH_ENV" ]; then
+    # Cai lai timer dashboard voi cau hinh cu (URL, token, datasource, hang, chu ky) -> co them tuy chon moi
+    echo "-> Cap nhat phan tu dong dashboard (giu cau hinh cu)"
+    local iv
+    iv=$(sed -n 's/^OnUnitActiveSec=\([0-9]*\)min/\1/p' "/etc/systemd/system/$DASH_NAME.timer" 2>/dev/null)
+    ( set -a; . "$DASH_ENV"; INTERVAL=${iv:-10}; ROW=${ROW:-}; set +a
+      bash "$SCRIPT/install_auto_dashboard.sh" </dev/null ) >/tmp/vmc-dash-update.log 2>&1 \
+      && ok "   Dashboard tu dong OK" \
+      || { err "   Dashboard tu dong loi (chay lai muc 9):"; tail -5 /tmp/vmc-dash-update.log | tr -d '\r'; }
+  elif [ -f "$DASH_APP" ]; then
     install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
     ok "Da cap nhat $DASH_APP"
   fi

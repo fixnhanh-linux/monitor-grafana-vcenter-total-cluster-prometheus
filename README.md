@@ -12,10 +12,9 @@ Prometheus đọc về, prometheus-all lấy lại để Grafana hiển thị; Z
 `make_dashboard.py` hỏi Prometheus danh sách cluster rồi **chèn thêm khối** cho cluster mới vào dashboard đang có
 (giữ nguyên mọi chỉnh sửa tay trên Grafana: tiêu đề, hàng, datasource).
 
-Danh sách cluster nằm trong `CLUSTERS` của `script/make_dashboard.py` (tên đúng như trên vCenter):
-`CORE`, `POOL17`, `POOL18-XD`, `POOL23`, `POOL25`, `VC1_POOL6`. POOL23 hiện chưa có trong exporter nào
-(9811–9814 chỉ thấy 5 cluster trên) nên khối POOL23 sẽ hiện "–" cho tới khi có vCenter chứa nó.
-Thêm pool mới: xem mục **Thêm pool mới khi dashboard đã có** ở cuối.
+Cluster lấy tự động từ Prometheus (tên đúng như trên vCenter); `CLUSTERS` trong `script/make_dashboard.py`
+chỉ dùng khi tạo dashboard lần đầu. Thêm pool mới: menu **1 → 7 → 8 → 10** (xem **Hướng dẫn dùng menu**), hoặc
+bằng lệnh ở mục **Thêm pool mới khi dashboard đã có**.
 
 Bộ này **tách riêng hoàn toàn** khỏi bộ cũ *MONITOR RESOURCE HOST ESXi* (`esxi-host-exporter`):
 exporter, service, thư mục, user, port, metric, scrape job và dashboard đều có tên riêng,
@@ -85,7 +84,7 @@ sudo bash menu.sh
 | 12 | Xoá khối 1 cluster khỏi dashboard |
 | 13 | Sửa datasource khối hiện `–` (gán đúng Prometheus của site có cluster đó) |
 | 14 | Sắp xếp vị trí khối: **kéo thả bằng chuột** (hoặc phím mũi tên), đổi chỗ, đổi hàng — xem sơ đồ trên SSH, lưu mới đổi Grafana |
-| 15 | Cập nhật bản mới từ GitHub (giữ cấu hình, mật khẩu) |
+| 15 | Cập nhật bản mới từ GitHub: exporter + phần tự động dashboard (giữ cấu hình, mật khẩu, token) |
 | 16 | Gỡ phần tự động dashboard |
 
 Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard).
@@ -399,9 +398,16 @@ MobaXterm: Settings → Terminal → bật *Mouse tracking* nếu đang tắt.
 
 ### [15] Cập nhật bản mới từ GitHub
 
-`git pull` → giải nén gói exporter mới → cập nhật script dashboard của timer → chạy lại từng exporter với
-**cấu hình và mật khẩu cũ** (không hỏi gì). Mỗi pool in `OK` hoặc 5 dòng lỗi. `git pull loi (co file sua tay?)`:
-chạy `git -C /opt/monitor-grafana-vcenter-total-cluster-prometheus status` xem file nào bị sửa trên server.
+`git pull`, rồi chạy phần cập nhật bằng **menu.sh vừa tải về**:
+
+1. Giải nén gói exporter mới.
+2. Cài lại phần tự động dashboard với **cấu hình cũ** (URL, token, datasource, hàng, chu kỳ) — timer có luôn tùy
+   chọn mới, không phải chạy lại mục 9.
+3. Chạy lại từng exporter với **cấu hình và mật khẩu cũ** (không hỏi gì), in `pool5 OK - version="..."`.
+
+Lỗi thì in vài dòng log (pool vẫn chạy bản cũ). `git pull loi (co file sua tay?)`: chạy
+`git -C /opt/monitor-grafana-vcenter-total-cluster-prometheus status` xem file nào bị sửa trên server.
+Cập nhật xong **thoát menu (0) và mở lại** để dùng giao diện menu mới.
 
 ### [16] Gỡ phần tự động dashboard
 
@@ -539,8 +545,9 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | cam ≥ 30% · đỏ ≥ 35% |
 | RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | cam ≥ 76% · đỏ ≥ 80% |
 
-Ngưỡng được suy ra từ màu của dashboard mẫu. Đổi ngưỡng: sửa bảng `THRESHOLDS` trong `script/make_dashboard.py`,
-chạy `python3 script/make_dashboard.py`, import lại (Overwrite).
+Ngưỡng được suy ra từ màu của dashboard mẫu. Đổi ngưỡng cho dashboard **đang dùng**: sửa thẳng trên Grafana
+(Edit ô → Thresholds), giữ được mọi chỉnh sửa khác. `THRESHOLDS` trong `script/make_dashboard.py` chỉ áp dụng cho
+khối **mới thêm** và khi tạo lại từ đầu (`--rebuild` hoặc import Overwrite — cách này **mất** chỉnh sửa tay).
 
 ## 4. Khác với dashboard cũ
 
