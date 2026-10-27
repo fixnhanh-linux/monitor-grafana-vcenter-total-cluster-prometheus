@@ -43,9 +43,27 @@ err()  { echo "${R}$*${N}"; }
 warn() { echo "${Y}$*${N}"; }
 PAD=""
 pause() { echo; read -r -p "$PAD${D}Enter De Quay Lai Menu...${N}" _; }
-pad_out() {  # day ket qua cua chuc nang vao giua man hinh (thang le trai khung menu)
-  local l
-  while IFS= read -r l || [ -n "$l" ]; do printf '%s%s\n' "$PAD" "$l"; done
+pad_out() {  # day moi dong (ca loi, ca cau hoi chua xuong dong) vao giua man hinh, thang le trai khung menu
+  python3 -u -c '
+import os, sys
+pad, start = sys.argv[1].encode(), True
+while True:
+    b = os.read(0, 4096)
+    if not b:
+        break
+    b = b.replace(b"\r\n", b"\n").replace(b"\r", b"")
+    out, parts = bytearray(), b.split(b"\n")
+    for i, part in enumerate(parts):
+        if part:
+            if start:
+                out += pad
+            out += part
+            start = False
+        if i < len(parts) - 1:
+            out += b"\n"
+            start = True
+    os.write(1, bytes(out))
+' "$PAD"
 }
 my_ip() { hostname -I 2>/dev/null | awk '{print $1}'; }
 
@@ -119,7 +137,8 @@ run_dash() {  # chay make_dashboard.py voi cau hinh cua timer (URL, token, datas
 reinstall_instance() {  # chay lai install.sh cho 1 instance voi cau hinh cu (khong hoi gi)
   ( set -a; . "$CONF/$1.env"; set +a; NAME=$1; export NAME
     [ -n "${INFLUX_ORG:-}" ] || unset INFLUX_URL  # InfluxDB 1.x: install.sh tu giu nguyen dong INFLUX_ cu
-    cd "$PKG" && ./install.sh </dev/null )
+    # Enter cho moi cau hoi con lai (vd URL InfluxDB khi pool khong dung InfluxDB) -> giu nhu cu
+    cd "$PKG" && printf '\n%.0s' {1..20} | ./install.sh )
 }
 
 # ---------- cac muc menu ----------
@@ -344,7 +363,8 @@ m_update() {
   for n in $(instances); do
     echo "-> Cap nhat exporter $n (giu cau hinh, mat khau cu)"
     reinstall_instance "$n" >/tmp/vmc-update.log 2>&1 \
-      && ok "   $n OK" || { err "   $n loi:"; tail -5 /tmp/vmc-update.log; }
+      && ok "   $n OK - $(grep -o 'version="[^"]*"' <(curl -s --max-time 5 "http://127.0.0.1:$(env_get "$n" PORT)/metrics") | head -1)" \
+      || { err "   $n loi (pool van chay ban cu):"; tail -8 /tmp/vmc-update.log | tr -d '\r'; }
   done
 }
 
@@ -473,6 +493,6 @@ while true; do
   center_row "$B$W[$choice]  $t$N"
   border "$BLc" "$BR"
   echo
-  "$fn" | pad_out
+  { "$fn"; } 2>&1 | pad_out
   pause
 done
