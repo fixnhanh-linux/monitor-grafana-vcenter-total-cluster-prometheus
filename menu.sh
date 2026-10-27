@@ -20,14 +20,29 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 if [ -t 1 ]; then
-  B=$'\e[1m'; G=$'\e[32m'; R=$'\e[31m'; Y=$'\e[33m'; C=$'\e[36m'; N=$'\e[0m'
+  B=$'\e[1m'; D=$'\e[2m'; G=$'\e[32m'; R=$'\e[31m'; Y=$'\e[33m'; C=$'\e[36m'; M=$'\e[35m'; BL=$'\e[34m'
+  W=$'\e[97m'; N=$'\e[0m'
 else
-  B=""; G=""; R=""; Y=""; C=""; N=""
+  B=""; D=""; G=""; R=""; Y=""; C=""; M=""; BL=""; W=""; N=""
 fi
+
+# Khung ve bang ky tu Unicode neu terminal la UTF-8, khong thi dung ASCII
+UTF8=""
+for loc in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
+  if locale -a 2>/dev/null | grep -qix "$loc"; then export LC_ALL=$loc; UTF8=1; break; fi
+done
+if [ -n "$UTF8" ]; then
+  H="═"; V="║"; TL="╔"; TR="╗"; BLc="╚"; BR="╝"; ML="╠"; MR="╣"; DOT="●"; CP="©"
+else
+  H="="; V="|"; TL="+"; TR="+"; BLc="+"; BR="+"; ML="+"; MR="+"; DOT="*"; CP="(c)"
+fi
+BOX_W=66        # be rong ben trong khung
+COPYRIGHT="Bản quyền $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
+[ -n "$UTF8" ] || COPYRIGHT="Ban quyen $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
 ok()   { echo "${G}$*${N}"; }
 err()  { echo "${R}$*${N}"; }
 warn() { echo "${Y}$*${N}"; }
-pause() { echo; read -r -p "Enter de quay lai menu..." _; }
+pause() { echo; read -r -p "${D}Enter để quay lại menu...${N}" _; }
 my_ip() { hostname -I 2>/dev/null | awk '{print $1}'; }
 
 # ---------- tien ich ----------
@@ -335,42 +350,89 @@ m_remove_auto() {
 
 # ---------- menu chinh ----------
 
-header() {
-  local n total=0 run=0 auto="chua cai"
+# ---------- ve menu: khung mau, can giua man hinh ----------
+
+ARR="→"; [ -n "$UTF8" ] || ARR="->"
+MARGIN=""
+rep() { local s="" i; for ((i = 0; i < $2; i++)); do s+=$1; done; printf '%s' "$s"; }
+vis_len() { local s; s=$(printf '%s' "$1" | sed 's/\x1b\[[0-9;]*m//g'); echo "${#s}"; }
+if [ -z "$UTF8" ]; then  # locale khong UTF-8: bash dem byte -> dem ky tu bang python3
+  vis_len() {
+    python3 -c 'import re, sys
+s = sys.argv[1].encode("utf-8", "surrogateescape").decode("utf-8", "replace")
+print(len(re.sub(r"\x1b\[[0-9;]*m", "", s)))' "$1"
+  }
+fi
+row() {  # 1 dong trong khung, can trai
+  local pad=$((BOX_W - $(vis_len "$1")))
+  ((pad < 0)) && pad=0
+  printf '%s%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$V" "$N" "$1" "$(rep ' ' $pad)" "$C$V" "$N"
+}
+center_row() { row "$(rep ' ' $(((BOX_W - $(vis_len "$1")) / 2)))$1"; }
+border() { printf '%s%s%s%s%s%s\n' "$MARGIN" "$C" "$1" "$(rep "$H" $BOX_W)" "$2" "$N"; }
+section() {  # ╠══ TEN NHOM ══════╣
+  local title=" $2 "
+  printf '%s%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$ML$H$H" "$1$B$title$N" "$C" \
+    "$(rep "$H" $((BOX_W - 2 - $(vis_len "$title"))))" "$MR" "$N"
+}
+item() { row "   $2$B[$(printf '%2s' "$1")]$N  $3"; }
+badge() { [ "$1" = ok ] && printf '%s' "$G$DOT $2$N" || printf '%s' "$R$DOT $2$N"; }
+
+draw_menu() {
+  local n total=0 run=0 exp auto
   for n in $(instances); do
     total=$((total + 1))
     systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
   done
-  [ -f "$DASH_ENV" ] && auto="timer $(systemctl is-active $DASH_NAME.timer 2>/dev/null)"
+  if [ "$total" -gt 0 ] && [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total đang chạy")
+  else exp=$(badge no "$run/$total đang chạy"); fi
+  if [ ! -f "$DASH_ENV" ]; then auto=$(badge no "chưa cài")
+  elif systemctl is-active --quiet $DASH_NAME.timer; then auto=$(badge ok "đang bật")
+  else auto=$(badge no "đang tắt"); fi
+
+  border "$TL" "$TR"
+  center_row "$B${W}VMWARE CLUSTER HCM  $Y$DOT$N$B$W  MONITOR MENU$N"
+  center_row "${D}máy $(hostname)  $DOT  IP $(my_ip)$N"
+  border "$ML" "$MR"
+  row "  Exporter: $exp        Dashboard tự động: $auto"
+  section "$G" "EXPORTER  -  lấy số liệu vCenter"
+  item 1 "$G" "Cài exporter cho pool / vCenter mới"
+  item 2 "$G" "Xem trạng thái các exporter"
+  item 3 "$G" "Đổi user / mật khẩu vCenter của 1 pool"
+  item 4 "$G" "Khởi động lại / dừng / chạy 1 exporter"
+  item 5 "$G" "Xem log 1 exporter"
+  item 6 "$G" "Gỡ exporter"
+  section "$Y" "PROMETHEUS"
+  item 7 "$Y" "In cấu hình Prometheus cho các exporter trên máy"
+  item 8 "$Y" "Kiểm tra kết nối exporter $ARR Prometheus $ARR Grafana"
+  section "$M" "DASHBOARD GRAFANA"
+  item 9 "$M" "Cài tự động thêm pool lên dashboard"
+  item 10 "$M" "Thêm pool mới lên dashboard ngay"
+  item 11 "$M" "Xem hàng và cluster trên dashboard"
+  item 12 "$M" "Xoá khối 1 cluster khỏi dashboard"
+  section "$BL" "KHÁC"
+  item 13 "$BL" "Cập nhật bản mới từ GitHub"
+  item 14 "$BL" "Gỡ phần tự động dashboard"
+  item 0 "$R" "Thoát"
+  border "$BLc" "$BR"
+  printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
+}
+
+header() {  # ve menu giua man hinh (ngang + doc)
+  local cols lines out height top
+  cols=$(tput cols 2>/dev/null || echo 80); lines=$(tput lines 2>/dev/null || echo 24)
+  MARGIN=$(rep ' ' $(((cols - BOX_W - 2) / 2 > 0 ? (cols - BOX_W - 2) / 2 : 0)))
+  out=$(draw_menu)
+  height=$(printf '%s\n' "$out" | wc -l)
+  top=$(((lines - height - 2) / 2))
   clear 2>/dev/null || true
-  echo "${B}=== VMware Cluster HCM - menu ($(hostname) $(my_ip)) ===${N}"
-  echo "Exporter: $run/$total dang chay   |   Tu dong dashboard: $auto"
-  echo
-  echo "${C}-- Exporter (lay so lieu vCenter) --${N}"
-  echo "  1) Cai exporter cho pool / vCenter moi"
-  echo "  2) Xem trang thai cac exporter"
-  echo "  3) Doi user / mat khau vCenter cua 1 pool"
-  echo "  4) Khoi dong lai / dung / chay 1 exporter"
-  echo "  5) Xem log 1 exporter"
-  echo "  6) Go exporter"
-  echo "${C}-- Prometheus --${N}"
-  echo "  7) In cau hinh Prometheus cho cac exporter tren may nay"
-  echo "  8) Kiem tra ket noi (exporter -> Prometheus -> Grafana -> dashboard)"
-  echo "${C}-- Dashboard Grafana --${N}"
-  echo "  9) Cai / cau hinh tu dong them pool len dashboard (URL, token, hang)"
-  echo " 10) Them pool moi len dashboard ngay"
-  echo " 11) Xem hang va cluster tren dashboard"
-  echo " 12) Xoa khoi 1 cluster khoi dashboard"
-  echo "${C}-- Khac --${N}"
-  echo " 13) Cap nhat ban moi tu GitHub (exporter + script dashboard)"
-  echo " 14) Go phan tu dong dashboard"
-  echo "  0) Thoat"
-  echo
+  ((top > 0)) && rep $'\n' "$top"
+  printf '%s\n\n' "$out"
 }
 
 while true; do
   header
-  read -r -p "Chon: " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chọn chức năng [0-14]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) m_install ;;
@@ -387,7 +449,7 @@ while true; do
     12) m_dash_remove ;;
     13) m_update ;;
     14) m_remove_auto ;;
-    0|q|Q) exit 0 ;;
+    0|q|Q) echo "${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac
   pause
