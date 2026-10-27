@@ -15,12 +15,15 @@ Chi dung thu vien chuan Python 3 (chay duoc tren server Linux).
 import argparse
 import json
 import os
+import re
 import ssl
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
 TITLE = "VMWARE CLUSTER HCM"
+UID = "vmware-cluster-hcm"
 PROM_DS = "prometheus-all"  # ten datasource Prometheus tren Grafana
 DS = {"type": "prometheus", "uid": "${datasource}"}
 C = 'cluster="$cluster"'  # $cluster duoc thay bang ten tung cluster trong CLUSTERS
@@ -104,6 +107,7 @@ PER_ROW = 3          # so cluster moi hang
 TILE_W, TILE_H = 2, 3  # 1 o = 2/24 chieu ngang -> 4 o / cluster / hang
 # Bo cuc 1 cluster (4 cot x 4 hang): Cluster Status rong gap doi, 14 o con lai moi o 1 cot
 WIDTHS = [2] + [1] * (len(TILES) - 1)
+BLOCK_W, BLOCK_H = 24 // PER_ROW, 1 + TILE_H * 4  # 1 khoi = tieu de + 4 hang o
 
 
 def tile_panel(pid, cluster, x, y, w, tile):
@@ -136,9 +140,9 @@ def prometheus_clusters(url):
     return data["data"]
 
 
-def push_grafana(url, token, dash, folder_uid=None):
+def push_grafana(url, token, dash, n, folder_uid=None):
     body = {"dashboard": dict(dash, id=None), "overwrite": True,
-            "message": "make_dashboard.py: %d cluster" % len(CLUSTERS)}
+            "message": "make_dashboard.py: %d cluster" % n}
     if folder_uid:
         body["folderUid"] = folder_uid
     req = urllib.request.Request(url.rstrip("/") + "/api/dashboards/db", data=json.dumps(body).encode("utf-8"),
@@ -147,12 +151,84 @@ def push_grafana(url, token, dash, folder_uid=None):
         return json.load(r)
 
 
+def get_grafana(url, token, uid):
+    """Dashboard dang co tren Grafana (None neu chua co) va UID thu muc chua no."""
+    req = urllib.request.Request("%s/api/dashboards/uid/%s" % (url.rstrip("/"), uid),
+                                 headers={"Authorization": "Bearer " + token})
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
+            data = json.load(r)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None, None
+        raise
+    return data["dashboard"], data.get("meta", {}).get("folderUid") or None
+
+
+def all_panels(dash):
+    for p in dash.get("panels", []):
+        yield p
+        for q in p.get("panels", []):  # panel ben trong hang (row) dang thu gon
+            yield q
+
+
+def clusters_on(dash):
+    """Ten cluster da co o tren dashboard (doc tu PromQL cluster="..." cua moi o)."""
+    names = set()
+    for p in all_panels(dash):
+        for t in p.get("targets", []):
+            names.update(re.findall(r'cluster="([^"]+)"', t.get("expr", "")))
+    return names
+
+
+def block_panels(pid, cluster, bx, by):
+    """1 khoi cua 1 cluster: thanh tieu de + 15 o, goc tren trai (bx, by)."""
+    panels = [{  # thanh tieu de cua cluster (chi co title + link sang dashboard host)
+        "id": pid, "type": "text", "title": cluster, "transparent": True,
+        "gridPos": {"x": bx, "y": by, "w": BLOCK_W, "h": 1},
+        "links": [{"title": "Chi tiết host của " + cluster,
+                   "url": "/d/esxi-host-resource/?var-cluster=%s&${datasource:queryparam}" % cluster}],
+        "options": {"mode": "markdown", "content": ""}}]
+    col, row = 0, 0
+    for tile, w in zip(TILES, WIDTHS):
+        if col + w > 4:
+            col, row = 0, row + 1
+        panels.append(tile_panel(pid + len(panels), cluster, bx + col * TILE_W, by + 1 + row * TILE_H,
+                                 w * TILE_W, tile))
+        col += w
+    return panels
+
+
+def add_blocks(dash, clusters):
+    """Chen khoi cluster moi vao cuoi phan dau tien (tu hang dau den hang ke tiep), 3 khoi / hang.
+    Het cho trong hang khoi -> mo hang khoi moi va day cac phan ben duoi (vd hang HN) xuong."""
+    panels = dash.setdefault("panels", [])
+    rows = sorted((p for p in panels if p.get("type") == "row"), key=lambda p: p["gridPos"]["y"])
+    top = rows[0]["gridPos"]["y"] if rows else -1
+    end = rows[1]["gridPos"]["y"] if len(rows) > 1 else float("inf")
+    n = sum(1 for p in panels if p.get("type") == "text" and p["gridPos"].get("h") == 1
+            and top < p["gridPos"]["y"] < end)  # so khoi dang co trong phan dau
+    pid = max([p.get("id", 0) for p in all_panels(dash)] + [0]) + 1
+    for cluster in clusters:
+        bx, by = (n % PER_ROW) * BLOCK_W, top + 1 + (n // PER_ROW) * BLOCK_H
+        if n % PER_ROW == 0:  # hang khoi moi: day moi thu tu by tro xuong
+            for p in panels:
+                if p["gridPos"]["y"] >= by:
+                    p["gridPos"]["y"] += BLOCK_H
+        block = block_panels(pid, cluster, bx, by)
+        panels += block
+        pid += len(block)
+        n += 1
+
+
 ap = argparse.ArgumentParser(description="Sinh dashboard Grafana VMWARE CLUSTER HCM")
 ap.add_argument("--prometheus", help="URL Prometheus de tu tim cluster moi, vd http://10.0.0.x:9090")
 ap.add_argument("--grafana", help="URL Grafana de day dashboard len (token lay tu bien GRAFANA_TOKEN)")
 ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu muc hien tai / General)")
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
-ap.add_argument("--state", help="File nho danh sach cluster da day len Grafana; khong doi -> bo qua (dung cho timer)")
+ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
+ap.add_argument("--rebuild", action="store_true",
+                help="Sinh lai toan bo dashboard (mat chinh sua tay); mac dinh chi chen khoi cluster moi")
 ap.add_argument("--insecure", action="store_true",
                 help="Bo qua kiem tra chung chi HTTPS (Grafana/Prometheus dung chung chi tu ky)")
 ap.add_argument("--datasource", default=PROM_DS,
@@ -160,55 +236,10 @@ ap.add_argument("--datasource", default=PROM_DS,
 args = ap.parse_args()
 PROM_DS = args.datasource
 SSL_CTX = ssl._create_unverified_context() if args.insecure else None
-if args.prometheus:
-    found = prometheus_clusters(args.prometheus)
-    new = sorted(c for c in found if c not in CLUSTERS)
-    if new:
-        print("Cluster moi tu Prometheus:", ", ".join(new))
-    CLUSTERS += new  # cluster cu giu nguyen thu tu, cluster moi them vao cuoi
-STATE = "\n".join(CLUSTERS + ["datasource=" + PROM_DS]) + "\n"  # doi datasource cung day lai
-if args.state and args.grafana and os.path.isfile(args.state):
-    with open(args.state, encoding="utf-8") as f:
-        if f.read() == STATE:
-            print("Khong co cluster moi (%d cluster) - khong day lai Grafana" % len(CLUSTERS))
-            sys.exit(0)
-
-panels = [{"id": 1, "type": "row", "title": TITLE, "collapsed": False,
-           "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1}, "panels": []}]
-block_w = 24 // PER_ROW
-block_h = 1 + TILE_H * 4
-pid = 2
-for i, cluster in enumerate(CLUSTERS):
-    bx, by = (i % PER_ROW) * block_w, 1 + (i // PER_ROW) * block_h
-    panels.append({  # thanh tieu de cua cluster (chi co title + link sang dashboard host)
-        "id": pid, "type": "text", "title": cluster, "transparent": True,
-        "gridPos": {"x": bx, "y": by, "w": block_w, "h": 1},
-        "links": [{"title": "Chi tiết host của " + cluster,
-                   "url": "/d/esxi-host-resource/?var-cluster=%s&${datasource:queryparam}" % cluster}],
-        "options": {"mode": "markdown", "content": ""}})
-    pid += 1
-    col, row = 0, 0
-    for tile, w in zip(TILES, WIDTHS):
-        if col + w > 4:
-            col, row = 0, row + 1
-        panels.append(tile_panel(pid, cluster, bx + col * TILE_W, by + 1 + row * TILE_H, w * TILE_W, tile))
-        pid += 1
-        col += w
-
-dash = {
-    "title": TITLE, "uid": "vmware-cluster-hcm", "tags": ["vmware", "vsan", "cluster", "vmware-cluster-exporter"],
-    "description": "Tổng quan từng cluster VMware: trạng thái, DRS, host, VM, CPU/RAM, vSAN, resync, host cao nhất.",
-    "timezone": "browser", "editable": True, "refresh": "1m", "schemaVersion": 39, "version": 1,
-    "time": {"from": "now-1h", "to": "now"},
-    "templating": {"list": [
-        # Co dinh nguon PROM_DS (an o chon). Doi nguon: sua PROM_DS roi chay lai.
-        {"name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus",
-         "regex": "/^%s$/" % PROM_DS, "hide": 2, "refresh": 1,
-         "current": {"selected": True, "text": PROM_DS, "value": PROM_DS}},
-    ]},
-    "annotations": {"list": []},
-    "panels": panels,
-}
+TOKEN = os.environ.get("GRAFANA_TOKEN")
+if args.grafana and not TOKEN:
+    sys.exit("Thieu bien moi truong GRAFANA_TOKEN (service account token, quyen Editor)")
+found = prometheus_clusters(args.prometheus) if args.prometheus else []
 
 here = os.path.dirname(os.path.abspath(__file__))
 outdir = args.out or here
@@ -217,16 +248,59 @@ if not args.out and os.path.isdir(os.path.join(here, "..", "dashboard-grafana"))
 outs = [os.path.join(outdir, "vmware_cluster_hcm_grafana.json")]
 if not args.out and os.path.isdir(os.path.join(here, "vmware-cluster-exporter")):
     outs.append(os.path.join(here, "vmware-cluster-exporter", "vmware_cluster_hcm_grafana.json"))
-for out in outs:
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(dash, f, ensure_ascii=False, indent=2)
-    print("Da ghi", out, "-", len(CLUSTERS), "cluster x", len(TILES), "o")
-if args.grafana:
-    token = os.environ.get("GRAFANA_TOKEN")
-    if not token:
-        sys.exit("Thieu bien moi truong GRAFANA_TOKEN (service account token, quyen Editor)")
-    r = push_grafana(args.grafana, token, dash, args.folder_uid)
-    print("Da day len Grafana:", r.get("status"), r.get("url"))
-    if args.state:
-        with open(args.state, "w", encoding="utf-8") as f:
-            f.write(STATE)
+
+
+def save_and_push(dash, n, folder_uid):
+    for out in outs:
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(dash, f, ensure_ascii=False, indent=2)
+        print("Da ghi", out, "-", n, "cluster")
+    if args.grafana:
+        r = push_grafana(args.grafana, TOKEN, dash, n, folder_uid)
+        print("Da day len Grafana:", r.get("status"), r.get("url"))
+
+
+# 1) Dashboard da co tren Grafana: giu nguyen moi chinh sua tay (tieu de, datasource, khoi/hang tu them),
+#    chi chen khoi cho cluster moi vao cuoi phan dau tien.
+existing, folder = (None, None)
+if args.grafana and not args.rebuild:
+    existing, folder = get_grafana(args.grafana, TOKEN, UID)
+if existing is not None:
+    present = clusters_on(existing)
+    new = sorted(c for c in found if c not in present)
+    if not new:
+        print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
+        sys.exit(0)
+    print("Cluster moi tu Prometheus:", ", ".join(new))
+    add_blocks(existing, new)
+    save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
+    sys.exit(0)
+
+# 2) Chua co dashboard (hoac --rebuild): sinh moi toan bo tu CLUSTERS + cluster tren Prometheus.
+new = sorted(c for c in found if c not in CLUSTERS)
+if new:
+    print("Cluster moi tu Prometheus:", ", ".join(new))
+CLUSTERS += new  # cluster cu giu nguyen thu tu, cluster moi them vao cuoi
+panels = [{"id": 1, "type": "row", "title": TITLE, "collapsed": False,
+           "gridPos": {"x": 0, "y": 0, "w": 24, "h": 1}, "panels": []}]
+pid = 2
+for i, cluster in enumerate(CLUSTERS):
+    block = block_panels(pid, cluster, (i % PER_ROW) * BLOCK_W, 1 + (i // PER_ROW) * BLOCK_H)
+    panels += block
+    pid += len(block)
+
+dash = {
+    "title": TITLE, "uid": UID, "tags": ["vmware", "vsan", "cluster", "vmware-cluster-exporter"],
+    "description": "Tổng quan từng cluster VMware: trạng thái, DRS, host, VM, CPU/RAM, vSAN, resync, host cao nhất.",
+    "timezone": "browser", "editable": True, "refresh": "1m", "schemaVersion": 39, "version": 1,
+    "time": {"from": "now-1h", "to": "now"},
+    "templating": {"list": [
+        # Co dinh nguon PROM_DS (an o chon). Doi nguon: --datasource hoac sua PROM_DS roi chay lai.
+        {"name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus",
+         "regex": "/^%s$/" % PROM_DS, "hide": 2, "refresh": 1,
+         "current": {"selected": True, "text": PROM_DS, "value": PROM_DS}},
+    ]},
+    "annotations": {"list": []},
+    "panels": panels,
+}
+save_and_push(dash, len(CLUSTERS), args.folder_uid)
