@@ -91,7 +91,7 @@ pick_instance() {  # chon 1 instance -> bien PICK
     printf "  %d) %-12s vCenter %-16s port %s\n" "$i" "$n" "$(env_get "$n" VC)" "$(env_get "$n" PORT)"
     i=$((i + 1))
   done
-  read -r -p "${PAD}Chon so (Enter = huy): " choice
+  read -r -p "Chon so (Enter = huy): " choice
   [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#list[@]} ] || return 1
   PICK=${list[$((choice - 1))]}
 }
@@ -148,14 +148,14 @@ m_install() {
   local name port
   echo "${B}Cai exporter cho 1 vCenter (pool) moi${N} - moi pool 1 ten + 1 port rieng."
   [ -n "$(instances)" ] && echo "Dang co: $(instances | tr '\n' ' ')"
-  read -r -p "${PAD}Ten instance (vd pool5, chi chu/so/-): " name
+  read -r -p "Ten instance (vd pool5, chi chu/so/-): " name
   [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || { err "Ten khong hop le"; return; }
   if [ -f "$CONF/$name.env" ]; then
     warn "$name da co - dung muc 3 de doi user/mat khau, hoac nhap ten khac."
     return
   fi
   port=$(next_port)
-  read -r -p "${PAD}Port metrics [$port]: " p
+  read -r -p "Port metrics [$port]: " p
   port=${p:-$port}
   echo "Tiep theo nhap IP vCenter, user (quyen Read-only), mat khau (go khong hien)."
   ( cd "$PKG" && NAME=$name PORT=$port ./install.sh ) || true
@@ -200,11 +200,11 @@ m_password() {
   local user
   user=$(env_get "$PICK" VC_USER)
   echo "Doi user/mat khau vCenter cho ${B}$PICK${N} (vCenter $(env_get "$PICK" VC))."
-  read -r -p "${PAD}User vCenter [$user]: " u
+  read -r -p "User vCenter [$user]: " u
   ( set -a; . "$CONF/$PICK.env"; set +a
     unset VC_PASS INFLUX_URL INFLUX_ORG INFLUX_BUCKET INFLUX_TOKEN
     NAME=$PICK VC_USER=${u:-$user}; export NAME VC_USER
-    read -r -s -p "${PAD}Mat khau vCenter moi: " VC_PASS; echo
+    read -r -s -p "Mat khau vCenter moi: " VC_PASS; echo
     [ -n "$VC_PASS" ] || { echo "Mat khau trong - huy."; exit 1; }
     export VC_PASS
     cd "$PKG" && ./install.sh ) || true
@@ -213,7 +213,7 @@ m_password() {
 m_service() {
   pick_instance || return
   echo "  1) Khoi dong lai   2) Dung   3) Chay"
-  read -r -p "${PAD}Chon: " a
+  read -r -p "Chon: " a
   case "$a" in
     1) systemctl restart "$SVC@$PICK" ;;
     2) systemctl stop "$SVC@$PICK" ;;
@@ -231,15 +231,15 @@ m_logs() {
 
 m_uninstall() {
   echo "  1) Go 1 instance   2) Go TAT CA exporter tren may nay"
-  read -r -p "${PAD}Chon: " a
+  read -r -p "Chon: " a
   case "$a" in
     1) pick_instance || return
-       read -r -p "${PAD}Go $PICK? (y/N): " y
+       read -r -p "Go $PICK? (y/N): " y
        [[ "$y" =~ ^[yY] ]] || return
        systemctl disable --now "$SVC@$PICK" 2>/dev/null
        rm -f "$CONF/$PICK.env"
        ok "Da go $PICK. Nho xoa target cua no trong Prometheus." ;;
-    2) read -r -p "${PAD}Go TAT CA exporter? (go 'yes'): " y
+    2) read -r -p "Go TAT CA exporter? (go 'yes'): " y
        [ "$y" = yes ] || return
        if [ -x /opt/vmware-cluster-exporter/uninstall.sh ]; then
          /opt/vmware-cluster-exporter/uninstall.sh
@@ -287,7 +287,7 @@ m_check() {
   done
   prom=""
   [ -f "$DASH_ENV" ] && prom=$(set -a; . "$DASH_ENV"; echo "$PROM_URL")
-  read -r -p "${PAD}URL Prometheus can kiem tra [${prom:-http://<ip>:9090}]: " p
+  read -r -p "URL Prometheus can kiem tra [${prom:-http://<ip>:9090}]: " p
   prom=${p:-$prom}
   if [ -n "$prom" ]; then
     echo "${B}2) Prometheus $prom${N}"
@@ -323,11 +323,38 @@ m_auto_dash() {
   bash "$SCRIPT/install_auto_dashboard.sh"
 }
 
-m_dash_now() {
+m_dash_now() {  # chon hang (row) roi them pool moi vao hang do, hoac chuyen khoi da co sang hang do
   dash_ready || return
   install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
-  systemctl start "$DASH_NAME.service"
-  journalctl -u "$DASH_NAME.service" -n 10 --no-pager -o cat
+  local rows=() i=1 r choice row="" def names
+  run_dash --list
+  echo
+  mapfile -t rows < <(run_dash --rows 2>/dev/null)
+  def=$(set -a; . "$DASH_ENV"; echo "${ROW:-}")
+  if [ ${#rows[@]} -gt 0 ]; then
+    echo "${B}Chon hang (row) de them khoi:${N}"
+    for r in "${rows[@]}"; do
+      echo "  $C$i)$N $r"
+      i=$((i + 1))
+    done
+    read -r -p "So hang (Enter = hang mac dinh${def:+ \"$def\"}): " choice
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le ${#rows[@]} ]; then
+      row=${rows[$((choice - 1))]}
+    else
+      row=$def
+    fi
+  fi
+  echo
+  echo "${B}-> Them cluster moi vao hang: ${row:-hang dau}${N}"
+  run_dash --row "$row" --fix-datasource
+  echo
+  read -r -p "Chuyen cluster DA CO sang hang '${row:-hang dau}'? Nhap ten (vd POOL5, Enter = bo qua): " names
+  if [ -n "$names" ]; then
+    # shellcheck disable=SC2086
+    run_dash --row "${row:-${rows[0]:-}}" --move $names
+  fi
+  echo
+  echo "Bam F5 tren dashboard. Pool moi sau nay timer tu them vao hang mac dinh${def:+ \"$def\"} (doi o muc 9)."
 }
 
 m_dash_list() {
@@ -340,7 +367,7 @@ m_dash_remove() {
   install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
   run_dash --list
   echo
-  read -r -p "${PAD}Ten cluster can xoa khoi dashboard (cach nhau dau cach, Enter = huy): " names
+  read -r -p "Ten cluster can xoa khoi dashboard (cach nhau dau cach, Enter = huy): " names
   [ -n "$names" ] || return
   # shellcheck disable=SC2086
   run_dash --remove $names

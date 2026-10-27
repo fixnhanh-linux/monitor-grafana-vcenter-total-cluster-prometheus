@@ -407,6 +407,9 @@ ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
 ap.add_argument("--row", help="Chen cluster moi vao hang (row) co tieu de chua chuoi nay, vd HN (mac dinh hang dau)")
 ap.add_argument("--fix-datasource", action="store_true",
                 help="Khoi nao hien '-' vi datasource khong co cluster do -> doi sang Prometheus tren Grafana co cluster")
+ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
+ap.add_argument("--move", nargs="+", metavar="CLUSTER",
+                help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
 ap.add_argument("--list", action="store_true", help="Liet ke hang / datasource / cluster tren dashboard roi thoat")
 ap.add_argument("--remove", nargs="+", metavar="CLUSTER",
                 help="Xoa khoi cua cluster khoi dashboard tren Grafana roi thoat, vd --remove POOL5")
@@ -456,6 +459,25 @@ if args.list:
     if found:
         miss = sorted(c for c in found if c not in clusters_on(existing))
         print("Cluster tren Prometheus chua co tren dashboard:", ", ".join(miss) or "khong co")
+    sys.exit(0)
+if args.rows:  # ten cac hang, moi dong 1 ten (menu.sh dung de cho chon)
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana" % UID)
+    for r in sorted((p for p in existing.get("panels", []) if p.get("type") == "row"),
+                    key=lambda p: p["gridPos"]["y"]):
+        print(r.get("title", ""))
+    sys.exit(0)
+if args.move:  # chuyen khoi cluster sang hang --row: xoa khoi cu, chen lai vao hang moi (datasource tu chon)
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
+    if not args.row:
+        sys.exit("Can --row <ten hang> de chuyen toi")
+    n = remove_clusters(existing, args.move)
+    if not n:
+        sys.exit("Khong thay khoi nao cua: %s" % ", ".join(args.move))
+    print("Go %d panel cu cua: %s" % (n, ", ".join(args.move)))
+    add_blocks(existing, args.move, args.row)
+    save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
     sys.exit(0)
 if args.remove:
     if existing is None:

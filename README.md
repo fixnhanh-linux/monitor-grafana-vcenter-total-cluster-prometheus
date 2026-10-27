@@ -80,7 +80,7 @@ sudo bash menu.sh
 | 7 | In sẵn đoạn `job_name: 'vmware_cluster'` với IP:port các pool trên máy này để dán vào Prometheus |
 | 8 | Kiểm tra từng chặng: exporter → Prometheus đã có cluster chưa → Grafana → dashboard |
 | 9 | Cài tự động thêm pool lên dashboard (URL Prometheus, Grafana, token, hàng HCM/HN) |
-| 10 | Thêm pool mới lên dashboard ngay |
+| 10 | Thêm pool mới lên dashboard ngay — **chọn hàng (row)** bằng số; chuyển khối đã có sang hàng khác |
 | 11 | Xem các hàng trên dashboard, datasource và cluster từng hàng |
 | 12 | Xoá khối 1 cluster khỏi dashboard |
 | 13 | Sửa datasource khối hiện `–` (gán đúng Prometheus của site có cluster đó) |
@@ -148,7 +148,7 @@ dừng, hoặc phần tự động dashboard chưa cài / đang tắt. Gõ số 
 | Báo sai mật khẩu, đổi mật khẩu vCenter | **3** → **2** (kiểm tra Up = 1) |
 | Ô dashboard hiện `–`, pool không lên | **2** → **8** → làm theo dòng báo vàng/đỏ |
 | Khối pool mới hiện `–` (pool thuộc Prometheus site khác) | **13** |
-| Pool vào sai hàng (HCM/HN), muốn thử lại | **12** (xoá khối) → **9** (sửa hàng) → **10** |
+| Pool vào sai hàng (HCM/HN) | **10** → chọn số hàng → nhập tên cluster ở câu "Chuyen cluster DA CO" |
 | Lấy bản mới | **14** |
 
 ### [1] Cài exporter cho pool / vCenter mới
@@ -294,18 +294,29 @@ Cách chèn khối:
 Token lưu ở `/etc/vmware-cluster-dashboard.env` (chỉ root đọc). Chạy lại mục 9 để đổi URL / token / hàng
 (Enter ở câu token = giữ token cũ).
 
-### [10] Thêm pool mới lên dashboard ngay
+### [10] Thêm pool mới lên dashboard ngay (chọn hàng)
 
-Chạy timer ngay, không chờ 10 phút:
+Menu in các hàng và cluster đang có (như mục 11), rồi cho **chọn hàng bằng số**:
 
 ```text
+Chon hang (row) de them khoi:
+  1) CLUSTER VMWARE HCM
+  2) CLUSTER VMWARE HN
+So hang (Enter = hang mac dinh "HN"): 2
+-> Them cluster moi vao hang: CLUSTER VMWARE HN
 Cluster moi tu Prometheus: POOL5
-  + POOL5 -> hang 'CLUSTER VMWARE HN' (x=8, y=28, datasource ab12cd34E)
+  + POOL5 -> hang 'CLUSTER VMWARE HN' (x=8, y=41, datasource ab12cd34E = Prometheus HN)
 Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
+Chuyen cluster DA CO sang hang 'CLUSTER VMWARE HN'? Nhap ten (vd POOL5, Enter = bo qua):
 ```
 
-Mở dashboard, bấm F5, mở hàng HN là thấy khối POOL5. Báo `Khong co cluster moi` mà dashboard chưa có pool:
-Prometheus chưa có cluster đó → mục 8.
+- Cluster có trên Prometheus mà **chưa có** trên dashboard → chèn vào hàng vừa chọn, tự dùng đúng Prometheus
+  có cluster đó; đồng thời sửa các khối đang hiện `–` (như mục 13).
+- **Chuyển khối đã có** sang hàng vừa chọn (vd POOL5 đang ở hàng HCM → HN): gõ tên cluster ở câu cuối (nhiều tên
+  cách nhau dấu cách). Khối cũ được gỡ, khối mới chèn vào chỗ trống của hàng mới.
+- Enter ở câu chọn hàng = hàng mặc định đặt ở mục 9 (cũng là hàng timer dùng cho pool mới sau này).
+
+Mở dashboard, bấm F5. Báo `Khong co cluster moi` mà dashboard chưa có pool: Prometheus chưa có cluster đó → mục 8.
 
 ### [11] Xem hàng và cluster trên dashboard
 
@@ -539,6 +550,8 @@ khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` 
 | `--row HN` | chèn cluster mới vào hàng có tên chứa `HN`, ô dùng datasource của hàng đó |
 | `--list` | in các hàng, datasource, cluster trên dashboard và cluster còn thiếu |
 | `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
+| `--move POOL5 --row HN` | chuyển khối `POOL5` sang hàng có tên chứa `HN` |
+| `--rows` | in tên các hàng trên dashboard |
 | `--fix-datasource` | khối hiện `–` vì datasource không có cluster → đổi sang Prometheus trên Grafana có cluster đó |
 | `--insecure` | Grafana / Prometheus https chứng chỉ tự ký |
 | `--datasource <tên>` | datasource dùng khi tạo dashboard mới (chưa có trên Grafana) |
