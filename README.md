@@ -9,7 +9,8 @@ Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồ
 
 Exporter đăng nhập vCenter bằng user Read-only, mỗi 60 giây lấy số liệu cấp cluster và mở ở `/metrics`.
 Prometheus đọc về, prometheus-all lấy lại để Grafana hiển thị; Zabbix đọc thẳng `/metrics`. Khi có pool mới,
-`make_dashboard.py` hỏi prometheus-all danh sách cluster rồi ghi đè dashboard để thêm khối mới.
+`make_dashboard.py` hỏi Prometheus danh sách cluster rồi **chèn thêm khối** cho cluster mới vào dashboard đang có
+(giữ nguyên mọi chỉnh sửa tay trên Grafana: tiêu đề, hàng, datasource).
 
 Danh sách cluster nằm trong `CLUSTERS` của `script/make_dashboard.py` (tên đúng như trên vCenter):
 `CORE`, `POOL17`, `POOL18-XD`, `POOL23`, `POOL25`, `VC1_POOL6`. POOL23 hiện chưa có trong exporter nào
@@ -39,8 +40,9 @@ dashboard-grafana/
 script/
   vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.16-4)
   vmware-cluster-exporter-linux.zip.sha256
-  make_dashboard.py                        sinh lại dashboard, tự thêm pool mới, đẩy lên Grafana
+  make_dashboard.py                        chèn khối pool mới / xoá khối / liệt kê, đẩy lên Grafana
   install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
+menu.sh                                    menu quản lý tất cả (sudo bash menu.sh)
 zabbix_template_vmware_cluster_hcm.yaml    template Zabbix 6.0
 ```
 
@@ -85,6 +87,257 @@ sudo bash menu.sh
 | 14 | Gỡ phần tự động dashboard |
 
 Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard).
+Chi tiết từng mục, câu hỏi và kết quả mẫu: xem **Hướng dẫn dùng menu (chi tiết)** ngay bên dưới.
+
+## Hướng dẫn dùng menu (chi tiết)
+
+Mọi IP, tên máy trong mục này là **giả lập**; thay bằng giá trị thật.
+
+### Mở menu
+
+Chạy trên máy cài exporter (vd `srv-exporter`), cần `git`, `unzip`, `python3`, `curl`:
+
+```bash
+cd /opt/monitor-grafana-vcenter-total-cluster-prometheus && git pull && sudo bash menu.sh
+```
+
+Không có `sudo` thì menu tự gọi lại bằng `sudo`. Menu tự căn giữa màn hình, khung màu, chữ tiếng Việt có dấu
+(terminal không hỗ trợ UTF-8 thì tự chuyển sang khung ASCII `+ = |`):
+
+```text
+╔══════════════════════════════════════════════════════════════════╗
+║               VMWARE CLUSTER HCM  ●  MONITOR MENU                ║
+║            máy srv-exporter  ●  IP 10.0.0.10                     ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Exporter: ● 1/1 đang chạy        Dashboard tự động: ● đang bật  ║
+╠══ EXPORTER  -  lấy số liệu vCenter ══════════════════════════════╣
+║   [ 1]  Cài exporter cho pool / vCenter mới                      ║
+║   [ 2]  Xem trạng thái các exporter                              ║
+║   [ 3]  Đổi user / mật khẩu vCenter của 1 pool                   ║
+║   [ 4]  Khởi động lại / dừng / chạy 1 exporter                   ║
+║   [ 5]  Xem log 1 exporter                                       ║
+║   [ 6]  Gỡ exporter                                              ║
+╠══ PROMETHEUS ════════════════════════════════════════════════════╣
+║   [ 7]  In cấu hình Prometheus cho các exporter trên máy         ║
+║   [ 8]  Kiểm tra kết nối exporter → Prometheus → Grafana         ║
+╠══ DASHBOARD GRAFANA ═════════════════════════════════════════════╣
+║   [ 9]  Cài tự động thêm pool lên dashboard                      ║
+║   [10]  Thêm pool mới lên dashboard ngay                         ║
+║   [11]  Xem hàng và cluster trên dashboard                       ║
+║   [12]  Xoá khối 1 cluster khỏi dashboard                        ║
+╠══ KHÁC ══════════════════════════════════════════════════════════╣
+║   [13]  Cập nhật bản mới từ GitHub                               ║
+║   [14]  Gỡ phần tự động dashboard                                ║
+║   [ 0]  Thoát                                                    ║
+╚══════════════════════════════════════════════════════════════════╝
+         Bản quyền © 2026 FIX NHANH  -  License: FIX NHANH
+```
+
+Dòng trạng thái: chấm **xanh** = mọi exporter đang chạy / timer dashboard đang bật; chấm **đỏ** = có exporter
+dừng, hoặc phần tự động dashboard chưa cài / đang tắt. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
+
+### Quy trình hay dùng
+
+| Muốn | Chọn lần lượt |
+|---|---|
+| Lần đầu cài trên máy mới | **1** (mỗi vCenter 1 lần) → **7** → dán vào Prometheus → **9** → **8** |
+| Thêm pool / vCenter mới | **1** → **7** (dán thêm dòng `- targets`) → **8** → **10** |
+| Báo sai mật khẩu, đổi mật khẩu vCenter | **3** → **2** (kiểm tra Up = 1) |
+| Ô dashboard hiện `–`, pool không lên | **2** → **8** → làm theo dòng báo vàng/đỏ |
+| Pool vào sai hàng (HCM/HN), muốn thử lại | **12** (xoá khối) → **9** (sửa hàng) → **10** |
+| Lấy bản mới | **13** |
+
+### [1] Cài exporter cho pool / vCenter mới
+
+Mỗi vCenter là một *instance* riêng (`vmware-cluster-exporter@<tên>`), 1 port riêng. Menu hỏi:
+
+| Câu hỏi | Nhập | Ghi chú |
+|---|---|---|
+| Ten instance | `pool5` | chữ, số, `-`, `_`; trùng tên đã có → dùng mục 3 |
+| Port metrics | Enter | menu gợi ý port trống đầu tiên từ 9821 |
+| IP/hostname vCenter | `10.0.50.10` | |
+| User vCenter | `monitor@vsphere.local` | phải có `@vsphere.local` (hoặc domain), quyền **Read-only** là đủ |
+| Cluster | Enter (`-`) | `-` = lấy mọi cluster của vCenter |
+| Chu ky lay du lieu | Enter (60 giây) | |
+| Mat khau vCenter | tự gõ, không hiện | lưu ở `/etc/vmware-cluster-exporter/<tên>.env`, chỉ root đọc |
+| URL InfluxDB | Enter | bỏ trống = không đẩy InfluxDB |
+
+Kết quả đúng:
+
+```text
+Oct 27 11:20:57 srv-exporter env[218637]: [11:20:57] OK: 1 cluster (0.6s)
+OK - exporter dang chay.
+   Prometheus : http://10.0.0.10:9821/metrics
+Xong. Viec tiep theo: them target 10.0.0.10:9821 vao Prometheus (muc 7).
+```
+
+Báo `LOI: dang nhap vCenter that bai (sai user/mat khau)`: exporter **cố ý dừng** (mã 3) để không làm khoá
+tài khoản vCenter → chọn **3** nhập lại. Hay sai: thiếu `@vsphere.local`; tài khoản đã bị khoá do nhập sai nhiều lần.
+
+### [2] Xem trạng thái các exporter
+
+```text
+Instance   vCenter          Port   Service   Up   Lay luc   Cluster
+pool5      10.0.50.10       9821   active    1    12s       POOL5
+Tu dong dashboard: timer active, lan chay cuoi:
+   Khong co cluster moi (9 cluster tren dashboard) - giu nguyen dashboard
+```
+
+| Cột | Ý nghĩa |
+|---|---|
+| Service | `active` = đang chạy; `failed`/`inactive` = dừng (xem log mục 5) |
+| Up | `1` = lần lấy số liệu vCenter gần nhất thành công; `0` = lỗi |
+| Lay luc | bao lâu trước lấy được số liệu (bình thường < 2 phút) |
+| Cluster | các cluster exporter thấy trên vCenter (tên này sẽ thành khối trên dashboard) |
+
+### [3] Đổi user / mật khẩu vCenter của 1 pool
+
+Chọn pool trong danh sách → Enter giữ user cũ (hoặc gõ user mới) → gõ mật khẩu mới. Menu giữ nguyên IP vCenter,
+port, cấu hình InfluxDB; chạy lại exporter và chờ lấy số liệu lần đầu, in `OK - exporter dang chay.` là xong.
+
+### [4] / [5] / [6] Khởi động lại – xem log – gỡ exporter
+
+- **4**: chọn pool → `1` khởi động lại, `2` dừng, `3` chạy.
+- **5**: 40 dòng log gần nhất. Dòng tốt: `OK: 1 cluster (0.6s)`. Dòng lỗi hay gặp: `Dang nhap that bai` (mục 3),
+  `timed out` / `Connection refused` (máy này không tới được vCenter port 443).
+- **6**: `1` gỡ 1 pool (hỏi `y/N`), `2` gỡ **tất cả** (phải gõ `yes`). Gỡ xong nhớ xoá target trong Prometheus.
+
+### [7] In cấu hình Prometheus cho các exporter trên máy
+
+Menu in sẵn đoạn YAML theo IP máy này và port từng pool:
+
+```yaml
+  - job_name: 'vmware_cluster'
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    static_configs:
+      - targets: ['10.0.0.10:9821']
+        labels:
+          pool: 'pool5'
+```
+
+Trên **server Prometheus** (Prometheus mà datasource của hàng dashboard trỏ tới):
+
+1. `nano /etc/prometheus/prometheus.yml`, dán đoạn trên vào cuối `scrape_configs:`. Dấu `-` của `- job_name`
+   phải **thẳng cột** với các `- job_name` khác (YAML lệch 1 dấu cách là lỗi).
+2. Đã có job `vmware_cluster` (thêm pool thứ 2 trở đi): **không** dán cả job nữa, chỉ thêm 3 dòng `- targets` /
+   `labels` / `pool` vào dưới `static_configs` của job đó.
+3. Kiểm tra và nạp lại:
+
+```bash
+grep -c "job_name: 'vmware_cluster'" /etc/prometheus/prometheus.yml     # phai la 1
+promtool check config /etc/prometheus/prometheus.yml && systemctl reload prometheus
+```
+
+4. Mở port trên máy exporter cho Prometheus (menu in sẵn lệnh): `ufw allow from <ip-prometheus> to any port 9821 proto tcp`.
+5. Mở `http://<ip-prometheus>:9090/targets`: job `vmware_cluster` phải **UP**.
+
+### [8] Kiểm tra kết nối
+
+Hỏi URL Prometheus (Enter = URL đã lưu ở mục 9) rồi kiểm tra từng chặng:
+
+```text
+1) Exporter tren may nay
+  pool5 :9821  OK
+2) Prometheus http://10.0.0.5:9090
+  Ket noi duoc
+  Cluster dang co tren Prometheus: "CORE","POOL1-XD","POOL5"
+  POOL5 (pool5) da co tren Prometheus
+3) Grafana https://10.0.0.7:3000
+  Ket noi duoc
+4) Dashboard
+  Dashboard: VMWARE CLUSTER HCM - HN (uid vmware-cluster-hcm)
+  CLUSTER VMWARE HCM   datasource ${datasource}  6 cluster: CORE, POOL17, ...
+  CLUSTER VMWARE HN    datasource ab12cd34E      3 cluster: CORE, POOL1-XD, POOL5
+  Cluster tren Prometheus chua co tren dashboard: khong co
+```
+
+| Báo | Cách xử lý |
+|---|---|
+| `pool5 :9821 KHONG lay duoc du lieu vCenter` | mục 5 xem log, sai mật khẩu → mục 3 |
+| Prometheus `Khong ket noi duoc` | sai IP, hoặc firewall chặn máy này tới port 9090 (không ảnh hưởng exporter, chỉ là không kiểm tra được từ máy này) |
+| `POOL5 (pool5) CHUA co` | chưa thêm target / target DOWN → mục 7, mở firewall port exporter |
+| Grafana `Khong ket noi duoc` | sai URL, hoặc chứng chỉ https tự ký chưa chọn bỏ qua ở mục 9 |
+| `chua co tren dashboard: POOL5` | chọn **10** |
+
+### [9] Cài tự động thêm pool lên dashboard
+
+Cài systemd timer `vmware-cluster-dashboard` chạy mỗi 10 phút: hỏi Prometheus có cluster nào, cluster nào **chưa
+có** trên dashboard thì **chèn thêm khối** (không ghi đè dashboard). Câu hỏi:
+
+| Câu hỏi | Nhập | Ghi chú |
+|---|---|---|
+| URL Prometheus | `http://10.0.0.5:9090` | Prometheus đang scrape các exporter (mục 7) |
+| URL Grafana | `https://10.0.0.7:3000` | không có `/` cuối cũng được |
+| Chu ky kiem tra | Enter (10 phút) | |
+| Grafana service account token | dán token, không hiện | Grafana → Administration → Service accounts → Add (role **Editor**) → Add token |
+| Bo qua kiem tra chung chi? | `y` | chỉ hỏi khi Grafana https dùng chứng chỉ tự ký |
+| Datasource Prometheus | `Prometheus HCM` | menu liệt kê tên có sẵn; chỉ dùng khi dashboard chưa tồn tại |
+| **Chen cluster moi vao hang nao** | `HN` | menu liệt kê các hàng (row); gõ 1 phần tên, Enter = hàng đầu |
+
+Cách chèn khối:
+
+- Khối mới vào **chỗ trống đầu tiên** của hàng đã chọn (3 khối / hàng khối), không đè lên ô nào đang có; hết chỗ
+  thì mở hàng khối mới và đẩy các hàng bên dưới xuống. Hàng đang thu gọn cũng chèn được.
+- Các ô của khối mới dùng **datasource của hàng đó** (vd hàng HN đang dùng Prometheus HN thì khối mới cũng vậy).
+- Giữ nguyên tiêu đề dashboard, các hàng, khối tự sửa tay, thư mục chứa dashboard; ẩn ô chọn datasource ở đầu
+  dashboard (giá trị đang chọn giữ nguyên).
+- Cluster đã có ở bất kỳ hàng nào thì không thêm lần nữa.
+
+Token lưu ở `/etc/vmware-cluster-dashboard.env` (chỉ root đọc). Chạy lại mục 9 để đổi URL / token / hàng
+(Enter ở câu token = giữ token cũ).
+
+### [10] Thêm pool mới lên dashboard ngay
+
+Chạy timer ngay, không chờ 10 phút:
+
+```text
+Cluster moi tu Prometheus: POOL5
+  + POOL5 -> hang 'CLUSTER VMWARE HN' (x=8, y=28, datasource ab12cd34E)
+Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
+```
+
+Mở dashboard, bấm F5, mở hàng HN là thấy khối POOL5. Báo `Khong co cluster moi` mà dashboard chưa có pool:
+Prometheus chưa có cluster đó → mục 8.
+
+### [11] Xem hàng và cluster trên dashboard
+
+In từng hàng (row), datasource và các cluster đang có, cùng cluster có trên Prometheus nhưng chưa có trên dashboard.
+
+### [12] Xoá khối 1 cluster khỏi dashboard
+
+Menu in danh sách (như mục 11) → gõ tên cluster **đúng như trong danh sách** (vd `POOL5`; nhiều tên cách nhau dấu
+cách) → xoá thanh tiêu đề + 15 ô của cluster đó, các khối khác giữ nguyên:
+
+```text
+Da xoa 16 panel cua: POOL5
+Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
+```
+
+Cluster còn trên Prometheus thì timer **tự thêm lại** trong ≤ 10 phút (dùng để thử lại / chuyển sang hàng khác:
+mục 12 → mục 9 đổi hàng → mục 10). Muốn bỏ hẳn: xoá target của pool trong Prometheus trước, rồi mục 12.
+
+### [13] Cập nhật bản mới từ GitHub
+
+`git pull` → giải nén gói exporter mới → cập nhật script dashboard của timer → chạy lại từng exporter với
+**cấu hình và mật khẩu cũ** (không hỏi gì). Mỗi pool in `OK` hoặc 5 dòng lỗi. `git pull loi (co file sua tay?)`:
+chạy `git -C /opt/monitor-grafana-vcenter-total-cluster-prometheus status` xem file nào bị sửa trên server.
+
+### [14] Gỡ phần tự động dashboard
+
+Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard trên Grafana giữ nguyên.
+
+### Lỗi hay gặp
+
+| Hiện tượng | Nguyên nhân | Xử lý |
+|---|---|---|
+| `Dang nhap that bai` / Up = 0, service failed mã 3 | sai user / mật khẩu vCenter | mục **3** |
+| Mục 9 báo `curl: (28) ... Connection timed out` tới Prometheus | firewall chặn máy này tới port 9090 | dùng IP Prometheus nội bộ, hoặc mở firewall, hoặc cài mục 9 trên chính server Prometheus |
+| Mục 9 báo `SSL certificate problem: self-signed certificate` | Grafana https chứng chỉ tự ký | trả lời `y` khi được hỏi (hoặc `sudo GRAFANA_INSECURE=1 bash menu.sh`) |
+| Mọi ô dashboard hiện `–` | dashboard đang dùng datasource không có metric `vmware_cluster_*` | Grafana → Explore → chọn datasource → chạy `vmware_cluster_hosts`; dùng datasource có kết quả |
+| Khối pool mới hiện `–` | pool vào hàng có datasource khác Prometheus đang scrape pool đó | mục 12 → mục 9 chọn đúng hàng → mục 10 |
+| Pool vừa xoá lại xuất hiện | timer tự thêm cluster còn trên Prometheus | xoá target trong Prometheus trước |
+| `bash: http://...: No such file or directory` | dán URL vào terminal như lệnh | dùng `curl -s <url>` |
 
 ### Lệnh từng việc
 
@@ -248,8 +501,20 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 
 Xem từng lệnh và kết quả mẫu ở mục **Ví dụ chi tiết: thêm pool mới POOL30** ngay bên dưới.
 
-Dashboard luôn có uid `vmware-cluster-hcm`. Sinh lại rồi import (Overwrite) hoặc đẩy lên sẽ **cập nhật đúng dashboard
-đang có** (không tạo bản mới): các khối cũ giữ nguyên chỗ, pool mới thêm một khối 15 ô ở cuối, 3 cluster / hàng.
+Dùng menu thì làm theo **Quy trình hay dùng** ở trên (1 → 7 → 8 → 10); mục này là cách làm bằng lệnh.
+
+Dashboard luôn có uid `vmware-cluster-hcm`. Khi đẩy lên Grafana (`--grafana`) mà dashboard đã có, script **chỉ chèn
+khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` (mặc định hàng đầu), giữ nguyên mọi chỉnh sửa tay.
+`--rebuild` mới sinh lại toàn bộ (mất chỉnh sửa tay). Các tùy chọn khác:
+
+| Tùy chọn | Việc |
+|---|---|
+| `--row HN` | chèn cluster mới vào hàng có tên chứa `HN`, ô dùng datasource của hàng đó |
+| `--list` | in các hàng, datasource, cluster trên dashboard và cluster còn thiếu |
+| `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
+| `--insecure` | Grafana / Prometheus https chứng chỉ tự ký |
+| `--datasource <tên>` | datasource dùng khi tạo dashboard mới (chưa có trên Grafana) |
+| `--rebuild` | sinh lại toàn bộ dashboard từ đầu |
 
 1. **Cài service exporter cho pool mới** trên server exporter. Mỗi pool (vCenter) là một service riêng
    `vmware-cluster-exporter@<tên>`; `install.sh` tự tạo file cấu hình, bật và chạy service đó, không đụng các pool đang chạy.
@@ -317,9 +582,9 @@ rồi cài systemd timer `vmware-cluster-dashboard` chạy mỗi 10 phút:
 cd script && sudo bash install_auto_dashboard.sh
 ```
 
-Mỗi lần chạy, timer hỏi Prometheus danh sách cluster; **chỉ khi có cluster mới** mới đẩy dashboard lên Grafana
-(không có gì mới thì bỏ qua, không ghi đè). Từ đó thêm pool mới chỉ còn bước 1 (cài exporter + thêm target vào
-Prometheus); 10 phút sau dashboard tự có khối mới.
+Mỗi lần chạy, timer hỏi Prometheus danh sách cluster; **chỉ khi có cluster chưa có trên dashboard** mới chèn khối
+và đẩy lên Grafana (không có gì mới thì bỏ qua). Từ đó thêm pool mới chỉ còn bước 1 (cài exporter + thêm target vào
+Prometheus); 10 phút sau dashboard tự có khối mới, ở hàng đã chọn khi cài (câu hỏi "Chen cluster moi vao hang nao").
 
 ```bash
 journalctl -u vmware-cluster-dashboard.service -n 20     # xem lần chạy gần nhất
@@ -329,9 +594,8 @@ sudo bash install_auto_dashboard.sh --uninstall           # gỡ timer (dashboar
 
 Token lưu ở `/etc/vmware-cluster-dashboard.env` (chỉ root đọc được).
 
-Lưu ý: cập nhật sẽ ghi đè dashboard, chỉnh sửa tay trên Grafana (đổi tên, kéo ô) sẽ mất; muốn đổi thì sửa
-`script/make_dashboard.py`. Pool mới được thêm vào lần chạy hiện tại; muốn giữ cố định thứ tự thì thêm tên vào
-`CLUSTERS`. Zabbix không cần làm gì: template tự phát hiện cluster mới.
+Chỉnh sửa tay trên Grafana (đổi tên, thêm hàng, kéo ô, đổi datasource) được giữ nguyên khi timer chèn khối mới.
+Zabbix không cần làm gì: template tự phát hiện cluster mới.
 
 ## Ví dụ chi tiết: thêm pool mới POOL30 (IP giả lập)
 
@@ -441,7 +705,8 @@ journalctl -u vmware-cluster-dashboard.service -n 5 --no-pager
 
 ```text
 Cluster moi tu Prometheus: POOL30
-Da ghi /var/lib/vmware-cluster-dashboard/vmware_cluster_hcm_grafana.json - 7 cluster x 15 o
+  + POOL30 -> hang 'VMWARE CLUSTER HCM' (x=0, y=27, datasource ${datasource})
+Da ghi /var/lib/vmware-cluster-dashboard/vmware_cluster_hcm_grafana.json - 7 cluster
 Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm
 ```
 
