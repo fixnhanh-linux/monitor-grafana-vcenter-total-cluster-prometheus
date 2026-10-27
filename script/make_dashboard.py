@@ -466,22 +466,222 @@ def move_block(dash, b, col, line):
         p["gridPos"]["y"] += y - by
 
 
-def move_block_to_section(dash, b, si):
-    """Chuyen khoi (giu nguyen cac o, datasource) sang hang si, vao o trong dau tien."""
+def move_block_to_section(dash, b, si, slot=None):
+    """Chuyen khoi (giu nguyen cac o, datasource) sang hang si, vao o slot=(col, line) hoac o trong dau tien."""
     secs = sections(dash)
     src, dst = secs[b["sec"]], secs[si]
     for p in b["panels"]:
         src["cont"].remove(p)
-    taken = {(o["col"], o["line"]) for o in blocks_of(dash) if o["sec"] == si}
-    n = 0
-    while (n % PER_ROW, n // PER_ROW) in taken:
-        n += 1
+    if slot is None:
+        taken = {(o["col"], o["line"]) for o in blocks_of(dash) if o["sec"] == si}
+        n = 0
+        while (n % PER_ROW, n // PER_ROW) in taken:
+            n += 1
+        slot = (n % PER_ROW, n // PER_ROW)
     dst["cont"].extend(b["panels"])
     y0 = min(q["gridPos"]["y"] for q in b["panels"])
-    for p in b["panels"]:  # tam dat vao dau hang de khoi thuoc hang moi, roi dich vao o trong
+    for p in b["panels"]:  # tam dat vao dau hang de khoi thuoc hang moi, roi dich vao o can toi
         p["gridPos"]["y"] += dst["top"] + 1 - y0
-    b2 = dict(b, sec=si)
-    move_block(dash, b2, n % PER_ROW, n // PER_ROW)
+    move_block(dash, dict(b, sec=si), slot[0], slot[1])
+
+
+def drop_block(dash, b, si, col, line):
+    """Tha khoi b vao o (col, line) cua hang si. O co khoi -> doi cho (ke ca khac hang). Tra ve cau thong bao."""
+    if (si, col, line) == (b["sec"], b["col"], b["line"]):
+        return ""
+    others = [o for o in blocks_of(dash) if o["sec"] == si and (o["col"], o["line"]) == (col, line)
+              and o["key"] != b["key"]]
+    src = (b["sec"], b["col"], b["line"])
+    if si == b["sec"]:
+        for o in others:
+            move_block(dash, o, b["col"], b["line"])
+        move_block(dash, b, col, line)
+    else:
+        for o in others:  # khoi o o dich sang cho cu cua b (hang cu)
+            move_block_to_section(dash, o, src[0], (src[1], src[2]))
+        b = [x for x in blocks_of(dash) if x["key"] == b["key"]][0]
+        move_block_to_section(dash, b, si, (col, line))
+    if others:
+        return "Da doi cho %s <-> %s." % (b["title"], ", ".join(o["title"] for o in others))
+    return "Da chuyen %s." % b["title"]
+
+
+def arrange_tui(dash):
+    """Giao dien keo tha bang chuot (curses) tren SSH. Tra ve True neu nguoi dung xac nhan luu."""
+    import copy
+    import curses
+
+    order = [b["key"] for b in blocks_of(dash)]
+    state = {"undo": [], "sel": order[0] if order else None, "msg": "", "drag": None, "changed": False}
+    CW, CH = 24, 2  # be rong o (ke ca vien trai), cao o (dong chu + vien duoi)
+
+    def num(b):
+        if b["key"] not in order:
+            order.append(b["key"])
+        return order.index(b["key"]) + 1
+
+    def layout(scr):
+        """Ve so do, tra ve {(si, col, line): (y, x)} toa do tung o tren man hinh."""
+        h, w = scr.getmaxyx()
+        width = PER_ROW * CW + 1
+        x0 = max(0, (w - width) // 2)
+        cells, y = {}, 1
+        blocks = blocks_of(dash)
+
+        def put(yy, xx, s, attr=0):
+            if 0 <= yy < h - 1 and xx < w:
+                try:
+                    scr.addstr(yy, xx, s[:max(0, w - xx - 1)], attr)
+                except curses.error:
+                    pass
+
+        title = "VMWARE CLUSTER HCM  -  SAP XEP VI TRI KHOI (KEO THA)"
+        put(0, max(0, (w - len(title)) // 2), title, curses.A_BOLD | curses.color_pair(3))
+        for si, sec in enumerate(sections(dash)):
+            mine = [b for b in blocks if b["sec"] == si]
+            y += 1
+            put(y, x0, "HANG %d: %s%s" % (si + 1, sec["title"], "  (dang thu gon)" if sec["collapsed"] else ""),
+                curses.A_BOLD | curses.color_pair(1))
+            y += 1
+            last = max([b["line"] for b in mine] + [-1]) + 1  # them 1 hang khoi trong de tha xuong duoi
+            put(y, x0, "+" + ("-" * (CW - 1) + "+") * PER_ROW)
+            for ln in range(last + 1):
+                y += 1
+                for col in range(PER_ROW):
+                    cx = x0 + col * CW
+                    cells[(si, col, ln)] = (y, cx)
+                    here = [b for b in mine if (b["col"], b["line"]) == (col, ln)]
+                    txt = ", ".join("%d %s" % (num(b), b["title"]) for b in here)
+                    attr = 0
+                    if any(b["key"] == state["sel"] for b in here):
+                        attr = curses.A_REVERSE | curses.A_BOLD | curses.color_pair(2)
+                    if state["drag"] and state["drag"].get("over") == (si, col, ln):
+                        attr = curses.A_REVERSE | curses.color_pair(3)
+                    put(y, cx, "|")
+                    put(y, cx + 1, (" " + txt).ljust(CW - 1)[:CW - 1], attr)
+                put(y, x0 + PER_ROW * CW, "|")
+                y += 1
+                put(y, x0, "+" + ("-" * (CW - 1) + "+") * PER_ROW)
+        y += 2
+        help1 = "CHUOT: bam giu khoi, keo sang o khac roi tha  |  hoac bam khoi roi bam o can toi"
+        help2 = "PHIM: Tab chon khoi | mui ten di chuyen | u hoan tac | s luu | q thoat"
+        put(y, max(0, (w - len(help1)) // 2), help1, curses.color_pair(3))
+        put(y + 1, max(0, (w - len(help2)) // 2), help2, curses.color_pair(3))
+        if state["msg"]:
+            put(y + 3, max(0, (w - len(state["msg"])) // 2), state["msg"], curses.A_BOLD | curses.color_pair(2))
+        return cells
+
+    def cell_at(cells, my, mx):
+        for k, (cy, cx) in cells.items():
+            if cy == my and cx <= mx < cx + CW:
+                return k
+        return None
+
+    def do(fn):
+        before = copy.deepcopy(dash)
+        msg = fn()
+        if msg:
+            state["undo"].append(before)
+            state["changed"] = True
+        state["msg"] = msg or state["msg"]
+
+    def sel_block():
+        return next((b for b in blocks_of(dash) if b["key"] == state["sel"]), None)
+
+    def confirm(scr, q):
+        h, w = scr.getmaxyx()
+        scr.addstr(h - 2, max(0, (w - len(q)) // 2), q[:w - 1], curses.A_BOLD | curses.color_pair(3))
+        scr.refresh()
+        while True:
+            k = scr.getch()
+            if k in (ord("y"), ord("Y")):
+                return True
+            if k in (ord("n"), ord("N"), ord("q")):
+                return False
+
+    def main(scr):
+        curses.curs_set(0)
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_CYAN, -1)
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
+        curses.mousemask(curses.ALL_MOUSE_EVENTS | curses.REPORT_MOUSE_POSITION)
+        curses.mouseinterval(0)  # nhan rieng su kien bam / tha de keo tha
+        sys.stdout.write("\033[?1002h")  # bao vi tri chuot khi dang giu nut (keo)
+        sys.stdout.flush()
+        try:
+            while True:
+                scr.erase()
+                cells = layout(scr)
+                scr.refresh()
+                k = scr.getch()
+                if k == curses.KEY_MOUSE:
+                    try:
+                        _, mx, my, _, bs = curses.getmouse()
+                    except curses.error:
+                        continue
+                    c = cell_at(cells, my, mx)
+                    if bs & curses.BUTTON1_PRESSED:
+                        here = [b for b in blocks_of(dash) if c and (b["sec"], b["col"], b["line"]) == c]
+                        if here:
+                            state["drag"] = {"key": here[0]["key"], "from": c, "over": c}
+                            state["sel"] = here[0]["key"]
+                        elif c and state["sel"] is not None:  # bam khoi truoc, bam o trong sau -> chuyen
+                            b = sel_block()
+                            do(lambda: drop_block(dash, b, *c))
+                    elif bs & curses.BUTTON1_RELEASED:
+                        d, state["drag"] = state["drag"], None
+                        if d and c and c != d["from"]:
+                            b = next(x for x in blocks_of(dash) if x["key"] == d["key"])
+                            do(lambda: drop_block(dash, b, *c))
+                    elif state["drag"] and c:  # dang keo: to o dang tro toi
+                        state["drag"]["over"] = c
+                    elif bs & curses.BUTTON1_CLICKED and c:  # terminal chi bao "click"
+                        here = [b for b in blocks_of(dash) if (b["sec"], b["col"], b["line"]) == c]
+                        if here:
+                            state["sel"] = here[0]["key"]
+                        elif state["sel"] is not None:
+                            b = sel_block()
+                            do(lambda: drop_block(dash, b, *c))
+                elif k in (9, curses.KEY_BTAB):  # Tab: chon khoi ke tiep
+                    keys = [b["key"] for b in blocks_of(dash)]
+                    if keys:
+                        i = keys.index(state["sel"]) if state["sel"] in keys else -1
+                        state["sel"] = keys[(i + (1 if k == 9 else -1)) % len(keys)]
+                elif k in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_LEFT, curses.KEY_RIGHT,
+                           ord("w"), ord("a"), ord("d")):
+                    b = sel_block()
+                    if not b:
+                        continue
+                    dc, dl = {curses.KEY_UP: (0, -1), ord("w"): (0, -1), curses.KEY_DOWN: (0, 1),
+                              curses.KEY_LEFT: (-1, 0), ord("a"): (-1, 0), curses.KEY_RIGHT: (1, 0),
+                              ord("d"): (1, 0)}[k]
+                    col, line = b["col"] + dc, b["line"] + dl
+                    if 0 <= col < PER_ROW and line >= 0:
+                        do(lambda: drop_block(dash, b, b["sec"], col, line))
+                    elif line < 0 and b["sec"] > 0:  # len qua dau hang -> sang hang tren
+                        do(lambda: drop_block(dash, b, b["sec"] - 1, b["col"], 0))
+                elif k == ord("u"):
+                    if state["undo"]:
+                        prev = state["undo"].pop()
+                        dash.clear()
+                        dash.update(prev)
+                        state["msg"] = "Da hoan tac."
+                    else:
+                        state["msg"] = "Khong con buoc nao de hoan tac."
+                elif k in (ord("s"), ord("l")):
+                    if confirm(scr, "Luu so do nay len dashboard Grafana? (y/n)"):
+                        return True
+                    state["msg"] = "Chua luu."
+                elif k == ord("q"):
+                    if not state["changed"] or confirm(scr, "Thoat va BO cac thay doi? (y/n)"):
+                        return False
+        finally:
+            sys.stdout.write("\033[?1002l")
+            sys.stdout.flush()
+
+    return curses.wrapper(main)
 
 
 def draw_layout(dash, order, mark=None):
@@ -688,7 +888,13 @@ if args.list:
 if args.arrange:  # sap xep vi tri khoi tren SSH, chi day len Grafana khi nguoi dung xac nhan luu
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
-    if arrange(existing):
+    use_tui = sys.stdin.isatty() and sys.stdout.isatty() and not os.environ.get("ARRANGE_TEXT")
+    if use_tui:
+        try:
+            import curses  # noqa: F401
+        except ImportError:
+            use_tui = False
+    if arrange_tui(existing) if use_tui else arrange(existing):
         save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
     else:
         print("Thoat, KHONG luu - dashboard tren Grafana giu nguyen.")

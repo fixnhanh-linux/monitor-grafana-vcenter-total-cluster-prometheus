@@ -541,6 +541,10 @@ while true; do
   center_row "$B$W[$choice]  $t$N"
   border "$BLc" "$BR"
   echo
-  { "$fn"; } 2>&1 | pad_out
+  if [ "$fn" = m_arrange ]; then
+    "$fn"  # giao dien keo tha chuot can terminal that (khong qua pad_out)
+  else
+    { "$fn"; } 2>&1 | pad_out
+  fi
   pause
 done

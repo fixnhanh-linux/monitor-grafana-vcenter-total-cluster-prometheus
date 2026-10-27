@@ -84,7 +84,7 @@ sudo bash menu.sh
 | 11 | Xem các hàng trên dashboard, datasource và cluster từng hàng |
 | 12 | Xoá khối 1 cluster khỏi dashboard |
 | 13 | Sửa datasource khối hiện `–` (gán đúng Prometheus của site có cluster đó) |
-| 14 | Sắp xếp vị trí khối: kéo lên / xuống / trái / phải, đổi chỗ, đổi hàng — xem sơ đồ trên SSH, lưu mới đổi Grafana |
+| 14 | Sắp xếp vị trí khối: **kéo thả bằng chuột** (hoặc phím mũi tên), đổi chỗ, đổi hàng — xem sơ đồ trên SSH, lưu mới đổi Grafana |
 | 15 | Cập nhật bản mới từ GitHub (giữ cấu hình, mật khẩu) |
 | 16 | Gỡ phần tự động dashboard |
 
@@ -353,44 +353,48 @@ Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
 Bấm F5 trên dashboard. Báo `Khong co khoi nao can doi datasource` mà vẫn `–`: không datasource nào trên Grafana có
 cluster đó → Prometheus chưa scrape pool (mục 7, mục 8), hoặc Grafana chưa có datasource trỏ tới Prometheus đó.
 
-### [14] Sắp xếp vị trí khối (xem trước rồi lưu)
+### [14] Sắp xếp vị trí khối — kéo thả bằng chuột (xem trước rồi lưu)
 
-Đổi thứ tự các khối pool ngay trên SSH, không cần mở Grafana. Menu vẽ sơ đồ dashboard, mỗi khối 1 số (số giữ
-nguyên suốt phiên, kể cả khi đã di chuyển); khối vừa di chuyển tô xanh:
+Đổi thứ tự các khối pool ngay trên SSH (MobaXterm, PuTTY, xterm…), không cần mở Grafana. Màn hình vẽ sơ đồ
+dashboard, mỗi khối 1 số; mỗi hàng có thêm 1 hàng khối trống ở dưới để thả xuống:
 
 ```text
-HANG 1: CLUSTER VMWARE HCM
-+----------------------+----------------------+----------------------+
-| 1 CORE               | 2 POOL17             | 3 POOL18-XD          |
-+----------------------+----------------------+----------------------+
-| 4 POOL23             | 5 POOL25             | 6 VC1_POOL6          |
-+----------------------+----------------------+----------------------+
-| 7 POOL5              |                      |                      |
-+----------------------+----------------------+----------------------+
+            VMWARE CLUSTER HCM  -  SAP XEP VI TRI KHOI (KEO THA)
 
-HANG 2: CLUSTER VMWARE HN
-+----------------------+----------------------+----------------------+
-| 8 POOL1-XD           |                      |                      |
-+----------------------+----------------------+----------------------+
-
-Lenh (? = huong dan, l = luu, q = thoat):
+  HANG 1: CLUSTER VMWARE HCM
+  +-----------------------+-----------------------+-----------------------+
+  | 1 CORE                | 2 POOL17              | 3 POOL18-XD           |
+  +-----------------------+-----------------------+-----------------------+
+  | 4 POOL23              | 5 POOL25              | 6 VC1_POOL6           |
+  +-----------------------+-----------------------+-----------------------+
+  | 7 POOL5               |                       |                       |
+  +-----------------------+-----------------------+-----------------------+
+  |                       |                       |                       |
+  +-----------------------+-----------------------+-----------------------+
+  HANG 2: CLUSTER VMWARE HN
+  +-----------------------+-----------------------+-----------------------+
+  | 8 POOL1-XD            |                       |                       |
+  ...
+  CHUOT: bam giu khoi, keo sang o khac roi tha  |  hoac bam khoi roi bam o can toi
+  PHIM: Tab chon khoi | mui ten di chuyen | u hoan tac | s luu | q thoat
 ```
 
-| Lệnh | Việc |
+| Thao tác | Việc |
 |---|---|
-| `7 w` hoặc `7 len` | đưa khối 7 lên 1 hàng khối (ô trên có khối thì 2 khối đổi chỗ) |
-| `7 s` / `7 xuong` | xuống |
-| `7 a` / `7 trai` | sang trái |
-| `7 d` / `7 phai` | sang phải |
-| `7 4` | đổi chỗ khối 7 và khối 4 (cùng 1 hàng) |
-| `7 h2` | chuyển khối 7 sang HANG 2, vào ô trống đầu tiên (giữ nguyên các ô và datasource của khối) |
+| **Chuột**: bấm giữ khối, kéo sang ô khác, thả | ô trống → khối chuyển tới; ô có khối → 2 khối **đổi chỗ**; thả sang hàng khác → **đổi hàng** (giữ nguyên ô và datasource) |
+| **Chuột**: bấm 1 khối (tô xanh), rồi bấm ô cần tới | giống kéo thả |
+| `Tab` / `Shift+Tab` | chọn khối kế tiếp / trước |
+| Phím mũi tên `↑ ↓ ← →` | đưa khối đang chọn lên / xuống / trái / phải (có khối thì đổi chỗ; `↑` ở hàng khối đầu → sang hàng trên) |
 | `u` | hoàn tác bước vừa làm (làm được nhiều lần) |
-| `?` | xem lại hướng dẫn |
-| `l` | **lưu**: hỏi `Luu so do nay len dashboard Grafana? (y/N)`, gõ `y` mới đẩy lên Grafana |
-| `q` | thoát **không lưu** — dashboard trên Grafana giữ nguyên |
+| `s` | **lưu**: hỏi `Luu so do nay len dashboard Grafana? (y/n)`, bấm `y` mới đẩy lên Grafana |
+| `q` | thoát; đã có thay đổi thì hỏi `Thoat va BO cac thay doi? (y/n)` — dashboard trên Grafana giữ nguyên |
 
-Mỗi lệnh chỉ đổi bản xem trước trên SSH; dashboard thật chỉ đổi khi `l` → `y`. Lưu xong bấm F5 trên dashboard.
-Ô trống để lại sau khi di chuyển được Grafana tự dồn lên khi mở dashboard. Hàng đang thu gọn vẫn sắp xếp được.
+Mọi thao tác chỉ đổi sơ đồ trên SSH; dashboard thật chỉ đổi khi `s` → `y`. Lưu xong bấm F5 trên dashboard.
+Ô trống để lại sau khi di chuyển được Grafana tự dồn lên. Hàng đang thu gọn vẫn sắp xếp được.
+
+Chuột không ăn (terminal không hỗ trợ chuột): dùng `Tab` + phím mũi tên, hoặc chế độ gõ lệnh
+(`7 w`, `7 4`, `7 h2`, `u`, `l`, `q`) bằng cách mở menu với `sudo ARRANGE_TEXT=1 bash menu.sh`.
+MobaXterm: Settings → Terminal → bật *Mouse tracking* nếu đang tắt.
 
 ### [15] Cập nhật bản mới từ GitHub
 
@@ -594,7 +598,7 @@ khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` 
 | `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
 | `--move POOL5 --row HN` | chuyển khối `POOL5` sang hàng có tên chứa `HN` |
 | `--rows` | in tên các hàng trên dashboard |
-| `--arrange` | sắp xếp vị trí khối trên SSH (như mục 14) |
+| `--arrange` | sắp xếp vị trí khối trên SSH, kéo thả chuột (như mục 14); `ARRANGE_TEXT=1` = chế độ gõ lệnh |
 | `--fix-datasource` | khối hiện `–` vì datasource không có cluster → đổi sang Prometheus trên Grafana có cluster đó |
 | `--insecure` | Grafana / Prometheus https chứng chỉ tự ký |
 | `--datasource <tên>` | datasource dùng khi tạo dashboard mới (chưa có trên Grafana) |
