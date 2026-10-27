@@ -155,7 +155,10 @@ ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
 ap.add_argument("--state", help="File nho danh sach cluster da day len Grafana; khong doi -> bo qua (dung cho timer)")
 ap.add_argument("--insecure", action="store_true",
                 help="Bo qua kiem tra chung chi HTTPS (Grafana/Prometheus dung chung chi tu ky)")
+ap.add_argument("--datasource", default=PROM_DS,
+                help="Ten datasource Prometheus tren Grafana co metric vmware_cluster_* (mac dinh %(default)s)")
 args = ap.parse_args()
+PROM_DS = args.datasource
 SSL_CTX = ssl._create_unverified_context() if args.insecure else None
 if args.prometheus:
     found = prometheus_clusters(args.prometheus)
@@ -163,7 +166,7 @@ if args.prometheus:
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
     CLUSTERS += new  # cluster cu giu nguyen thu tu, cluster moi them vao cuoi
-STATE = "\n".join(CLUSTERS) + "\n"
+STATE = "\n".join(CLUSTERS + ["datasource=" + PROM_DS]) + "\n"  # doi datasource cung day lai
 if args.state and args.grafana and os.path.isfile(args.state):
     with open(args.state, encoding="utf-8") as f:
         if f.read() == STATE:

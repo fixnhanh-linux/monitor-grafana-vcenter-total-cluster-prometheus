@@ -77,6 +77,16 @@ fi
 GRAFANA_OPTS=""
 [ "${GRAFANA_INSECURE:-0}" = 1 ] && GRAFANA_OPTS="--insecure"
 
+# Ten datasource Prometheus tren Grafana ma dashboard se dung (phai co metric vmware_cluster_*)
+DS_LIST=$(curl -fsS $CURL_K -H "Authorization: Bearer $GRAFANA_TOKEN" "$GRAFANA_URL/api/datasources" 2>/dev/null \
+  | python3 -c 'import json,sys; print(", ".join(d["name"] for d in json.load(sys.stdin) if d.get("type") == "prometheus"))' \
+  2>/dev/null || true)
+[ -n "$DS_LIST" ] && echo "Datasource Prometheus tren Grafana: $DS_LIST"
+DS_DEF=prometheus-all
+[ -f "$ENV_FILE" ] && DS_OLD=$(sed -n "s/^PROM_DS='\(.*\)'$/\1/p" "$ENV_FILE") && [ -n "$DS_OLD" ] && DS_DEF=$DS_OLD
+ask PROM_DS "Ten datasource Prometheus tren Grafana cho dashboard" "$DS_DEF"
+[[ "$PROM_DS" != *"'"* ]] || die "ten datasource khong duoc chua dau nhay don"
+
 install -d -m 755 "$APP"
 install -m 644 "$SRC/make_dashboard.py" "$APP/make_dashboard.py"
 install -d -m 700 "$STATE_DIR"
@@ -87,6 +97,7 @@ PROM_URL='$PROM_URL'
 GRAFANA_URL='$GRAFANA_URL'
 GRAFANA_TOKEN='$GRAFANA_TOKEN'
 GRAFANA_OPTS='$GRAFANA_OPTS'
+PROM_DS='$PROM_DS'
 EOF
 chmod 600 "$ENV_FILE"
 umask 022
@@ -100,7 +111,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
+ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --datasource \${PROM_DS} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
 EOF
 
 cat > "/etc/systemd/system/$NAME.timer" <<EOF
