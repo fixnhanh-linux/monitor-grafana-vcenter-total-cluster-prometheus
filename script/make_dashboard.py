@@ -388,6 +388,229 @@ def list_rows(dash):
                                                         ", ".join(names) or "-"))
 
 
+# ---------- sap xep vi tri khoi (--arrange): xem truoc tren SSH, luu moi day len Grafana ----------
+
+def panel_cluster(p):
+    """Cluster ma 1 panel thuoc ve (tu PromQL cluster="..." hoac link var-cluster=...)."""
+    names = {c for t in p.get("targets", []) for c in re.findall(r'cluster="([^"]+)"', t.get("expr", ""))}
+    names |= {c for l in p.get("links", []) for c in re.findall(r"var-cluster=([^&]+)", l.get("url", ""))}
+    return names.pop() if len(names) == 1 else None
+
+
+def sections(dash):
+    """Moi hang (row): {title, row, cont (list chua panel), top, end, collapsed}."""
+    panels = dash.setdefault("panels", [])
+    rows = sorted((p for p in panels if p.get("type") == "row"), key=lambda p: p["gridPos"]["y"])
+    out = []
+    for i, r in enumerate(rows):
+        top = r["gridPos"]["y"]
+        end = rows[i + 1]["gridPos"]["y"] if i + 1 < len(rows) else float("inf")
+        if r.get("collapsed"):
+            kids = r.setdefault("panels", [])
+            top = min(p["gridPos"]["y"] for p in kids) - 1 if kids else top
+            out.append({"title": r.get("title", ""), "row": r, "cont": kids, "top": top, "end": float("inf"),
+                        "collapsed": True})
+        else:
+            out.append({"title": r.get("title", ""), "row": r, "cont": panels, "top": top, "end": end,
+                        "collapsed": False})
+    if not rows:
+        out.append({"title": "(khong co hang)", "row": None, "cont": panels, "top": -1, "end": float("inf"),
+                    "collapsed": False})
+    return out
+
+
+def sec_panels(sec):
+    return [p for p in sec["cont"] if p.get("type") != "row"
+            and (sec["collapsed"] or sec["top"] < p["gridPos"]["y"] < sec["end"])]
+
+
+def blocks_of(dash):
+    """Danh sach khoi: {cluster, title, sec (chi so hang), panels, col, line}."""
+    out = []
+    for si, sec in enumerate(sections(dash)):
+        groups = {}
+        for p in sec_panels(sec):
+            c = panel_cluster(p)
+            if c:
+                groups.setdefault(c, []).append(p)
+        for c, ps in groups.items():
+            bx = min(p["gridPos"]["x"] for p in ps)
+            by = min(p["gridPos"]["y"] for p in ps)
+            head = [p for p in ps if p.get("type") == "text" and p.get("title")]
+            out.append({"cluster": c, "title": head[0]["title"] if head else c, "sec": si, "panels": ps,
+                        "key": min(p.get("id", 0) for p in ps),  # id co dinh -> so thu tu khoi khong doi khi di chuyen
+                        "col": min(PER_ROW - 1, int(round(bx / BLOCK_W))),
+                        "line": max(0, (by - sec["top"] - 1) // BLOCK_H)})
+    out.sort(key=lambda b: (b["sec"], b["line"], b["col"], b["cluster"]))
+    return out
+
+
+def slot_xy(sec, col, line):
+    return col * BLOCK_W, sec["top"] + 1 + line * BLOCK_H
+
+
+def move_block(dash, b, col, line):
+    """Dich ca khoi toi o (col, line) trong hang cua no; hang dang mo ma vuot cho -> day cac hang duoi xuong."""
+    sec = sections(dash)[b["sec"]]
+    x, y = slot_xy(sec, col, line)
+    if not sec["collapsed"] and y + BLOCK_H > sec["end"]:
+        shift = y + BLOCK_H - sec["end"]
+        mine = {id(p) for p in b["panels"]}
+        for p in dash["panels"]:
+            if p["gridPos"]["y"] >= sec["end"] and id(p) not in mine:
+                p["gridPos"]["y"] += shift
+    bx = min(p["gridPos"]["x"] for p in b["panels"])
+    by = min(p["gridPos"]["y"] for p in b["panels"])
+    for p in b["panels"]:
+        p["gridPos"]["x"] += x - bx
+        p["gridPos"]["y"] += y - by
+
+
+def move_block_to_section(dash, b, si):
+    """Chuyen khoi (giu nguyen cac o, datasource) sang hang si, vao o trong dau tien."""
+    secs = sections(dash)
+    src, dst = secs[b["sec"]], secs[si]
+    for p in b["panels"]:
+        src["cont"].remove(p)
+    taken = {(o["col"], o["line"]) for o in blocks_of(dash) if o["sec"] == si}
+    n = 0
+    while (n % PER_ROW, n // PER_ROW) in taken:
+        n += 1
+    dst["cont"].extend(b["panels"])
+    y0 = min(q["gridPos"]["y"] for q in b["panels"])
+    for p in b["panels"]:  # tam dat vao dau hang de khoi thuoc hang moi, roi dich vao o trong
+        p["gridPos"]["y"] += dst["top"] + 1 - y0
+    b2 = dict(b, sec=si)
+    move_block(dash, b2, n % PER_ROW, n // PER_ROW)
+
+
+def draw_layout(dash, order, mark=None):
+    """Ve so do cac khoi theo tung hang (o 3 cot) de xem truoc tren SSH. order: key khoi theo so thu tu."""
+    G, Y, C, B, N = "\033[32m", "\033[33m", "\033[36m", "\033[1m", "\033[0m"
+    if os.environ.get("NO_COLOR"):
+        G = Y = C = B = N = ""
+    cw = 22
+    blocks = blocks_of(dash)
+    lines = []
+    for si, sec in enumerate(sections(dash)):
+        mine = [b for b in blocks if b["sec"] == si]
+        lines.append("%s%sHANG %d: %s%s%s" % (C, B, si + 1, sec["title"], " (dang thu gon)" if sec["collapsed"] else "", N))
+        sep = "+" + ("-" * cw + "+") * PER_ROW
+        lines.append(sep)
+        last = max([b["line"] for b in mine] + [-1])
+        for ln in range(last + 1):
+            cells = []
+            for col in range(PER_ROW):
+                here = [b for b in mine if b["line"] == ln and b["col"] == col]
+                txt = ", ".join("%d %s" % (order.index(b["key"]) + 1, b["title"]) for b in here)
+                txt = txt[:cw - 2].ljust(cw - 2)
+                if mark is not None and any(b["key"] == mark for b in here):
+                    txt = G + B + txt + N
+                cells.append(" " + txt + " ")
+            lines.append("|" + "|".join(cells) + "|")
+            lines.append(sep)
+        if last < 0:
+            lines.append("|" + "|".join([" " * cw] * PER_ROW) + "|")
+            lines.append(sep)
+        lines.append("")
+    print("\n".join(lines))
+
+
+ARRANGE_HELP = """Lenh (go roi Enter):
+  5 w | 5 len      dua khoi so 5 len 1 hang khoi     5 s | 5 xuong   xuong
+  5 a | 5 trai     sang trai                         5 d | 5 phai    sang phai
+  5 7              doi cho khoi 5 va khoi 7
+  5 h2             chuyen khoi 5 sang HANG 2 (vao o trong dau tien)
+  u                hoan tac buoc vua lam             ?               xem lai huong dan
+  l                LUU len Grafana (hoi xac nhan)    q               thoat, KHONG luu"""
+
+
+def arrange(dash):
+    """Vong lap sap xep tren SSH. Tra ve True neu nguoi dung xac nhan luu."""
+    import copy
+    undo, mark, msg = [], None, ""
+    order = [b["key"] for b in blocks_of(dash)]  # so thu tu co dinh trong ca phien
+    print(ARRANGE_HELP)
+    while True:
+        print()
+        draw_layout(dash, order, mark)
+        if msg:
+            print(msg)
+        msg = ""
+        try:
+            cmd = input("Lenh (? = huong dan, l = luu, q = thoat): ").strip().lower().split()
+        except EOFError:
+            return False
+        if not cmd:
+            continue
+        blocks = blocks_of(dash)
+        by_num = {order.index(b["key"]) + 1: b for b in blocks}
+        if cmd[0] in ("q", "thoat"):
+            return False
+        if cmd[0] == "?":
+            print(ARRANGE_HELP)
+            continue
+        if cmd[0] == "u":
+            if undo:
+                dash.clear()
+                dash.update(undo.pop())
+                msg = "Da hoan tac."
+            else:
+                msg = "Khong con buoc nao de hoan tac."
+            continue
+        if cmd[0] in ("l", "luu"):
+            yn = input("Luu so do nay len dashboard Grafana? (y/N): ").strip().lower()
+            if yn in ("y", "yes", "co"):
+                return True
+            msg = "Chua luu."
+            continue
+        if not cmd[0].isdigit() or int(cmd[0]) not in by_num or len(cmd) < 2:
+            msg = "Lenh khong hop le. Vd: 5 w | 5 7 | 5 h2 (go ? de xem huong dan)"
+            continue
+        b = by_num[int(cmd[0])]
+        act = cmd[1] if len(cmd) == 2 else cmd[1] + cmd[2]
+        before = copy.deepcopy(dash)
+        dirs = {"w": (0, -1), "len": (0, -1), "s": (0, 1), "xuong": (0, 1),
+                "a": (-1, 0), "trai": (-1, 0), "d": (1, 0), "phai": (1, 0)}
+        if act in dirs:
+            col, line = b["col"] + dirs[act][0], b["line"] + dirs[act][1]
+            if not (0 <= col < PER_ROW) or line < 0:
+                msg = "Khoi %s da o sat mep, khong di duoc." % b["title"]
+                continue
+            other = [o for o in blocks if o["sec"] == b["sec"] and (o["col"], o["line"]) == (col, line)]
+            if other:  # o dich co khoi -> doi cho
+                for o in other:
+                    move_block(dash, o, b["col"], b["line"])
+            move_block(dash, b, col, line)
+            msg = "Da dua %s %s." % (b["title"], {"w": "len", "s": "xuong", "a": "sang trai", "d": "sang phai"}.get(
+                act, act))
+        elif act.isdigit() and int(act) in by_num:
+            o = by_num[int(act)]
+            if o is b:
+                continue
+            if o["sec"] != b["sec"]:
+                msg = "Hai khoi o 2 hang khac nhau - dung lenh '%s h%d' truoc de dua ve cung hang." % (
+                    cmd[0], o["sec"] + 1)
+                continue
+            bc, bl = b["col"], b["line"]
+            move_block(dash, b, o["col"], o["line"])
+            move_block(dash, o, bc, bl)
+            msg = "Da doi cho %s <-> %s." % (b["title"], o["title"])
+        elif re.fullmatch(r"(h|hang)\d+", act):
+            si = int(re.sub(r"\D", "", act)) - 1
+            if not (0 <= si < len(sections(dash))) or si == b["sec"]:
+                msg = "So hang khong hop le."
+                continue
+            move_block_to_section(dash, b, si)
+            b = dict(b, sec=si)
+            msg = "Da chuyen %s sang HANG %d." % (b["title"], si + 1)
+        else:
+            msg = "Lenh khong hop le. Go ? de xem huong dan."
+            continue
+        undo.append(before)
+        mark = b["key"]
+
+
 def hide_datasource_picker(dash):
     """An o chon datasource tren dashboard (giu nguyen gia tri dang chon). Tra ve True neu co thay doi."""
     changed = False
@@ -407,6 +630,8 @@ ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
 ap.add_argument("--row", help="Chen cluster moi vao hang (row) co tieu de chua chuoi nay, vd HN (mac dinh hang dau)")
 ap.add_argument("--fix-datasource", action="store_true",
                 help="Khoi nao hien '-' vi datasource khong co cluster do -> doi sang Prometheus tren Grafana co cluster")
+ap.add_argument("--arrange", action="store_true",
+                help="Sap xep vi tri khoi tren SSH (len/xuong/trai/phai, doi cho, doi hang), xem truoc roi moi luu")
 ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
@@ -459,6 +684,14 @@ if args.list:
     if found:
         miss = sorted(c for c in found if c not in clusters_on(existing))
         print("Cluster tren Prometheus chua co tren dashboard:", ", ".join(miss) or "khong co")
+    sys.exit(0)
+if args.arrange:  # sap xep vi tri khoi tren SSH, chi day len Grafana khi nguoi dung xac nhan luu
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
+    if arrange(existing):
+        save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
+    else:
+        print("Thoat, KHONG luu - dashboard tren Grafana giu nguyen.")
     sys.exit(0)
 if args.rows:  # ten cac hang, moi dong 1 ten (menu.sh dung de cho chon)
     if existing is None:
