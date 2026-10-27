@@ -15,6 +15,7 @@ Chi dung thu vien chuan Python 3 (chay duoc tren server Linux).
 import argparse
 import json
 import os
+import ssl
 import sys
 import urllib.parse
 import urllib.request
@@ -127,7 +128,8 @@ def tile_panel(pid, cluster, x, y, w, tile):
 def prometheus_clusters(url):
     """Ten cac cluster dang co so lieu tren Prometheus (label cluster cua vmware_cluster_hosts)."""
     q = urllib.parse.urlencode({"match[]": "vmware_cluster_hosts"})
-    with urllib.request.urlopen("%s/api/v1/label/cluster/values?%s" % (url.rstrip("/"), q), timeout=20) as r:
+    with urllib.request.urlopen("%s/api/v1/label/cluster/values?%s" % (url.rstrip("/"), q), timeout=20,
+                                context=SSL_CTX) as r:
         data = json.load(r)
     if data.get("status") != "success":
         sys.exit("Prometheus tra loi loi: %s" % data)
@@ -141,7 +143,7 @@ def push_grafana(url, token, dash, folder_uid=None):
         body["folderUid"] = folder_uid
     req = urllib.request.Request(url.rstrip("/") + "/api/dashboards/db", data=json.dumps(body).encode("utf-8"),
                                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + token})
-    with urllib.request.urlopen(req, timeout=20) as r:
+    with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
         return json.load(r)
 
 
@@ -151,7 +153,10 @@ ap.add_argument("--grafana", help="URL Grafana de day dashboard len (token lay t
 ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu muc hien tai / General)")
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
 ap.add_argument("--state", help="File nho danh sach cluster da day len Grafana; khong doi -> bo qua (dung cho timer)")
+ap.add_argument("--insecure", action="store_true",
+                help="Bo qua kiem tra chung chi HTTPS (Grafana/Prometheus dung chung chi tu ky)")
 args = ap.parse_args()
+SSL_CTX = ssl._create_unverified_context() if args.insecure else None
 if args.prometheus:
     found = prometheus_clusters(args.prometheus)
     new = sorted(c for c in found if c not in CLUSTERS)

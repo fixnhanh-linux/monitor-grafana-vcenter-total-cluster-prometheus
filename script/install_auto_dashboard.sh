@@ -6,6 +6,7 @@
 #   sudo ./install_auto_dashboard.sh                    # hoi tung thong tin
 #   sudo PROM_URL=http://10.0.0.x:9090 GRAFANA_URL=http://10.0.0.y:3000 ./install_auto_dashboard.sh
 #   sudo ./install_auto_dashboard.sh --uninstall        # go timer
+#   Grafana https chung chi tu ky: script hoi bo qua kiem tra (hoac dat GRAFANA_INSECURE=1)
 set -euo pipefail
 
 APP=/opt/vmware-cluster-dashboard
@@ -42,6 +43,7 @@ ask PROM_URL    "URL Prometheus (nguon cua dashboard, vd prometheus-all)" "http:
 ask GRAFANA_URL "URL Grafana" "http://localhost:3000"
 ask INTERVAL    "Chu ky kiem tra (phut)" "10"
 [[ "$INTERVAL" =~ ^[0-9]+$ ]] || die "chu ky phai la so phut"
+PROM_URL=${PROM_URL%/}; GRAFANA_URL=${GRAFANA_URL%/}
 if [ -z "${GRAFANA_TOKEN:-}" ]; then
   if [ -f "$ENV_FILE" ] && grep -q '^GRAFANA_TOKEN=' "$ENV_FILE"; then
     read -r -s -p "Grafana token (Enter = giu token cu): " GRAFANA_TOKEN; echo
@@ -53,12 +55,27 @@ fi
 [ -n "$GRAFANA_TOKEN" ] || die "token khong duoc de trong"
 [[ "$GRAFANA_TOKEN" != *"'"* ]] || die "token khong duoc chua dau nhay don"
 
+if [ -z "${GRAFANA_INSECURE:-}" ] && [ -f "$ENV_FILE" ] && grep -q "^GRAFANA_OPTS='--insecure'" "$ENV_FILE"; then
+  GRAFANA_INSECURE=1
+fi
+CURL_K=""
+[ "${GRAFANA_INSECURE:-0}" = 1 ] && CURL_K="-k"
+
 echo "-> Kiem tra Prometheus $PROM_URL"
-curl -fsS "$PROM_URL/api/v1/label/cluster/values?match%5B%5D=vmware_cluster_hosts" >/dev/null \
+curl -fsS $CURL_K "$PROM_URL/api/v1/label/cluster/values?match%5B%5D=vmware_cluster_hosts" >/dev/null \
   || die "khong goi duoc Prometheus $PROM_URL"
 echo "-> Kiem tra Grafana $GRAFANA_URL"
-curl -fsS -H "Authorization: Bearer $GRAFANA_TOKEN" "$GRAFANA_URL/api/search?limit=1" >/dev/null \
-  || die "Grafana tu choi token hoac khong ket noi duoc $GRAFANA_URL"
+grafana_ok() { curl -fsS $CURL_K -H "Authorization: Bearer $GRAFANA_TOKEN" "$GRAFANA_URL/api/search?limit=1" >/dev/null; }
+rc=0; grafana_ok 2>/dev/null || rc=$?
+if [ "$rc" = 60 ]; then  # curl 60 = chung chi tu ky / khong tin cay
+  echo "Grafana dung chung chi HTTPS tu ky (self-signed)."
+  read -r -p "Bo qua kiem tra chung chi cho Grafana nay? [y/N]: " yn
+  [[ "$yn" =~ ^[yY] ]] || die "dung. Dat chung chi hop le cho Grafana hoac tra loi y"
+  GRAFANA_INSECURE=1; CURL_K="-k"; rc=0; grafana_ok || rc=$?
+fi
+[ "$rc" = 0 ] || die "Grafana tu choi token hoac khong ket noi duoc $GRAFANA_URL"
+GRAFANA_OPTS=""
+[ "${GRAFANA_INSECURE:-0}" = 1 ] && GRAFANA_OPTS="--insecure"
 
 install -d -m 755 "$APP"
 install -m 644 "$SRC/make_dashboard.py" "$APP/make_dashboard.py"
@@ -69,6 +86,7 @@ cat > "$ENV_FILE" <<EOF
 PROM_URL='$PROM_URL'
 GRAFANA_URL='$GRAFANA_URL'
 GRAFANA_TOKEN='$GRAFANA_TOKEN'
+GRAFANA_OPTS='$GRAFANA_OPTS'
 EOF
 chmod 600 "$ENV_FILE"
 umask 022
@@ -82,7 +100,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --out $STATE_DIR --state $STATE_DIR/clusters.txt
+ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
 EOF
 
 cat > "/etc/systemd/system/$NAME.timer" <<EOF
