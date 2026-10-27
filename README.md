@@ -394,12 +394,17 @@ Nếu `prometheus.yml` liệt kê từng file thay vì `scrape_configs/*.yml`, t
 
 ## 1b. Cập nhật exporter khi có bản mới (không cần cài lại, giữ nguyên cấu hình/mật khẩu)
 
+Dễ nhất: `sudo bash menu.sh` → **13**. Làm bằng lệnh (repo clone ở `/opt`):
+
 ```bash
-cd /home && sha256sum -c vmware-cluster-exporter-linux.zip.sha256 && rm -rf vmware-cluster-exporter && unzip -o vmware-cluster-exporter-linux.zip
+cd /opt/monitor-grafana-vcenter-total-cluster-prometheus && git pull && cd script
+sha256sum -c vmware-cluster-exporter-linux.zip.sha256 && rm -rf vmware-cluster-exporter && unzip -oq vmware-cluster-exporter-linux.zip
 install -m 644 vmware-cluster-exporter/app/vmware_cluster_exporter.py /opt/vmware-cluster-exporter/
-systemctl restart 'vmware-cluster-exporter@*'
-for p in 9821 9822 9823 9824; do echo -n "$p: "; curl -s localhost:$p/metrics | grep -o 'version="[^"]*"' || echo "CHUA CHAY"; done
+systemctl restart 'vmware-cluster-exporter@*' && sleep 10
+for f in /etc/vmware-cluster-exporter/*.env; do p=$(sed -n 's/^PORT=//p' "$f"); echo -n "$(basename "$f" .env) :$p  "; curl -s localhost:$p/metrics | grep -o 'version="[^"]*"' || echo "CHUA CHAY"; done
 ```
+
+Vòng `for` cuối chỉ kiểm tra các pool **cài trên máy này** (đọc port từ `/etc/vmware-cluster-exporter/*.env`).
 
 ## 2a. Đẩy thêm lên InfluxDB 2.x (tuỳ chọn)
 
