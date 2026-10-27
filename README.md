@@ -384,7 +384,7 @@ dashboard, mỗi khối 1 số; mỗi hàng có thêm 1 hàng khối trống ở
 | **Chuột**: bấm giữ khối, kéo sang ô khác, thả | ô trống → khối chuyển tới; ô có khối → 2 khối **đổi chỗ**; thả sang hàng khác → **đổi hàng** (giữ nguyên ô và datasource) |
 | **Chuột**: bấm 1 khối (tô xanh), rồi bấm ô cần tới | giống kéo thả |
 | `Tab` / `Shift+Tab` | chọn khối kế tiếp / trước |
-| Phím mũi tên `↑ ↓ ← →` | đưa khối đang chọn lên / xuống / trái / phải (có khối thì đổi chỗ; `↑` ở hàng khối đầu → sang hàng trên) |
+| Phím mũi tên `↑ ↓ ← →` | đưa khối đang chọn lên / xuống / trái / phải (có khối thì đổi chỗ); `↓` ở dưới cùng hàng → sang **hàng dưới** (vd HCM → HN), `↑` ở hàng khối đầu → sang **hàng trên** |
 | `u` | hoàn tác bước vừa làm (làm được nhiều lần) |
 | `s` | **lưu**: hỏi `Luu so do nay len dashboard Grafana? (y/n)`, bấm `y` mới đẩy lên Grafana |
 | `q` | thoát; đã có thay đổi thì hỏi `Thoat va BO cac thay doi? (y/n)` — dashboard trên Grafana giữ nguyên |

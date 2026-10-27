@@ -658,10 +658,29 @@ def arrange_tui(dash):
                               curses.KEY_LEFT: (-1, 0), ord("a"): (-1, 0), curses.KEY_RIGHT: (1, 0),
                               ord("d"): (1, 0)}[k]
                     col, line = b["col"] + dc, b["line"] + dl
-                    if 0 <= col < PER_ROW and line >= 0:
+                    nsec = len(sections(dash))
+                    blocks = blocks_of(dash)
+                    last = max([o["line"] for o in blocks if o["sec"] == b["sec"] and o["key"] != b["key"]] + [-1])
+
+                    def free_slot(si, want):
+                        """O trong trong hang si: uu tien want=(col, line), khong thi o trong dau tien."""
+                        taken = {(o["col"], o["line"]) for o in blocks if o["sec"] == si and o["key"] != b["key"]}
+                        if want not in taken:
+                            return want
+                        n = 0
+                        while (n % PER_ROW, n // PER_ROW) in taken:
+                            n += 1
+                        return n % PER_ROW, n // PER_ROW
+
+                    if dl == 1 and line > last + 1 and b["sec"] + 1 < nsec:  # xuong qua cuoi hang -> sang hang duoi
+                        si = b["sec"] + 1
+                        do(lambda: drop_block(dash, b, si, *free_slot(si, (b["col"], 0))))
+                    elif line < 0 and b["sec"] > 0:  # len qua dau hang -> xuong cuoi hang tren
+                        si = b["sec"] - 1
+                        plast = max([o["line"] for o in blocks if o["sec"] == si] + [-1])
+                        do(lambda: drop_block(dash, b, si, *free_slot(si, (b["col"], plast + 1))))
+                    elif 0 <= col < PER_ROW and line >= 0:
                         do(lambda: drop_block(dash, b, b["sec"], col, line))
-                    elif line < 0 and b["sec"] > 0:  # len qua dau hang -> sang hang tren
-                        do(lambda: drop_block(dash, b, b["sec"] - 1, b["col"], 0))
                 elif k == ord("u"):
                     if state["undo"]:
                         prev = state["undo"].pop()
