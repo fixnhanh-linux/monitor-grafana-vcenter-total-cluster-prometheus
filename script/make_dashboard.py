@@ -485,6 +485,16 @@ def move_block_to_section(dash, b, si, slot=None):
     move_block(dash, dict(b, sec=si), slot[0], slot[1])
 
 
+def compact(dash):
+    """Bo cac dong khoi trong giua cac khoi trong moi hang (khoi ben duoi dich len)."""
+    for si in range(len(sections(dash))):
+        used = sorted({b["line"] for b in blocks_of(dash) if b["sec"] == si})
+        for new, old in enumerate(used):
+            if new != old:
+                for b in [x for x in blocks_of(dash) if x["sec"] == si and x["line"] == old]:
+                    move_block(dash, b, b["col"], new)
+
+
 def drop_block(dash, b, si, col, line):
     """Tha khoi b vao o (col, line) cua hang si. O co khoi -> doi cho (ke ca khac hang). Tra ve cau thong bao."""
     if (si, col, line) == (b["sec"], b["col"], b["line"]):
@@ -511,8 +521,12 @@ def arrange_tui(dash):
     import copy
     import curses
 
+    before = copy.deepcopy(dash)
+    compact(dash)  # don cac dong trong co san (vd tu lan sap xep truoc)
     order = [b["key"] for b in blocks_of(dash)]
     state = {"undo": [], "sel": order[0] if order else None, "msg": "", "drag": None, "changed": False}
+    if dash != before:
+        state.update(undo=[before], changed=True, msg="Da don cac dong trong giua cac khoi (bam u de giu nguyen).")
     CW, CH = 24, 2  # be rong o (ke ca vien trai), cao o (dong chu + vien duoi)
 
     def num(b):
@@ -581,6 +595,7 @@ def arrange_tui(dash):
         before = copy.deepcopy(dash)
         msg = fn()
         if msg:
+            compact(dash)  # khong de lai dong trong giua cac khoi
             state["undo"].append(before)
             state["changed"] = True
         state["msg"] = msg or state["msg"]

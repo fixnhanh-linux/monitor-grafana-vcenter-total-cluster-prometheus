@@ -390,7 +390,8 @@ dashboard, mỗi khối 1 số; mỗi hàng có thêm 1 hàng khối trống ở
 | `q` | thoát; đã có thay đổi thì hỏi `Thoat va BO cac thay doi? (y/n)` — dashboard trên Grafana giữ nguyên |
 
 Mọi thao tác chỉ đổi sơ đồ trên SSH; dashboard thật chỉ đổi khi `s` → `y`. Lưu xong bấm F5 trên dashboard.
-Ô trống để lại sau khi di chuyển được Grafana tự dồn lên. Hàng đang thu gọn vẫn sắp xếp được.
+Sơ đồ tự dồn dòng khối trống sau mỗi lần di chuyển (và ngay khi mở, nếu dashboard đang có khoảng trống —
+bấm `u` nếu muốn giữ nguyên). Hàng đang thu gọn vẫn sắp xếp được.
 
 Chuột không ăn (terminal không hỗ trợ chuột): dùng `Tab` + phím mũi tên, hoặc chế độ gõ lệnh
 (`7 w`, `7 4`, `7 h2`, `u`, `l`, `q`) bằng cách mở menu với `sudo ARRANGE_TEXT=1 bash menu.sh`.
