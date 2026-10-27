@@ -87,6 +87,19 @@ DS_DEF=prometheus-all
 ask PROM_DS "Ten datasource Prometheus tren Grafana cho dashboard" "$DS_DEF"
 [[ "$PROM_DS" != *"'"* ]] || die "ten datasource khong duoc chua dau nhay don"
 
+# Hang (row) tren dashboard se chen khoi cluster moi; o moi dung datasource cua hang do
+ROW_LIST=$(curl -fsS $CURL_K -H "Authorization: Bearer $GRAFANA_TOKEN" "$GRAFANA_URL/api/dashboards/uid/vmware-cluster-hcm" 2>/dev/null \
+  | python3 -c 'import json,sys; print(" | ".join(p.get("title","") for p in json.load(sys.stdin)["dashboard"].get("panels",[]) if p.get("type")=="row"))' \
+  2>/dev/null || true)
+[ -n "$ROW_LIST" ] && echo "Cac hang tren dashboard: $ROW_LIST"
+if [ -z "${ROW+x}" ]; then
+  ROW_DEF=""
+  [ -f "$ENV_FILE" ] && ROW_DEF=$(sed -n "s/^ROW='\(.*\)'$/\1/p" "$ENV_FILE")
+  read -r -p "Chen cluster moi vao hang nao (mot phan ten, vd HN; Enter = hang dau)${ROW_DEF:+ [$ROW_DEF]}: " ROW
+  ROW=${ROW:-$ROW_DEF}
+fi
+[[ "$ROW" != *"'"* ]] || die "ten hang khong duoc chua dau nhay don"
+
 install -d -m 755 "$APP"
 install -m 644 "$SRC/make_dashboard.py" "$APP/make_dashboard.py"
 install -d -m 700 "$STATE_DIR"
@@ -98,6 +111,7 @@ GRAFANA_URL='$GRAFANA_URL'
 GRAFANA_TOKEN='$GRAFANA_TOKEN'
 GRAFANA_OPTS='$GRAFANA_OPTS'
 PROM_DS='$PROM_DS'
+ROW='$ROW'
 EOF
 chmod 600 "$ENV_FILE"
 umask 022
@@ -111,7 +125,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=$ENV_FILE
-ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --datasource \${PROM_DS} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
+ExecStart=/usr/bin/env python3 $APP/make_dashboard.py --prometheus \${PROM_URL} --grafana \${GRAFANA_URL} --datasource \${PROM_DS} --row \${ROW} --out $STATE_DIR --state $STATE_DIR/clusters.txt \$GRAFANA_OPTS
 EOF
 
 cat > "/etc/systemd/system/$NAME.timer" <<EOF

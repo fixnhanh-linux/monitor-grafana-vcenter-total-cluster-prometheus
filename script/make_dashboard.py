@@ -199,26 +199,76 @@ def block_panels(pid, cluster, bx, by):
     return panels
 
 
-def add_blocks(dash, clusters):
-    """Chen khoi cluster moi vao cuoi phan dau tien (tu hang dau den hang ke tiep), 3 khoi / hang.
-    Het cho trong hang khoi -> mo hang khoi moi va day cac phan ben duoi (vd hang HN) xuong."""
+def row_datasource(section):
+    """Datasource cua hang: uid co dinh dung nhieu nhat trong hang (vd Prometheus HN), khong co -> ${datasource}."""
+    uids = [p["datasource"]["uid"] for p in section
+            if isinstance(p.get("datasource"), dict) and not str(p["datasource"].get("uid", "$")).startswith("$")]
+    return max(set(uids), key=uids.count) if uids else DS["uid"]
+
+
+def add_blocks(dash, clusters, row_title=None):
+    """Chen khoi cluster moi vao hang (row) co tieu de chua row_title (mac dinh hang dau), 3 khoi / hang khoi.
+    Khoi moi dat vao o trong dau tien (khong de len panel dang co); o datasource lay theo hang do.
+    Hang dang mo ma het cho -> day cac hang ben duoi xuong. Hang dang thu gon -> them vao ben trong hang."""
     panels = dash.setdefault("panels", [])
     rows = sorted((p for p in panels if p.get("type") == "row"), key=lambda p: p["gridPos"]["y"])
-    top = rows[0]["gridPos"]["y"] if rows else -1
-    end = rows[1]["gridPos"]["y"] if len(rows) > 1 else float("inf")
-    n = sum(1 for p in panels if p.get("type") == "text" and p["gridPos"].get("h") == 1
-            and top < p["gridPos"]["y"] < end)  # so khoi dang co trong phan dau
+    if row_title:
+        match = [r for r in rows if row_title.lower() in r.get("title", "").lower()]
+        if not match:
+            sys.exit("Khong thay hang '%s'. Cac hang: %s" % (row_title, ", ".join(r.get("title", "") for r in rows)))
+        row = match[0]
+    else:
+        row = rows[0] if rows else None
+    top = row["gridPos"]["y"] if row else -1
+    nxt = [r["gridPos"]["y"] for r in rows if r["gridPos"]["y"] > top]
+    end = min(nxt) if nxt else float("inf")
+    collapsed = bool(row and row.get("collapsed"))
+    if collapsed:  # panel ben trong hang thu gon giu toa do luc mo -> tinh theo toa do cua chung
+        section = row.setdefault("panels", [])
+        if section:
+            top = min(p["gridPos"]["y"] for p in section) - 1
+    else:
+        section = [p for p in panels if p.get("type") != "row" and top < p["gridPos"]["y"] < end]
+    uid = row_datasource(section)
     pid = max([p.get("id", 0) for p in all_panels(dash)] + [0]) + 1
+
+    def free(bx, by):
+        return not any(p["gridPos"]["x"] < bx + BLOCK_W and bx < p["gridPos"]["x"] + p["gridPos"].get("w", 1)
+                       and p["gridPos"]["y"] < by + BLOCK_H and by < p["gridPos"]["y"] + p["gridPos"].get("h", 1)
+                       for p in section)
+
     for cluster in clusters:
+        n = 0
+        while not free((n % PER_ROW) * BLOCK_W, top + 1 + (n // PER_ROW) * BLOCK_H):
+            n += 1
         bx, by = (n % PER_ROW) * BLOCK_W, top + 1 + (n // PER_ROW) * BLOCK_H
-        if n % PER_ROW == 0:  # hang khoi moi: day moi thu tu by tro xuong
+        if not collapsed and by + BLOCK_H > end:  # het cho trong hang: day cac hang ben duoi xuong
+            shift = by + BLOCK_H - end
             for p in panels:
-                if p["gridPos"]["y"] >= by:
-                    p["gridPos"]["y"] += BLOCK_H
+                if p["gridPos"]["y"] >= end:
+                    p["gridPos"]["y"] += shift
+            end += shift
         block = block_panels(pid, cluster, bx, by)
-        panels += block
+        for p in block:
+            for obj in [p] + p.get("targets", []):
+                if "datasource" in obj:
+                    obj["datasource"] = {"type": "prometheus", "uid": uid}
+        (row["panels"] if collapsed else panels).extend(block)
+        if not collapsed:
+            section.extend(block)
         pid += len(block)
-        n += 1
+        print("  + %s -> hang '%s' (x=%d, y=%d, datasource %s)" % (cluster, row.get("title") if row else "-",
+                                                                 bx, by, uid))
+
+
+def hide_datasource_picker(dash):
+    """An o chon datasource tren dashboard (giu nguyen gia tri dang chon). Tra ve True neu co thay doi."""
+    changed = False
+    for v in dash.get("templating", {}).get("list", []):
+        if v.get("type") == "datasource" and v.get("hide") != 2:
+            v["hide"] = 2
+            changed = True
+    return changed
 
 
 ap = argparse.ArgumentParser(description="Sinh dashboard Grafana VMWARE CLUSTER HCM")
@@ -227,6 +277,7 @@ ap.add_argument("--grafana", help="URL Grafana de day dashboard len (token lay t
 ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu muc hien tai / General)")
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
 ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
+ap.add_argument("--row", help="Chen cluster moi vao hang (row) co tieu de chua chuoi nay, vd HN (mac dinh hang dau)")
 ap.add_argument("--rebuild", action="store_true",
                 help="Sinh lai toan bo dashboard (mat chinh sua tay); mac dinh chi chen khoi cluster moi")
 ap.add_argument("--insecure", action="store_true",
@@ -268,11 +319,15 @@ if args.grafana and not args.rebuild:
 if existing is not None:
     present = clusters_on(existing)
     new = sorted(c for c in found if c not in present)
-    if not new:
+    hidden = hide_datasource_picker(existing)
+    if not new and not hidden:
         print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
         sys.exit(0)
-    print("Cluster moi tu Prometheus:", ", ".join(new))
-    add_blocks(existing, new)
+    if hidden:
+        print("An o chon datasource tren dashboard")
+    if new:
+        print("Cluster moi tu Prometheus:", ", ".join(new))
+        add_blocks(existing, new, args.row)
     save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
     sys.exit(0)
 
