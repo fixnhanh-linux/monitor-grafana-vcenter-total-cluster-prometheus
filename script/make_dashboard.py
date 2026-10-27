@@ -280,6 +280,24 @@ def remove_clusters(dash, clusters):
     return removed
 
 
+def list_rows(dash):
+    """In tung hang (row) cua dashboard: datasource va cac cluster trong hang."""
+    panels = dash.get("panels", [])
+    rows = sorted((p for p in panels if p.get("type") == "row"), key=lambda p: p["gridPos"]["y"])
+    ys = [r["gridPos"]["y"] for r in rows] + [float("inf")]
+    groups = [("(khong co hang)", [p for p in panels if p.get("type") != "row" and p["gridPos"]["y"] < ys[0]])]
+    for i, r in enumerate(rows):
+        inside = r.get("panels") if r.get("collapsed") else \
+            [p for p in panels if p.get("type") != "row" and ys[i] < p["gridPos"]["y"] < ys[i + 1]]
+        groups.append((r.get("title", ""), inside or []))
+    for title, section in groups:
+        if not section and title == "(khong co hang)":
+            continue
+        names = sorted(clusters_on({"panels": section}))
+        print("%-28s datasource %-14s %d cluster: %s" % (title, row_datasource(section), len(names),
+                                                        ", ".join(names) or "-"))
+
+
 def hide_datasource_picker(dash):
     """An o chon datasource tren dashboard (giu nguyen gia tri dang chon). Tra ve True neu co thay doi."""
     changed = False
@@ -297,6 +315,7 @@ ap.add_argument("--folder-uid", help="UID thu muc Grafana (bo trong = giu thu mu
 ap.add_argument("--out", help="Thu muc ghi file JSON (mac dinh canh script)")
 ap.add_argument("--state", help="(khong con dung, giu de tuong thich lenh cu)")
 ap.add_argument("--row", help="Chen cluster moi vao hang (row) co tieu de chua chuoi nay, vd HN (mac dinh hang dau)")
+ap.add_argument("--list", action="store_true", help="Liet ke hang / datasource / cluster tren dashboard roi thoat")
 ap.add_argument("--remove", nargs="+", metavar="CLUSTER",
                 help="Xoa khoi cua cluster khoi dashboard tren Grafana roi thoat, vd --remove POOL5")
 ap.add_argument("--rebuild", action="store_true",
@@ -337,6 +356,15 @@ def save_and_push(dash, n, folder_uid):
 existing, folder = (None, None)
 if args.grafana and not args.rebuild:
     existing, folder = get_grafana(args.grafana, TOKEN, UID)
+if args.list:
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
+    print("Dashboard: %s (uid %s)" % (existing.get("title"), UID))
+    list_rows(existing)
+    if found:
+        miss = sorted(c for c in found if c not in clusters_on(existing))
+        print("Cluster tren Prometheus chua co tren dashboard:", ", ".join(miss) or "khong co")
+    sys.exit(0)
 if args.remove:
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)

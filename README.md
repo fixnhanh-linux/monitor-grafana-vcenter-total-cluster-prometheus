@@ -61,6 +61,33 @@ curl -L -o repo.zip https://github.com/fixnhanh-linux/monitor-grafana-vcenter-to
 unzip repo.zip && cd monitor-grafana-vcenter-total-cluster-prometheus-main
 ```
 
+### Menu (dễ nhất)
+
+Mọi việc gom vào một menu, chọn bằng số:
+
+```bash
+sudo bash menu.sh
+```
+
+| Số | Việc |
+|---|---|
+| 1 | Cài exporter cho pool / vCenter mới (tự gợi ý port trống từ 9821) |
+| 2 | Xem trạng thái: service, lấy được số liệu chưa, lần lấy gần nhất, cluster của từng pool |
+| 3 | Đổi user / mật khẩu vCenter của 1 pool (sai mật khẩu chọn mục này) |
+| 4 / 5 / 6 | Khởi động lại – dừng – chạy / xem log / gỡ 1 exporter |
+| 7 | In sẵn đoạn `job_name: 'vmware_cluster'` với IP:port các pool trên máy này để dán vào Prometheus |
+| 8 | Kiểm tra từng chặng: exporter → Prometheus đã có cluster chưa → Grafana → dashboard |
+| 9 | Cài tự động thêm pool lên dashboard (URL Prometheus, Grafana, token, hàng HCM/HN) |
+| 10 | Thêm pool mới lên dashboard ngay |
+| 11 | Xem các hàng trên dashboard, datasource và cluster từng hàng |
+| 12 | Xoá khối 1 cluster khỏi dashboard |
+| 13 | Cập nhật bản mới từ GitHub (giữ cấu hình, mật khẩu) |
+| 14 | Gỡ phần tự động dashboard |
+
+Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard).
+
+### Lệnh từng việc
+
 | Việc | Lệnh (trong thư mục repo) |
 |---|---|
 | Cài exporter (mỗi vCenter chạy 1 lần) | `cd script && sha256sum -c vmware-cluster-exporter-linux.zip.sha256 && unzip -o vmware-cluster-exporter-linux.zip && cd vmware-cluster-exporter && sudo ./install.sh` |
