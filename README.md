@@ -37,7 +37,7 @@ Exporter mới chỉ lấy số liệu cấp cluster (không lấy disk health, 
 dashboard-grafana/
   vmware_cluster_hcm_grafana.json          dashboard để import vào Grafana
 script/
-  vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.28-1)
+  vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.28-2)
   vmware-cluster-exporter-linux.zip.sha256
   make_dashboard.py                        chèn khối pool mới / xoá khối / liệt kê, đẩy lên Grafana
   install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
@@ -740,7 +740,7 @@ cd /home/vmware-cluster-exporter && ./install.sh
 ```
 
 ```text
-== Cai dat VMware cluster exporter 2026.10.28-1 ==
+== Cai dat VMware cluster exporter 2026.10.28-2 ==
 Ten instance (vd: pool18, chi chu/so/-) [pool18]: pool30
 IP/hostname vCenter [10.0.0.20]: 10.0.30.10
 User vCenter (chi can quyen Read-only) [monitor@vsphere.local]: monitor@vsphere.local
@@ -765,7 +765,7 @@ curl -s localhost:9825/metrics | grep -E 'build_info|^vmware_cluster_hosts|vsan_
 ```text
 vmware_cluster_vsan_health_score{cluster="POOL30"} 97
 vmware_cluster_hosts{cluster="POOL30"} 12
-vmware_cluster_exporter_build_info{version="2026.10.28-1"} 1
+vmware_cluster_exporter_build_info{version="2026.10.28-2"} 1
 ```
 
 Mở firewall nếu Prometheus ở máy khác: `ufw allow 9825/tcp` (hoặc `firewall-cmd --add-port=9825/tcp --permanent && firewall-cmd --reload`).
@@ -862,7 +862,7 @@ Bấm **Add**. Sau 1–2 phút, Monitoring → Latest data lọc host `VMware cl
 
 | Kiểm tra | Kết quả đúng |
 |---|---|
-| `curl -s 10.0.0.10:9825/metrics \| grep build_info` | `version="2026.10.28-1"` |
+| `curl -s 10.0.0.10:9825/metrics \| grep build_info` | `version="2026.10.28-2"` |
 | Prometheus HCM → Status → Targets | `10.0.0.10:9825` **UP** |
 | prometheus-all label values | có `"POOL30"` |
 | Grafana dashboard | có khối POOL30, 15 ô có số |
