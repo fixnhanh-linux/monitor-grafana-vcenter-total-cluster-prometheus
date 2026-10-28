@@ -266,10 +266,13 @@ def clusters_on(dash):
     return names
 
 
+NAMES = {}  # cluster -> ten hien thi tren thanh tieu de khoi (nap tu file names)
+
+
 def block_panels(pid, cluster, bx, by):
     """1 khoi cua 1 cluster: thanh tieu de + 15 o, goc tren trai (bx, by)."""
     panels = [{  # thanh tieu de cua cluster (chi co title + link sang dashboard host)
-        "id": pid, "type": "text", "title": cluster, "transparent": True,
+        "id": pid, "type": "text", "title": NAMES.get(cluster, cluster), "transparent": True,
         "gridPos": {"x": bx, "y": by, "w": BLOCK_W, "h": 1},
         "links": [{"title": "Chi tiết host của " + cluster,
                    "url": "/d/esxi-host-resource/?var-cluster=%s&${datasource:queryparam}" % cluster}],
@@ -367,6 +370,52 @@ def remove_clusters(dash, clusters):
     return removed
 
 
+def load_names(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return {str(k): str(v) for k, v in json.load(f).items()}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_names(path, names):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(dict(sorted(names.items())), f, ensure_ascii=False, indent=2)
+        return True
+    except OSError as e:
+        print("Khong ghi duoc file ten %s: %s" % (path, e))
+        return False
+
+
+def learn_names(dash, names):
+    """Ghi nhan ten khoi da doi tay tren Grafana (thanh tieu de khac ten cluster). Tra ve True neu co thay doi."""
+    changed = False
+    for p in all_panels(dash):
+        if p.get("type") != "text" or p.get("gridPos", {}).get("h") != 1:
+            continue
+        c, title = panel_cluster(p), (p.get("title") or "").strip()
+        if not c or not title:
+            continue
+        if title != c and names.get(c) != title:
+            names[c] = title
+            changed = True
+        elif title == c and c in names:
+            del names[c]
+            changed = True
+    return changed
+
+
+def rename_block(panels, cluster, new):
+    """Doi ten thanh tieu de cac khoi cua cluster (trong danh sach panel). Tra ve so thanh tieu de da doi."""
+    n = 0
+    for p in panels:
+        if p.get("type") == "text" and p.get("gridPos", {}).get("h") == 1 and panel_cluster(p) == cluster:
+            p["title"] = new
+            n += 1
+    return n
+
+
 def list_rows(dash):
     """In tung hang (row) cua dashboard: datasource va cac cluster trong hang."""
     panels = dash.get("panels", [])
@@ -380,7 +429,7 @@ def list_rows(dash):
     for title, section in groups:
         if not section and title == "(khong co hang)":
             continue
-        names = sorted(clusters_on({"panels": section}))
+        names = ["%s (%s)" % (c, NAMES[c]) if c in NAMES else c for c in sorted(clusters_on({"panels": section}))]
         print("%-28s datasource %-14s %d cluster: %s" % (title, row_datasource(section), len(names),
                                                         ", ".join(names) or "-"))
 
@@ -601,7 +650,7 @@ def arrange_tui(dash):
                 put(y, x0, "+" + ("-" * (CW - 1) + "+") * PER_ROW)
         y += 2
         help1 = "CHUOT: bam giu khoi, keo sang o khac roi tha  |  hoac bam khoi roi bam o can toi"
-        help2 = "PHIM: Tab chon khoi | mui ten di chuyen | x xoa khoi | u hoan tac | s luu | q thoat"
+        help2 = "PHIM: Tab chon | mui ten di chuyen | r doi ten | x xoa | u hoan tac | s luu | q thoat"
         put(y, max(0, (w - len(help1)) // 2), help1, curses.color_pair(3))
         put(y + 1, max(0, (w - len(help2)) // 2), help2, curses.color_pair(3))
         if state["msg"]:
@@ -625,6 +674,21 @@ def arrange_tui(dash):
 
     def sel_block():
         return next((b for b in blocks_of(dash) if b["key"] == state["sel"]), None)
+
+    def ask(scr, q):
+        """Hoi 1 dong chu o cuoi man hinh (hien chu go)."""
+        h, w = scr.getmaxyx()
+        scr.move(h - 2, 0)
+        scr.clrtoeol()
+        scr.addstr(h - 2, 2, q[:w - 4], curses.A_BOLD | curses.color_pair(3))
+        curses.echo()
+        curses.curs_set(1)
+        try:
+            raw = scr.getstr(h - 2, min(w - 2, 2 + len(q)), 40)
+        finally:
+            curses.noecho()
+            curses.curs_set(0)
+        return raw.decode("utf-8", "replace").strip()
 
     def confirm(scr, q):
         h, w = scr.getmaxyx()
@@ -727,6 +791,16 @@ def arrange_tui(dash):
                         state["msg"] = "Da hoan tac."
                     else:
                         state["msg"] = "Khong con buoc nao de hoan tac."
+                elif k == ord("r"):  # doi ten khoi dang chon (ghi nho cho lan sau)
+                    b = sel_block()
+                    if b and not any(p.get("type") == "text" for p in b["panels"]):
+                        state["msg"] = "Khoi nay khong co thanh tieu de de doi ten."
+                    elif b:
+                        new = ask(scr, "Ten moi cho khoi %s (Enter = huy): " % b["title"])
+                        if new:
+                            old = b["title"]
+                            do(lambda: rename_block(b["panels"], b["cluster"], new)
+                               and "Da doi ten %s -> %s (ghi nho khi luu)." % (old, new))
                 elif k == ord("x"):  # xoa dung khoi dang chon (vd khoi CORE thua o hang HN)
                     b = sel_block()
                     if b and confirm(scr, "Xoa khoi %d %s (chi khoi nay, %d o)? (y/n)" % (num(b), b["title"], len(b["panels"]))):
@@ -786,6 +860,7 @@ ARRANGE_HELP = """Lenh (go roi Enter):
   5 a | 5 trai     sang trai                         5 d | 5 phai    sang phai
   5 7              doi cho khoi 5 va khoi 7
   5 h2             chuyen khoi 5 sang HANG 2 (vao o trong dau tien)
+  5 r Ten moi      doi ten khoi 5 (duoc ghi nho cho lan them / chuyen sau)
   u                hoan tac buoc vua lam             ?               xem lai huong dan
   l                LUU len Grafana (hoi xac nhan)    q               thoat, KHONG luu"""
 
@@ -804,7 +879,8 @@ def arrange(dash):
             print(msg)
         msg = ""
         try:
-            cmd = input("Lenh (? = huong dan, l = luu, q = thoat): ").strip().lower().split()
+            raw = input("Lenh (? = huong dan, l = luu, q = thoat): ").strip()
+            cmd = raw.lower().split()
         except EOFError:
             return False
         if not cmd:
@@ -823,6 +899,16 @@ def arrange(dash):
                 msg = "Da hoan tac."
             else:
                 msg = "Khong con buoc nao de hoan tac."
+            continue
+        if len(cmd) >= 3 and cmd[1] == "r" and cmd[0].isdigit() and int(cmd[0]) in by_num:
+            b = by_num[int(cmd[0])]
+            new = raw.split(None, 2)[2].strip()
+            before = copy.deepcopy(dash)
+            if rename_block(b["panels"], b["cluster"], new):
+                undo.append(before)
+                msg = "Da doi ten %s -> %s." % (b["title"], new)
+            else:
+                msg = "Khoi nay khong co thanh tieu de de doi ten."
             continue
         if cmd[0] in ("l", "luu"):
             if count_overlaps(dash) > base_ov:
@@ -905,6 +991,9 @@ ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren 
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
 ap.add_argument("--list", action="store_true", help="Liet ke hang / datasource / cluster tren dashboard roi thoat")
+ap.add_argument("--rename", nargs=2, metavar=("CLUSTER", "TEN"),
+                help="Doi ten hien thi khoi cua cluster (vd --rename POOL17 PKH), ghi nho cho lan sau")
+ap.add_argument("--names", help="File ghi nho ten hien thi (mac dinh /etc/vmware-cluster-dashboard.names neu ghi duoc)")
 ap.add_argument("--remove", nargs="+", metavar="CLUSTER",
                 help="Xoa khoi cua cluster khoi dashboard tren Grafana roi thoat, vd --remove POOL5")
 ap.add_argument("--rebuild", action="store_true",
@@ -939,6 +1028,9 @@ def save_and_push(dash, n, folder_uid):
         with open(bfile, "w", encoding="utf-8") as f:
             json.dump(ORIGINAL, f, ensure_ascii=False, indent=2)
         print("Sao luu ban cu:", bfile)
+    if learn_names(dash, NAMES):  # ten moi doi (phim r, --rename) -> ghi nho cho lan sau
+        if save_names(NAMES_FILE, NAMES):
+            print("Ghi nho ten khoi ->", NAMES_FILE)
     for out in outs:
         with open(out, "w", encoding="utf-8") as f:
             json.dump(dash, f, ensure_ascii=False, indent=2)
@@ -955,6 +1047,21 @@ if args.grafana and not args.rebuild:
     existing, folder = get_grafana(args.grafana, TOKEN, UID)
 import copy as _copy
 ORIGINAL = _copy.deepcopy(existing)
+NAMES_FILE = args.names or os.environ.get("NAMES_FILE") or (
+    "/etc/vmware-cluster-dashboard.names" if os.access("/etc", os.W_OK) else os.path.join(outdir, "names.json"))
+NAMES.update(load_names(NAMES_FILE))
+if existing is not None and learn_names(existing, NAMES) and save_names(NAMES_FILE, NAMES):
+    print("Ghi nhan ten khoi doi tay tren Grafana ->", NAMES_FILE)
+if args.rename:
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
+    c, new = args.rename
+    n = rename_block(list(all_panels(existing)), c, new)
+    if not n:
+        sys.exit("Khong thay thanh tieu de khoi nao cua cluster %s" % c)
+    print("Doi ten %d khoi %s -> %s" % (n, c, new))
+    save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
+    sys.exit(0)
 if args.list:
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)

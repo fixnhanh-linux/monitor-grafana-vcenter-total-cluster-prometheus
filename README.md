@@ -384,6 +384,7 @@ dashboard, mỗi khối 1 số; mỗi hàng có thêm 1 hàng khối trống ở
 | **Chuột**: bấm 1 khối (tô xanh), rồi bấm ô cần tới | giống kéo thả |
 | `Tab` / `Shift+Tab` | chọn khối kế tiếp / trước |
 | Phím mũi tên `↑ ↓ ← →` | đưa khối đang chọn lên / xuống / trái / phải (có khối thì đổi chỗ); `↓` ở dưới cùng hàng → sang **hàng dưới** (vd HCM → HN), `↑` ở hàng khối đầu → sang **hàng trên** |
+| `r` | **đổi tên** khối đang chọn (vd `POOL17` → `PKH`), tên được ghi nhớ cho các lần thêm / chuyển sau |
 | `x` | xoá **đúng khối đang chọn** (hỏi xác nhận) — vd khối CORE thừa ở hàng HN; khối cùng tên ở chỗ khác không bị đụng |
 | `u` | hoàn tác bước vừa làm (làm được nhiều lần) |
 | `s` | **lưu**: hỏi `Luu so do nay len dashboard Grafana? (y/n)`, bấm `y` mới đẩy lên Grafana |
@@ -399,6 +400,20 @@ bấm `u` nếu muốn giữ nguyên). Hàng đang thu gọn vẫn sắp xếp �
 Chuột không ăn (terminal không hỗ trợ chuột): dùng `Tab` + phím mũi tên, hoặc chế độ gõ lệnh
 (`7 w`, `7 4`, `7 h2`, `u`, `l`, `q`) bằng cách mở menu với `sudo ARRANGE_TEXT=1 bash menu.sh`.
 MobaXterm: Settings → Terminal → bật *Mouse tracking* nếu đang tắt.
+
+### Đổi tên khối (ghi nhớ cho lần sau)
+
+Tên trên thanh tiêu đề khối mặc định là tên cluster trên vCenter. Đổi tên bằng 1 trong 3 cách — tên mới được **ghi
+nhớ** trong `/etc/vmware-cluster-dashboard.names` (dạng `{"POOL17": "PKH"}`), nên khi khối bị xoá rồi thêm lại, chuyển
+hàng, hay timer tự thêm, khối vẫn mang tên đã đặt:
+
+| Cách | Làm |
+|---|---|
+| Sửa thẳng trên Grafana | Edit thanh tiêu đề khối → đổi Title → Save. Lần chạy kế tiếp (timer, mục 10–14) **tự ghi nhận** tên này |
+| Menu **14** | chọn khối → bấm `r` → gõ tên mới → Enter → `s` → `y` (chế độ gõ lệnh: `5 r PKH`) |
+| Lệnh | `make_dashboard.py --grafana ... --rename POOL17 PKH` |
+
+Mục **11** hiện cả tên cluster lẫn tên hiển thị, vd `POOL17 (PKH)`. Muốn bỏ tên đã đặt: đổi tên khối về đúng tên cluster.
 
 ### [15] Cập nhật bản mới từ GitHub
 
@@ -610,6 +625,8 @@ khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` 
 | `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
 | `--move POOL5 --row HN` | chuyển khối `POOL5` sang hàng có tên chứa `HN` |
 | `--rows` | in tên các hàng trên dashboard |
+| `--rename POOL17 PKH` | đổi tên hiển thị khối của cluster `POOL17` thành `PKH` (ghi nhớ) |
+| `--names <file>` | file ghi nhớ tên hiển thị (mặc định `/etc/vmware-cluster-dashboard.names`) |
 | `--arrange` | sắp xếp vị trí khối trên SSH, kéo thả chuột (như mục 14); `ARRANGE_TEXT=1` = chế độ gõ lệnh |
 | `--fix-datasource` | khối hiện `–` vì datasource không có cluster → đổi sang Prometheus trên Grafana có cluster đó |
 | `--insecure` | Grafana / Prometheus https chứng chỉ tự ký |
