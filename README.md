@@ -384,11 +384,15 @@ dashboard, mỗi khối 1 số; mỗi hàng có thêm 1 hàng khối trống ở
 | **Chuột**: bấm 1 khối (tô xanh), rồi bấm ô cần tới | giống kéo thả |
 | `Tab` / `Shift+Tab` | chọn khối kế tiếp / trước |
 | Phím mũi tên `↑ ↓ ← →` | đưa khối đang chọn lên / xuống / trái / phải (có khối thì đổi chỗ); `↓` ở dưới cùng hàng → sang **hàng dưới** (vd HCM → HN), `↑` ở hàng khối đầu → sang **hàng trên** |
+| `x` | xoá **đúng khối đang chọn** (hỏi xác nhận) — vd khối CORE thừa ở hàng HN; khối cùng tên ở chỗ khác không bị đụng |
 | `u` | hoàn tác bước vừa làm (làm được nhiều lần) |
 | `s` | **lưu**: hỏi `Luu so do nay len dashboard Grafana? (y/n)`, bấm `y` mới đẩy lên Grafana |
 | `q` | thoát; đã có thay đổi thì hỏi `Thoat va BO cac thay doi? (y/n)` — dashboard trên Grafana giữ nguyên |
 
-Mọi thao tác chỉ đổi sơ đồ trên SSH; dashboard thật chỉ đổi khi `s` → `y`. Lưu xong bấm F5 trên dashboard.
+Mọi thao tác chỉ đổi sơ đồ trên SSH; dashboard thật chỉ đổi khi `s` → `y`. Nếu sắp xếp làm **tăng** số ô đè lên
+nhau, công cụ **không cho lưu** (báo `KHONG LUU: ... cap o de len nhau`). Trước mỗi lần đẩy lên Grafana, bản cũ được
+sao lưu ở `/var/lib/vmware-cluster-dashboard/backup/`; Grafana cũng giữ lịch sử: dashboard → Edit → Settings →
+**Versions** → chọn bản cũ → **Restore**. Lưu xong bấm F5 trên dashboard.
 Sơ đồ tự dồn dòng khối trống sau mỗi lần di chuyển (và ngay khi mở, nếu dashboard đang có khoảng trống —
 bấm `u` nếu muốn giữ nguyên). Hàng đang thu gọn vẫn sắp xếp được.
 

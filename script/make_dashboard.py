@@ -428,9 +428,11 @@ def blocks_of(dash):
         groups = {}
         for p in sec_panels(sec):
             c = panel_cluster(p)
-            if c:
-                groups.setdefault(c, []).append(p)
-        for c, ps in groups.items():
+            if c:  # gom theo cluster + o (col, dong khoi) cua tung panel -> 2 khoi trung ten o 2 cho la 2 khoi rieng
+                col = min(PER_ROW - 1, max(0, p["gridPos"]["x"] // BLOCK_W))
+                line = max(0, (p["gridPos"]["y"] - sec["top"] - 1) // BLOCK_H)
+                groups.setdefault((c, col, line), []).append(p)
+        for (c, _, _), ps in groups.items():
             bx = min(p["gridPos"]["x"] for p in ps)
             by = min(p["gridPos"]["y"] for p in ps)
             head = [p for p in ps if p.get("type") == "text" and p.get("title")]
@@ -482,6 +484,29 @@ def move_block_to_section(dash, b, si, slot=None):
     move_block(dash, dict(b, sec=si), slot[0], slot[1])
 
 
+def count_overlaps(dash):
+    """So cap o (panel) de len nhau trong cung 1 hang - Grafana se tu day xuong lam vo bo cuc."""
+    conts = [[p for p in dash.get("panels", []) if p.get("type") != "row"]]
+    conts += [r.get("panels", []) for r in dash.get("panels", []) if r.get("type") == "row" and r.get("collapsed")]
+    n = 0
+    for ps in conts:
+        g = [p["gridPos"] for p in ps]
+        for i, a in enumerate(g):
+            for c in g[i + 1:]:
+                if a["x"] < c["x"] + c.get("w", 1) and c["x"] < a["x"] + a.get("w", 1) \
+                        and a["y"] < c["y"] + c.get("h", 1) and c["y"] < a["y"] + a.get("h", 1):
+                    n += 1
+    return n
+
+
+def delete_block(dash, b):
+    """Xoa dung 1 khoi (cac o cua no), khong dung toi khoi cung ten o cho khac."""
+    cont = sections(dash)[b["sec"]]["cont"]
+    for p in b["panels"]:
+        cont.remove(p)
+    return "Da xoa khoi %s (%d o)." % (b["title"], len(b["panels"]))
+
+
 def compact(dash):
     """Bo cac dong khoi trong giua cac khoi trong moi hang (khoi ben duoi dich len)."""
     for si in range(len(sections(dash))):
@@ -519,6 +544,7 @@ def arrange_tui(dash):
     import curses
 
     before = copy.deepcopy(dash)
+    base_ov = count_overlaps(dash)  # o de nhau co san (khong chan luu vi cai nay)
     compact(dash)  # don cac dong trong co san (vd tu lan sap xep truoc)
     order = [b["key"] for b in blocks_of(dash)]
     state = {"undo": [], "sel": order[0] if order else None, "msg": "", "drag": None, "changed": False}
@@ -575,7 +601,7 @@ def arrange_tui(dash):
                 put(y, x0, "+" + ("-" * (CW - 1) + "+") * PER_ROW)
         y += 2
         help1 = "CHUOT: bam giu khoi, keo sang o khac roi tha  |  hoac bam khoi roi bam o can toi"
-        help2 = "PHIM: Tab chon khoi | mui ten di chuyen | u hoan tac | s luu | q thoat"
+        help2 = "PHIM: Tab chon khoi | mui ten di chuyen | x xoa khoi | u hoan tac | s luu | q thoat"
         put(y, max(0, (w - len(help1)) // 2), help1, curses.color_pair(3))
         put(y + 1, max(0, (w - len(help2)) // 2), help2, curses.color_pair(3))
         if state["msg"]:
@@ -701,10 +727,18 @@ def arrange_tui(dash):
                         state["msg"] = "Da hoan tac."
                     else:
                         state["msg"] = "Khong con buoc nao de hoan tac."
+                elif k == ord("x"):  # xoa dung khoi dang chon (vd khoi CORE thua o hang HN)
+                    b = sel_block()
+                    if b and confirm(scr, "Xoa khoi %d %s (chi khoi nay, %d o)? (y/n)" % (num(b), b["title"], len(b["panels"]))):
+                        do(lambda: delete_block(dash, b))
                 elif k in (ord("s"), ord("l")):
-                    if confirm(scr, "Luu so do nay len dashboard Grafana? (y/n)"):
+                    ov = count_overlaps(dash)
+                    if ov > base_ov:
+                        state["msg"] = "KHONG LUU: %d cap o de len nhau (luc mo: %d). Bam u de hoan tac." % (ov, base_ov)
+                    elif confirm(scr, "Luu so do nay len dashboard Grafana? (y/n)"):
                         return True
-                    state["msg"] = "Chua luu."
+                    else:
+                        state["msg"] = "Chua luu."
                 elif k == ord("q"):
                     if not state["changed"] or confirm(scr, "Thoat va BO cac thay doi? (y/n)"):
                         return False
@@ -760,6 +794,7 @@ def arrange(dash):
     """Vong lap sap xep tren SSH. Tra ve True neu nguoi dung xac nhan luu."""
     import copy
     undo, mark, msg = [], None, ""
+    base_ov = count_overlaps(dash)
     order = [b["key"] for b in blocks_of(dash)]  # so thu tu co dinh trong ca phien
     print(ARRANGE_HELP)
     while True:
@@ -790,6 +825,9 @@ def arrange(dash):
                 msg = "Khong con buoc nao de hoan tac."
             continue
         if cmd[0] in ("l", "luu"):
+            if count_overlaps(dash) > base_ov:
+                msg = "KHONG LUU: %d cap o de len nhau (luc mo: %d). Go u de hoan tac." % (count_overlaps(dash), base_ov)
+                continue
             yn = input("Luu so do nay len dashboard Grafana? (y/N): ").strip().lower()
             if yn in ("y", "yes", "co"):
                 return True
@@ -893,6 +931,14 @@ if not args.out and os.path.isdir(os.path.join(here, "vmware-cluster-exporter"))
 
 
 def save_and_push(dash, n, folder_uid):
+    if ORIGINAL is not None and args.grafana:  # sao luu dashboard dang co truoc khi ghi de len Grafana
+        import time
+        bdir = os.path.join(outdir, "backup")
+        os.makedirs(bdir, exist_ok=True)
+        bfile = os.path.join(bdir, "%s-%s.json" % (UID, time.strftime("%Y%m%d-%H%M%S")))
+        with open(bfile, "w", encoding="utf-8") as f:
+            json.dump(ORIGINAL, f, ensure_ascii=False, indent=2)
+        print("Sao luu ban cu:", bfile)
     for out in outs:
         with open(out, "w", encoding="utf-8") as f:
             json.dump(dash, f, ensure_ascii=False, indent=2)
@@ -907,6 +953,8 @@ def save_and_push(dash, n, folder_uid):
 existing, folder = (None, None)
 if args.grafana and not args.rebuild:
     existing, folder = get_grafana(args.grafana, TOKEN, UID)
+import copy as _copy
+ORIGINAL = _copy.deepcopy(existing)
 if args.list:
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
