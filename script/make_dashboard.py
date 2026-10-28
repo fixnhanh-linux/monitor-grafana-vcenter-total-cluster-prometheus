@@ -56,7 +56,9 @@ TILES = [
     ("vSAN Used", "(max(vmware_cluster_vsan_capacity_bytes{%s}) - max(vmware_cluster_vsan_free_bytes{%s}))"
                   " / max(vmware_cluster_vsan_capacity_bytes{%s}) * 100" % (C, C, C), "percent", "thr"),
     ("vSAN Free", "max(vmware_cluster_vsan_free_bytes{%s})" % C, "bytes", "fixed"),
-    ("vSAN Resync", "max(vmware_cluster_vsan_resync_bytes{%s})" % C, "bytes", "resync"),
+    # Khong lay duoc resync (cluster co vSAN) -> -1 -> hien "LỖI" do; 0 xanh; dang resync (> 0) do
+    ("vSAN Resync", "max(vmware_cluster_vsan_resync_bytes{%s}) or (max(vmware_cluster_vsan_capacity_bytes{%s}) * 0 - 1)"
+     % (C, C), "bytes", "resync"),
     ("Host - Uptime", "max(vmware_cluster_host_uptime_max_seconds{%s}) / 86400" % C, "suffix: d", "thr"),
     ("CPU Host (Max)", "max(vmware_cluster_host_cpu_max_percent{%s})" % C, "percent", "thr"),
     ("RAM Host (Max)", "max(vmware_cluster_host_mem_max_percent{%s})" % C, "percent", "thr"),
@@ -86,7 +88,9 @@ def tile_override(ref, name, unit, kind):
             "3": {"text": "Fully Automated", "color": GREEN, "index": 3}}}]},
                   {"id": "thresholds", "value": steps((None, ORANGE), (1, GREEN))}]
     elif kind == "resync":
-        props += [{"id": "thresholds", "value": steps((None, GREEN), (1, ORANGE))}]
+        props += [{"id": "mappings", "value": [{"type": "value", "options": {
+            "-1": {"text": "LỖI", "color": RED, "index": 0}}}]},
+                  {"id": "thresholds", "value": steps((None, RED), (0, GREEN), (1, RED))}]
     elif kind == "thr":
         warn, crit = THRESHOLDS[name]
         st = [(None, GREEN)] + ([(warn, ORANGE)] if warn is not None else []) + [(crit, RED)]
@@ -966,6 +970,24 @@ def arrange(dash):
         mark = b["key"]
 
 
+def upgrade_resync_tiles(dash):
+    """O vSAN Resync kieu cu (chi max(...resync_bytes)) -> bieu thuc + mau moi: > 0 do, khong lay duoc -> LỖI do.
+    Giu nguyen vi tri, datasource cua o. Tra ve so o da nang cap."""
+    tile = next(t for t in TILES if t[0] == "vSAN Resync")
+    fresh = tile_panel(0, "X", 0, 0, 1, tile)["fieldConfig"]["defaults"]
+    n = 0
+    for p in all_panels(dash):
+        for t in p.get("targets", []):
+            m = re.fullmatch(r'\s*max\(vmware_cluster_vsan_resync_bytes\{cluster="([^"]+)"\}\)\s*', t.get("expr", ""))
+            if not m:
+                continue
+            t["expr"] = tile[1].replace("$cluster", m.group(1))
+            d = p.setdefault("fieldConfig", {}).setdefault("defaults", {})
+            d["mappings"], d["thresholds"] = fresh["mappings"], fresh["thresholds"]
+            n += 1
+    return n
+
+
 def hide_datasource_picker(dash):
     """An o chon datasource tren dashboard (giu nguyen gia tri dang chon). Tra ve True neu co thay doi."""
     changed = False
@@ -1130,6 +1152,10 @@ if existing is not None:
     hidden = hide_datasource_picker(existing)
     if hidden:
         print("An o chon datasource tren dashboard")
+    up = upgrade_resync_tiles(existing)
+    if up:
+        print("Nang cap %d o vSAN Resync: dang resync -> do, khong lay duoc -> LOI do" % up)
+        hidden = True
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
         add_blocks(existing, new, args.row)

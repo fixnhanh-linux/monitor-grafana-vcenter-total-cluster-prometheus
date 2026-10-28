@@ -945,7 +945,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"CORE\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"CORE\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"CORE\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -959,15 +959,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
@@ -2116,7 +2132,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL17\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL17\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"POOL17\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -2130,15 +2146,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
@@ -3287,7 +3319,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL18-XD\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL18-XD\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"POOL18-XD\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -3301,15 +3333,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
@@ -4458,7 +4506,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL23\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL23\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"POOL23\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -4472,15 +4520,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
@@ -5629,7 +5693,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL25\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"POOL25\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"POOL25\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -5643,15 +5707,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]
@@ -6800,7 +6880,7 @@
             "uid": "${datasource}"
           },
           "refId": "A",
-          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"VC1_POOL6\"})",
+          "expr": "max(vmware_cluster_vsan_resync_bytes{cluster=\"VC1_POOL6\"}) or (max(vmware_cluster_vsan_capacity_bytes{cluster=\"VC1_POOL6\"}) * 0 - 1)",
           "legendFormat": "vSAN Resync",
           "instant": true,
           "range": false
@@ -6814,15 +6894,31 @@
           "noValue": "–",
           "displayName": "vSAN Resync",
           "unit": "bytes",
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "LỖI",
+                  "color": "red",
+                  "index": 0
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
                 "value": 1
               }
             ]

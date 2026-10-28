@@ -559,7 +559,7 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | Ram Used | `mem_used_bytes / mem_total_bytes` | cam ≥ 80% · đỏ ≥ 90% |
 | vSAN Total / Free | `vmware_cluster_vsan_capacity_bytes` / `_free_bytes` (vSAN datastore) | xanh |
 | vSAN Used | `(capacity − free) / capacity` | cam ≥ 70% · đỏ ≥ 80% |
-| vSAN Resync | `vmware_cluster_vsan_resync_bytes` | cam khi > 0 |
+| vSAN Resync | `vmware_cluster_vsan_resync_bytes` (vCenter cũ: exporter tự hỏi qua host) | xanh = 0 · **đỏ** khi > 0 (đang resync) · **LỖI** đỏ khi cluster có vSAN mà không lấy được số resync |
 | Host - Uptime | `vmware_cluster_host_uptime_max_seconds` (host chạy lâu nhất, ngày) | đỏ ≥ 180 ngày |
 | CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | cam ≥ 30% · đỏ ≥ 35% |
 | RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | cam ≥ 76% · đỏ ≥ 80% |
