@@ -622,6 +622,23 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 
 Đổi ngưỡng riêng 1 cluster bằng macro context trên host, ví dụ `{$VMC.HOST.CPU.CRIT:"POOL17"}` = 60.
 
+**Lọc cluster cho 1 host** (1 exporter thấy nhiều cluster, vd pool18 thấy `POOL17` và `POOL18-XD`, mà host Zabbix chỉ
+cần 1): mở host → **Macros** → thêm macro trên host (đè giá trị của template):
+
+| Muốn | Macro trên host | Giá trị |
+|---|---|---|
+| Chỉ lấy POOL18-XD | `{$VMC.CLUSTER.MATCHES}` | `^POOL18-XD$` |
+| Lấy POOL17 và CORE | `{$VMC.CLUSTER.MATCHES}` | `^(POOL17\|CORE)$` |
+| Lấy hết, trừ POOL17 | `{$VMC.CLUSTER.NOT_MATCHES}` | `^POOL17$` |
+
+Giá trị là regex, phân biệt hoa thường, phải đúng tên cluster trên vCenter (không phải tên hiển thị như `PKH`). Mặc định
+`.*` / `CHANGE_IF_NEEDED` = lấy hết. Lưu macro → bấm **Execute now** ở LLD *Cluster Discovery* của host (hoặc chờ 1 phút):
+cluster bị lọc không tạo item mới; item cũ của nó chuyển "không còn phát hiện" và tự xoá sau 7 ngày (đổi ở
+*Keep lost resources period* của LLD nếu muốn xoá ngay — đặt `0`).
+
+Muốn 2 cluster của cùng 1 exporter thành **2 host Zabbix riêng**: tạo 2 host cùng IP + `{$VMC.PORT}`, mỗi host đặt
+`{$VMC.CLUSTER.MATCHES}` = đúng 1 cluster.
+
 ## Thêm pool mới khi dashboard đã có
 
 Xem từng lệnh và kết quả mẫu ở mục **Ví dụ chi tiết: thêm pool mới POOL30** ngay bên dưới.
