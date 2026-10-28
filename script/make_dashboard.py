@@ -84,8 +84,8 @@ def tile_override(ref, name, unit, kind):
         props += [{"id": "mappings", "value": [{"type": "value", "options": {
             "0": {"text": "Tắt", "color": ORANGE, "index": 0},
             "1": {"text": "Manual", "color": GREEN, "index": 1},
-            "2": {"text": "Partially Automated", "color": GREEN, "index": 2},
-            "3": {"text": "Fully Automated", "color": GREEN, "index": 3}}}]},
+            "2": {"text": "Partial", "color": GREEN, "index": 2},
+            "3": {"text": "Auto", "color": GREEN, "index": 3}}}]},
                   {"id": "thresholds", "value": steps((None, ORANGE), (1, GREEN))}]
     elif kind == "resync":
         props += [{"id": "mappings", "value": [{"type": "value", "options": {
@@ -107,7 +107,16 @@ CLUSTERS = ["CORE", "POOL17", "POOL18-XD", "POOL23", "POOL25", "VC1_POOL6"]
 PER_ROW = 3          # so cluster moi hang
 TILE_W, TILE_H = 2, 3  # 1 o = 2/24 chieu ngang -> 4 o / cluster / hang
 # Bo cuc 1 cluster (4 cot x 4 hang): Cluster Status rong gap doi, 14 o con lai moi o 1 cot
-WIDTHS = [2] + [1] * (len(TILES) - 1)
+# Bo cuc o trong 1 khoi (rong 8 cot luoi Grafana): 4 hang theo thu tu TILES, so = do rong (cot luoi).
+# Hang cuoi 3 o: 8 cot khong chia deu duoc cho 3 -> 3-2-3.
+LAYOUT_W = [[2, 2, 2, 2], [2, 2, 2, 2], [2, 2, 2, 2], [3, 2, 3]]
+LAYOUT_VERSION = 2  # doi bo cuc -> tang so nay de cac khoi dang co duoc xep lai 1 lan
+TILE_POS = {}  # ten o -> (x trong khoi, hang, rong)
+for _r, _ws in enumerate(LAYOUT_W):
+    _x = 0
+    for _w in _ws:
+        TILE_POS[TILES[len(TILE_POS)][0]] = (_x, _r, _w)
+        _x += _w
 BLOCK_W, BLOCK_H = 24 // PER_ROW, 1 + TILE_H * 4  # 1 khoi = tieu de + 4 hang o
 
 
@@ -281,13 +290,9 @@ def block_panels(pid, cluster, bx, by):
         "links": [{"title": "Chi tiết host của " + cluster,
                    "url": "/d/esxi-host-resource/?var-cluster=%s&${datasource:queryparam}" % cluster}],
         "options": {"mode": "markdown", "content": ""}}]
-    col, row = 0, 0
-    for tile, w in zip(TILES, WIDTHS):
-        if col + w > 4:
-            col, row = 0, row + 1
-        panels.append(tile_panel(pid + len(panels), cluster, bx + col * TILE_W, by + 1 + row * TILE_H,
-                                 w * TILE_W, tile))
-        col += w
+    for tile in TILES:
+        x, row, w = TILE_POS[tile[0]]
+        panels.append(tile_panel(pid + len(panels), cluster, bx + x, by + 1 + row * TILE_H, w, tile))
     return panels
 
 
@@ -970,6 +975,38 @@ def arrange(dash):
         mark = b["key"]
 
 
+def tile_name(p):
+    d = (p.get("fieldConfig") or {}).get("defaults") or {}
+    if d.get("displayName"):
+        return d["displayName"]
+    t = p.get("targets") or [{}]
+    return t[0].get("legendFormat")
+
+
+def relayout_blocks(dash):
+    """Xep lai o trong moi khoi theo LAYOUT_W (giu khoi o dung cho cu, giu datasource / ten / mau). Tra ve so o da doi."""
+    drs = tile_panel(0, "X", 0, 0, 1, next(t for t in TILES if t[0] == "DRS"))["fieldConfig"]["defaults"]["mappings"]
+    secs = sections(dash)
+    n = 0
+    for b in blocks_of(dash):
+        bx, by = slot_xy(secs[b["sec"]], b["col"], b["line"])
+        for p in b["panels"]:
+            g = p["gridPos"]
+            if p.get("type") == "text" and g.get("h") == 1:
+                new = {"x": bx, "y": by, "w": BLOCK_W, "h": 1}
+            elif tile_name(p) in TILE_POS:
+                x, row, w = TILE_POS[tile_name(p)]
+                new = {"x": bx + x, "y": by + 1 + row * TILE_H, "w": w, "h": TILE_H}
+                if tile_name(p) == "DRS":
+                    p.setdefault("fieldConfig", {}).setdefault("defaults", {})["mappings"] = drs
+            else:
+                continue
+            if any(g.get(k) != v for k, v in new.items()):
+                g.update(new)
+                n += 1
+    return n
+
+
 def upgrade_resync_tiles(dash):
     """O vSAN Resync kieu cu (chi max(...resync_bytes)) -> bieu thuc + mau moi: > 0 do, khong lay duoc -> LỖI do.
     Giu nguyen vi tri, datasource cua o. Tra ve so o da nang cap."""
@@ -1009,6 +1046,8 @@ ap.add_argument("--fix-datasource", action="store_true",
                 help="Khoi nao hien '-' vi datasource khong co cluster do -> doi sang Prometheus tren Grafana co cluster")
 ap.add_argument("--arrange", action="store_true",
                 help="Sap xep vi tri khoi tren SSH (len/xuong/trai/phai, doi cho, doi hang), xem truoc roi moi luu")
+ap.add_argument("--relayout", action="store_true",
+                help="Xep lai o trong moi khoi theo bo cuc chuan 4-4-4-3 (mac dinh tu lam 1 lan sau khi cap nhat)")
 ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
@@ -1156,6 +1195,12 @@ if existing is not None:
     if up:
         print("Nang cap %d o vSAN Resync: dang resync -> do, khong lay duoc -> LOI do" % up)
         hidden = True
+    marker = os.path.join(outdir, "layout-v%d.done" % LAYOUT_VERSION)
+    if args.relayout or not os.path.exists(marker):
+        moved = relayout_blocks(existing)
+        if moved:
+            print("Xep lai o theo bo cuc moi (4-4-4-3): %d o" % moved)
+            hidden = True
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
         add_blocks(existing, new, args.row)
@@ -1165,10 +1210,12 @@ if existing is not None:
         fixed = fix_datasources(existing)
         if not fixed:
             print("  Khong co khoi nao can doi datasource")
-    if not new and not hidden and not fixed:
+    if new or hidden or fixed:
+        save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
+    else:
         print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
-        sys.exit(0)
-    save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
+    if args.grafana:  # da xep bo cuc moi 1 lan -> lan sau giu nguyen chinh sua tay
+        open(marker, "w").close()
     sys.exit(0)
 
 # 2) Chua co dashboard (hoac --rebuild): sinh moi toan bo tu CLUSTERS + cluster tren Prometheus.

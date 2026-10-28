@@ -86,7 +86,7 @@
       "gridPos": {
         "x": 0,
         "y": 2,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -191,7 +191,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 2,
         "w": 2,
         "h": 3
@@ -232,12 +232,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -290,7 +290,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 2,
         "w": 2,
         "h": 3
@@ -358,8 +358,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 5,
+        "x": 6,
+        "y": 2,
         "w": 2,
         "h": 3
       },
@@ -426,7 +426,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 5,
         "w": 2,
         "h": 3
@@ -495,7 +495,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 5,
         "w": 2,
         "h": 3
@@ -572,7 +572,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 5,
         "w": 2,
         "h": 3
@@ -641,8 +641,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 8,
+        "x": 6,
+        "y": 5,
         "w": 2,
         "h": 3
       },
@@ -718,7 +718,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 8,
         "w": 2,
         "h": 3
@@ -787,7 +787,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 8,
         "w": 2,
         "h": 3
@@ -864,7 +864,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 8,
         "w": 2,
         "h": 3
@@ -933,8 +933,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 11,
+        "x": 6,
+        "y": 8,
         "w": 2,
         "h": 3
       },
@@ -1022,9 +1022,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -1095,7 +1095,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 3,
         "y": 11,
         "w": 2,
         "h": 3
@@ -1172,9 +1172,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 5,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -1273,7 +1273,7 @@
       "gridPos": {
         "x": 8,
         "y": 2,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -1378,7 +1378,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 2,
         "w": 2,
         "h": 3
@@ -1419,12 +1419,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -1477,7 +1477,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 2,
         "w": 2,
         "h": 3
@@ -1545,8 +1545,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 5,
+        "x": 14,
+        "y": 2,
         "w": 2,
         "h": 3
       },
@@ -1613,7 +1613,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 5,
         "w": 2,
         "h": 3
@@ -1682,7 +1682,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 5,
         "w": 2,
         "h": 3
@@ -1759,7 +1759,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 5,
         "w": 2,
         "h": 3
@@ -1828,8 +1828,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 8,
+        "x": 14,
+        "y": 5,
         "w": 2,
         "h": 3
       },
@@ -1905,7 +1905,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 8,
         "w": 2,
         "h": 3
@@ -1974,7 +1974,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 8,
         "w": 2,
         "h": 3
@@ -2051,7 +2051,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 8,
         "w": 2,
         "h": 3
@@ -2120,8 +2120,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 11,
+        "x": 14,
+        "y": 8,
         "w": 2,
         "h": 3
       },
@@ -2209,9 +2209,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -2282,7 +2282,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 11,
         "y": 11,
         "w": 2,
         "h": 3
@@ -2359,9 +2359,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 13,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -2460,7 +2460,7 @@
       "gridPos": {
         "x": 16,
         "y": 2,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -2565,7 +2565,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 2,
         "w": 2,
         "h": 3
@@ -2606,12 +2606,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -2664,7 +2664,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 2,
         "w": 2,
         "h": 3
@@ -2732,8 +2732,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 5,
+        "x": 22,
+        "y": 2,
         "w": 2,
         "h": 3
       },
@@ -2800,7 +2800,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 5,
         "w": 2,
         "h": 3
@@ -2869,7 +2869,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 5,
         "w": 2,
         "h": 3
@@ -2946,7 +2946,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 5,
         "w": 2,
         "h": 3
@@ -3015,8 +3015,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 8,
+        "x": 22,
+        "y": 5,
         "w": 2,
         "h": 3
       },
@@ -3092,7 +3092,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 8,
         "w": 2,
         "h": 3
@@ -3161,7 +3161,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 8,
         "w": 2,
         "h": 3
@@ -3238,7 +3238,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 8,
         "w": 2,
         "h": 3
@@ -3307,8 +3307,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 11,
+        "x": 22,
+        "y": 8,
         "w": 2,
         "h": 3
       },
@@ -3396,9 +3396,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -3469,7 +3469,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 19,
         "y": 11,
         "w": 2,
         "h": 3
@@ -3546,9 +3546,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 21,
         "y": 11,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -3647,7 +3647,7 @@
       "gridPos": {
         "x": 0,
         "y": 15,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -3752,7 +3752,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 15,
         "w": 2,
         "h": 3
@@ -3793,12 +3793,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -3851,7 +3851,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 15,
         "w": 2,
         "h": 3
@@ -3919,8 +3919,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 18,
+        "x": 6,
+        "y": 15,
         "w": 2,
         "h": 3
       },
@@ -3987,7 +3987,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 18,
         "w": 2,
         "h": 3
@@ -4056,7 +4056,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 18,
         "w": 2,
         "h": 3
@@ -4133,7 +4133,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 18,
         "w": 2,
         "h": 3
@@ -4202,8 +4202,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 21,
+        "x": 6,
+        "y": 18,
         "w": 2,
         "h": 3
       },
@@ -4279,7 +4279,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 21,
         "w": 2,
         "h": 3
@@ -4348,7 +4348,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 2,
         "y": 21,
         "w": 2,
         "h": 3
@@ -4425,7 +4425,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 21,
         "w": 2,
         "h": 3
@@ -4494,8 +4494,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 0,
-        "y": 24,
+        "x": 6,
+        "y": 21,
         "w": 2,
         "h": 3
       },
@@ -4583,9 +4583,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 2,
+        "x": 0,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -4656,7 +4656,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 4,
+        "x": 3,
         "y": 24,
         "w": 2,
         "h": 3
@@ -4733,9 +4733,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 6,
+        "x": 5,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -4834,7 +4834,7 @@
       "gridPos": {
         "x": 8,
         "y": 15,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -4939,7 +4939,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 15,
         "w": 2,
         "h": 3
@@ -4980,12 +4980,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -5038,7 +5038,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 15,
         "w": 2,
         "h": 3
@@ -5106,8 +5106,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 18,
+        "x": 14,
+        "y": 15,
         "w": 2,
         "h": 3
       },
@@ -5174,7 +5174,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 18,
         "w": 2,
         "h": 3
@@ -5243,7 +5243,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 18,
         "w": 2,
         "h": 3
@@ -5320,7 +5320,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 18,
         "w": 2,
         "h": 3
@@ -5389,8 +5389,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 21,
+        "x": 14,
+        "y": 18,
         "w": 2,
         "h": 3
       },
@@ -5466,7 +5466,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 21,
         "w": 2,
         "h": 3
@@ -5535,7 +5535,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 10,
         "y": 21,
         "w": 2,
         "h": 3
@@ -5612,7 +5612,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 12,
         "y": 21,
         "w": 2,
         "h": 3
@@ -5681,8 +5681,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 8,
-        "y": 24,
+        "x": 14,
+        "y": 21,
         "w": 2,
         "h": 3
       },
@@ -5770,9 +5770,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 10,
+        "x": 8,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -5843,7 +5843,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 12,
+        "x": 11,
         "y": 24,
         "w": 2,
         "h": 3
@@ -5920,9 +5920,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 14,
+        "x": 13,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -6021,7 +6021,7 @@
       "gridPos": {
         "x": 16,
         "y": 15,
-        "w": 4,
+        "w": 2,
         "h": 3
       },
       "targets": [
@@ -6126,7 +6126,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 15,
         "w": 2,
         "h": 3
@@ -6167,12 +6167,12 @@
                   "index": 1
                 },
                 "2": {
-                  "text": "Partially Automated",
+                  "text": "Partial",
                   "color": "green",
                   "index": 2
                 },
                 "3": {
-                  "text": "Fully Automated",
+                  "text": "Auto",
                   "color": "green",
                   "index": 3
                 }
@@ -6225,7 +6225,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 15,
         "w": 2,
         "h": 3
@@ -6293,8 +6293,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 18,
+        "x": 22,
+        "y": 15,
         "w": 2,
         "h": 3
       },
@@ -6361,7 +6361,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 18,
         "w": 2,
         "h": 3
@@ -6430,7 +6430,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 18,
         "w": 2,
         "h": 3
@@ -6507,7 +6507,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 18,
         "w": 2,
         "h": 3
@@ -6576,8 +6576,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 21,
+        "x": 22,
+        "y": 18,
         "w": 2,
         "h": 3
       },
@@ -6653,7 +6653,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 21,
         "w": 2,
         "h": 3
@@ -6722,7 +6722,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 18,
         "y": 21,
         "w": 2,
         "h": 3
@@ -6799,7 +6799,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 20,
         "y": 21,
         "w": 2,
         "h": 3
@@ -6868,8 +6868,8 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 16,
-        "y": 24,
+        "x": 22,
+        "y": 21,
         "w": 2,
         "h": 3
       },
@@ -6957,9 +6957,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 18,
+        "x": 16,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [
@@ -7030,7 +7030,7 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 20,
+        "x": 19,
         "y": 24,
         "w": 2,
         "h": 3
@@ -7107,9 +7107,9 @@
       },
       "transparent": false,
       "gridPos": {
-        "x": 22,
+        "x": 21,
         "y": 24,
-        "w": 2,
+        "w": 3,
         "h": 3
       },
       "targets": [

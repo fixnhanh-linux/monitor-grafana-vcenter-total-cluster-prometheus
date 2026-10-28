@@ -1,7 +1,18 @@
 # VMWARE CLUSTER HCM — dashboard lưới ô theo cluster
 
 Dashboard Grafana tổng quan từng cluster VMware: mỗi cluster 1 khối gồm 15 ô màu
-(xanh = tốt, cam = cảnh báo, đỏ = lỗi), cố định 4 cột × 4 hàng (ô Cluster Status rộng gấp đôi), 3 cluster / hàng.
+(xanh = tốt, cam = cảnh báo, đỏ = lỗi), 3 cluster / hàng. Ô trong mỗi khối xếp 4 – 4 – 4 – 3:
+
+```text
+| Cluster Status | DRS            | Total Host     | Total VM    |
+| CPU Total      | CPU Used       | Ram Total      | Ram Used    |
+| vSAN Total     | vSAN Used      | vSAN Free      | vSAN Resync |
+| Host - Uptime     | CPU Host (Max) | RAM Host (Max)            |
+```
+
+Khối rộng 8 cột lưới Grafana nên hàng cuối chia 3 – 2 – 3. Đổi bố cục: sửa `LAYOUT_W` trong `script/make_dashboard.py`
+và tăng `LAYOUT_VERSION` — lần chạy kế tiếp (timer / menu 10) tự xếp lại **1 lần** mọi khối đang có (giữ tên,
+datasource, vị trí khối); sau đó chỉnh tay trên Grafana được giữ nguyên. Xếp lại lúc khác: `--relayout`.
 
 ## Sơ đồ
 
@@ -550,7 +561,7 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | Ô | Metric | Màu |
 |---|---|---|
 | Cluster Status | `vmware_cluster_vsan_health_score` (điểm Skyline Health 0–100, giống "Cluster health score" trên vCenter); không có điểm thì `vmware_cluster_vsan_health`, không có vSAN thì `vmware_cluster_status` | HEALTHY ≥ 80 xanh · WARNING 60–79 cam · ERROR < 60 đỏ |
-| DRS | `vmware_cluster_drs_mode` | Manual / Partially / Fully Automated xanh · Tắt cam |
+| DRS | `vmware_cluster_drs_mode` | Manual / Partial / Auto xanh · Tắt cam |
 | Total Host | `vmware_cluster_hosts` | xanh |
 | Total VM | `vmware_cluster_vms_total` (cả VM đang tắt) | xanh |
 | CPU Total | `vmware_cluster_cpu_total_hz` | xanh |
@@ -628,6 +639,7 @@ khối cho cluster mới** vào chỗ trống của hàng chọn bằng `--row` 
 | `--remove POOL5` | xoá khối cluster `POOL5` khỏi dashboard |
 | `--move POOL5 --row HN` | chuyển khối `POOL5` sang hàng có tên chứa `HN` |
 | `--rows` | in tên các hàng trên dashboard |
+| `--relayout` | xếp lại ô trong mọi khối theo bố cục chuẩn 4 – 4 – 4 – 3 |
 | `--rename POOL17 PKH` | đổi tên hiển thị khối của cluster `POOL17` thành `PKH` (ghi nhớ) |
 | `--names <file>` | file ghi nhớ tên hiển thị (mặc định `/etc/vmware-cluster-dashboard.names`) |
 | `--arrange` | sắp xếp vị trí khối trên SSH, kéo thả chuột (như mục 14); `ARRANGE_TEXT=1` = chế độ gõ lệnh |
