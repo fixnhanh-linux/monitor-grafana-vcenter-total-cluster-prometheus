@@ -52,8 +52,12 @@ script/
   vmware-cluster-exporter-linux.zip.sha256
   make_dashboard.py                        chèn khối pool mới / xoá khối / liệt kê, đẩy lên Grafana
   install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
+template-zabbix/
+  zabbix_template_vmware_cluster_hcm.yaml  template Zabbix 6.0 (import vào Zabbix)
+  README.md                                cách import, gắn host, macro lọc cluster
+docs/
+  so-do-kien-truc.svg                      sơ đồ
 menu.sh                                    menu quản lý tất cả (sudo bash menu.sh)
-zabbix_template_vmware_cluster_hcm.yaml    template Zabbix 6.0
 ```
 
 ## Tải về và chạy nhanh (git clone)
@@ -462,7 +466,7 @@ Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard tr
 | Cài exporter (mỗi vCenter chạy 1 lần) | `cd script && sha256sum -c vmware-cluster-exporter-linux.zip.sha256 && unzip -o vmware-cluster-exporter-linux.zip && cd vmware-cluster-exporter && sudo ./install.sh` |
 | Thêm job Prometheus | `cp script/vmware-cluster-exporter/prometheus-vmware-cluster.yml /etc/prometheus/scrape_configs/vmware-cluster.yml` (sửa IP/port) |
 | Dashboard Grafana | Import `dashboard-grafana/vmware_cluster_hcm_grafana.json` |
-| Template Zabbix | Import `zabbix_template_vmware_cluster_hcm.yaml` |
+| Template Zabbix | Import `template-zabbix/zabbix_template_vmware_cluster_hcm.yaml` |
 | Tự thêm khối pool mới | `cd script && sudo bash install_auto_dashboard.sh` |
 
 Lấy bản mới về sau này: `git pull` trong thư mục repo, rồi cập nhật exporter theo mục **1b**.
@@ -586,7 +590,8 @@ khối **mới thêm** và khi tạo lại từ đầu (`--rebuild` hoặc impor
 
 ## Zabbix 6.0 — template `VMware Cluster HCM By VMware Cluster Exporter`
 
-File `zabbix_template_vmware_cluster_hcm.yaml`. Zabbix đọc thẳng
+File [`template-zabbix/zabbix_template_vmware_cluster_hcm.yaml`](template-zabbix/zabbix_template_vmware_cluster_hcm.yaml)
+(hướng dẫn ngắn: [`template-zabbix/README.md`](template-zabbix/README.md)). Zabbix đọc thẳng
 `/metrics` của exporter bằng HTTP agent, không cần mật khẩu vCenter trong Zabbix.
 
 1. Configuration → Templates → Import (Zabbix 6.4+: Data collection → Templates) → chọn file YAML → Import.
