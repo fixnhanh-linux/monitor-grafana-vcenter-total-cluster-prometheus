@@ -614,7 +614,7 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 | RAM cluster dùng ≥ (min 5 phút) | High / Warning | `{$VMC.MEM.CRIT}` 90 · `{$VMC.MEM.WARN}` 80 |
 | vSAN đã dùng ≥ | High / Warning | `{$VMC.VSAN.CRIT}` 80 · `{$VMC.VSAN.WARN}` 70 |
 | CPU / RAM host cao nhất ≥ (min 5 phút) | Average / Warning | `{$VMC.HOST.CPU.*}` 35/30 · `{$VMC.HOST.MEM.*}` 80/76 |
-| vSAN resync kéo dài | Warning | `{$VMC.RESYNC.TIME}` 30m |
+| vSAN resync kéo dài — tên cảnh báo ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Warning | `{$VMC.RESYNC.TIME}` 30m |
 | Có host không hoạt động (effective < tổng) | Average | — |
 | vCenter báo cluster red | Average | — |
 | vSAN Skyline có mục red · DRS tắt · host chạy lâu | Info | `{$VMC.UPTIME.MAX}` 180d |

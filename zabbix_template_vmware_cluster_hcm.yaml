@@ -523,8 +523,10 @@ zabbix_export:
         trigger_prototypes:
         - uuid: 4c25c070091e4186af4a8392467d4a2e
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.resync.bytes[{#CLUSTER}],{$VMC.RESYNC.TIME})>0'
-          name: 'Cluster {#CLUSTER}: vSAN Resync Running Longer Than {$VMC.RESYNC.TIME}'
+          name: 'Cluster {#CLUSTER}: vSAN Resync {ITEM.LASTVALUE} Remaining, Running Longer Than {$VMC.RESYNC.TIME}'
           priority: WARNING
+          opdata: 'Remaining: {ITEM.LASTVALUE}'
+          description: vSAN is still resyncing data. The name and operational data show how much is left to resync.
       - uuid: c656ef3d873442a2b88574d0503529ae
         name: 'Cluster {#CLUSTER}: vSAN Resync Objects'
         type: DEPENDENT
