@@ -6,8 +6,8 @@ zabbix_export:
     name: Templates/VMware
   templates:
   - uuid: 796759aa193848d88344eeff7f8358fe
-    template: VMware Cluster HCM by vmware-cluster-exporter
-    name: VMware Cluster HCM by vmware-cluster-exporter
+    template: VMware Cluster HCM By VMware Cluster Exporter
+    name: VMware Cluster HCM By VMware Cluster Exporter
     description: |-
       Per-cluster VMware totals from vmware-cluster-exporter (vmware_cluster_* metrics).
       One host per exporter instance: set macro {$VMC.PORT} (9821 pool18, 9822 pool25, 9823 pool6, 9824 core) and an interface with IP 10.0.0.10.
@@ -30,7 +30,7 @@ zabbix_export:
       - tag: component
         value: raw
     - uuid: 714599446e984168af2a68c9b098346f
-      name: 'Exporter: vCenter collection'
+      name: 'Exporter: vCenter Collection'
       type: DEPENDENT
       key: vmc.exporter.up
       delay: '0'
@@ -51,20 +51,20 @@ zabbix_export:
         value: exporter
       triggers:
       - uuid: cd14aa1262314927b9f61daa65fb540a
-        expression: last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up)=0
-        name: 'Exporter: cannot collect data from vCenter'
+        expression: last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.exporter.up)=0
+        name: 'Exporter: Cannot Collect Data From vCenter'
         priority: HIGH
         description: 'Check the log: journalctl -u vmware-cluster-exporter@<instance> -n 50'
         dependencies:
-        - name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
-          expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+        - name: 'Exporter: No Data From /metrics For {$VMC.NODATA}'
+          expression: 'nodata(/VMware Cluster HCM By VMware Cluster Exporter/vmc.exporter.up,{$VMC.NODATA})=1'
       - uuid: 2643626c4abb401d990f953cfe8c196b
-        expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
-        name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
+        expression: 'nodata(/VMware Cluster HCM By VMware Cluster Exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+        name: 'Exporter: No Data From /metrics For {$VMC.NODATA}'
         priority: HIGH
         description: 'Check the vmware-cluster-exporter service and firewall port {$VMC.PORT}'
     - uuid: 325ce3de586445e588f79c4e6a436c41
-      name: 'Exporter: last successful collection'
+      name: 'Exporter: Last Successful Collection'
       type: DEPENDENT
       key: vmc.exporter.last_success
       delay: '0'
@@ -84,14 +84,14 @@ zabbix_export:
         value: exporter
       triggers:
       - uuid: 6dc1d81cbbb1470781f595ccab2ce545
-        expression: 'fuzzytime(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.last_success,10m)=0'
-        name: 'Exporter: data older than 10 minutes'
+        expression: 'fuzzytime(/VMware Cluster HCM By VMware Cluster Exporter/vmc.exporter.last_success,10m)=0'
+        name: 'Exporter: Data Older Than 10 Minutes'
         priority: WARNING
         dependencies:
-        - name: 'Exporter: no data from /metrics for {$VMC.NODATA}'
-          expression: 'nodata(/VMware Cluster HCM by vmware-cluster-exporter/vmc.exporter.up,{$VMC.NODATA})=1'
+        - name: 'Exporter: No Data From /metrics For {$VMC.NODATA}'
+          expression: 'nodata(/VMware Cluster HCM By VMware Cluster Exporter/vmc.exporter.up,{$VMC.NODATA})=1'
     - uuid: 3cdae75694924bcbb638f96725a56bb3
-      name: 'Exporter: collection duration'
+      name: 'Exporter: Collection Duration'
       type: DEPENDENT
       key: vmc.exporter.duration
       delay: '0'
@@ -110,7 +110,7 @@ zabbix_export:
       - tag: component
         value: exporter
     - uuid: 347ad14198ac4b1ab04042bede4ec93b
-      name: 'Exporter: version'
+      name: 'Exporter: Version'
       type: DEPENDENT
       key: vmc.exporter.version
       delay: '0'
@@ -133,7 +133,7 @@ zabbix_export:
         value: exporter
     discovery_rules:
     - uuid: af7200965b4d4e6281fbecddc07b3a9c
-      name: Cluster discovery
+      name: Cluster Discovery
       type: DEPENDENT
       key: vmc.cluster.discovery
       delay: '0'
@@ -149,7 +149,7 @@ zabbix_export:
         path: $.labels.cluster
       item_prototypes:
       - uuid: f579aead8fff41fb939285b1073d89e3
-        name: 'Cluster {#CLUSTER}: vCenter status'
+        name: 'Cluster {#CLUSTER}: vCenter Status'
         type: DEPENDENT
         key: 'vmc.cluster.status[{#CLUSTER}]'
         delay: '0'
@@ -174,11 +174,11 @@ zabbix_export:
           name: VMware color status
         trigger_prototypes:
         - uuid: c6a72186c23b48ff95fb8dd4a93f43a3
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.status[{#CLUSTER}])=2'
-          name: 'Cluster {#CLUSTER}: vCenter reports status red'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.status[{#CLUSTER}])=2'
+          name: 'Cluster {#CLUSTER}: vCenter Reports Status Red'
           priority: AVERAGE
       - uuid: a92072db8a844d42b96b63e52852dfd9
-        name: 'Cluster {#CLUSTER}: vSAN overall health'
+        name: 'Cluster {#CLUSTER}: vSAN Overall Health'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.health[{#CLUSTER}]'
         delay: '0'
@@ -203,12 +203,12 @@ zabbix_export:
           name: vSAN health
         trigger_prototypes:
         - uuid: 7c04756e30ea4a7a9648891cc1710483
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.health[{#CLUSTER}])=2'
-          name: 'Cluster {#CLUSTER}: vSAN Skyline Health has a red check'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.health[{#CLUSTER}])=2'
+          name: 'Cluster {#CLUSTER}: vSAN Skyline Health Has A Red Check'
           priority: INFO
           description: vSAN overall health is red (at least one Unhealthy finding). Main alerting uses the health score.
       - uuid: 7b55b3b0dbd2444484b72c8f0910c43e
-        name: 'Cluster {#CLUSTER}: vSAN health score'
+        name: 'Cluster {#CLUSTER}: vSAN Health Score'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.score[{#CLUSTER}]'
         delay: '0'
@@ -231,17 +231,17 @@ zabbix_export:
         description: 'Cluster health score (0-100) shown in vCenter > Monitor > vSAN > Skyline Health'
         trigger_prototypes:
         - uuid: 1c5cd241014d4a7183b864b9e5aa39dd
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.CRIT}'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.CRIT}'
           priority: HIGH
           description: 'Check vCenter > Cluster > Monitor > vSAN > Skyline Health'
         - uuid: 6b6c373c86b640d09eb42e5961758cef
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.WARN}'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.WARN}'
           priority: WARNING
           dependencies:
-          - name: 'Cluster {#CLUSTER}: vSAN health score < {$VMC.SCORE.CRIT}'
-            expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
+          - name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.CRIT}'
+            expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
       - uuid: 82dcf37ab5764d87b65a586c6d8918c9
         name: 'Cluster {#CLUSTER}: DRS'
         type: DEPENDENT
@@ -267,8 +267,8 @@ zabbix_export:
           name: VMware DRS mode
         trigger_prototypes:
         - uuid: ea5692fca91c4613b7b6b0a34478e5d7
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.drs[{#CLUSTER}])=0'
-          name: 'Cluster {#CLUSTER}: DRS is disabled'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.drs[{#CLUSTER}])=0'
+          name: 'Cluster {#CLUSTER}: DRS Is Disabled'
           priority: INFO
       - uuid: 50fb114e2d564fdbbf356ee93df1ad09
         name: 'Cluster {#CLUSTER}: Hosts'
@@ -292,7 +292,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: ff87eda26e9f4bc5ba67995b346844ca
-        name: 'Cluster {#CLUSTER}: Effective hosts'
+        name: 'Cluster {#CLUSTER}: Effective Hosts'
         type: DEPENDENT
         key: 'vmc.cluster.hosts.effective[{#CLUSTER}]'
         delay: '0'
@@ -335,7 +335,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         description: Includes powered-off VMs
       - uuid: 2c062fd6ca22481c94f594a86227744b
-        name: 'Cluster {#CLUSTER}: Powered-off VMs'
+        name: 'Cluster {#CLUSTER}: Powered-Off VMs'
         type: DEPENDENT
         key: 'vmc.cluster.vms.off[{#CLUSTER}]'
         delay: '0'
@@ -356,7 +356,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: 1b0ab2750a764920a4baf9b9241ec194
-        name: 'Cluster {#CLUSTER}: CPU total'
+        name: 'Cluster {#CLUSTER}: CPU Total'
         type: DEPENDENT
         key: 'vmc.cluster.cpu.total[{#CLUSTER}]'
         delay: '0'
@@ -378,7 +378,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: Hz
       - uuid: 9b2f3335f7294308a6166076d70928e8
-        name: 'Cluster {#CLUSTER}: CPU used'
+        name: 'Cluster {#CLUSTER}: CPU Used'
         type: DEPENDENT
         key: 'vmc.cluster.cpu.used[{#CLUSTER}]'
         delay: '0'
@@ -400,7 +400,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: Hz
       - uuid: 4a0c2532e0b9428da0cb0a8191a54740
-        name: 'Cluster {#CLUSTER}: Memory total'
+        name: 'Cluster {#CLUSTER}: Memory Total'
         type: DEPENDENT
         key: 'vmc.cluster.mem.total[{#CLUSTER}]'
         delay: '0'
@@ -422,7 +422,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: B
       - uuid: 279966378ed44f4784e160fa987bf2c3
-        name: 'Cluster {#CLUSTER}: Memory used'
+        name: 'Cluster {#CLUSTER}: Memory Used'
         type: DEPENDENT
         key: 'vmc.cluster.mem.used[{#CLUSTER}]'
         delay: '0'
@@ -444,7 +444,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: B
       - uuid: 14ee9cab4ae343d7b8c484f2a596a169
-        name: 'Cluster {#CLUSTER}: vSAN capacity'
+        name: 'Cluster {#CLUSTER}: vSAN Capacity'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.total[{#CLUSTER}]'
         delay: '0'
@@ -466,7 +466,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: B
       - uuid: 638d4f93ab9040d7a12a213f0ca3d3e7
-        name: 'Cluster {#CLUSTER}: vSAN free'
+        name: 'Cluster {#CLUSTER}: vSAN Free'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.free[{#CLUSTER}]'
         delay: '0'
@@ -488,7 +488,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: B
       - uuid: 7b33a4e2c1ee43b187d3d3528849a989
-        name: 'Cluster {#CLUSTER}: vSAN resync'
+        name: 'Cluster {#CLUSTER}: vSAN Resync'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.resync.bytes[{#CLUSTER}]'
         delay: '0'
@@ -512,11 +512,11 @@ zabbix_export:
         description: Bytes left to resync
         trigger_prototypes:
         - uuid: 4c25c070091e4186af4a8392467d4a2e
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.resync.bytes[{#CLUSTER}],{$VMC.RESYNC.TIME})>0'
-          name: 'Cluster {#CLUSTER}: vSAN resync running longer than {$VMC.RESYNC.TIME}'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.resync.bytes[{#CLUSTER}],{$VMC.RESYNC.TIME})>0'
+          name: 'Cluster {#CLUSTER}: vSAN Resync Running Longer Than {$VMC.RESYNC.TIME}'
           priority: WARNING
       - uuid: c656ef3d873442a2b88574d0503529ae
-        name: 'Cluster {#CLUSTER}: vSAN resync objects'
+        name: 'Cluster {#CLUSTER}: vSAN Resync Objects'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.resync.objects[{#CLUSTER}]'
         delay: '0'
@@ -537,7 +537,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: 303b854c16e941c980d4fc8e470758f5
-        name: 'Cluster {#CLUSTER}: Longest host uptime'
+        name: 'Cluster {#CLUSTER}: Longest Host Uptime'
         type: DEPENDENT
         key: 'vmc.cluster.host.uptime.max[{#CLUSTER}]'
         delay: '0'
@@ -559,7 +559,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: uptime
       - uuid: b5c1d04ede274a769ea188a4124be124
-        name: 'Cluster {#CLUSTER}: Busiest host CPU'
+        name: 'Cluster {#CLUSTER}: Busiest Host CPU'
         type: DEPENDENT
         key: 'vmc.cluster.host.cpu.max[{#CLUSTER}]'
         delay: '0'
@@ -581,7 +581,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: '%'
       - uuid: 165c52f3e602457780d562cdfa7e688e
-        name: 'Cluster {#CLUSTER}: Busiest host memory'
+        name: 'Cluster {#CLUSTER}: Busiest Host Memory'
         type: DEPENDENT
         key: 'vmc.cluster.host.mem.max[{#CLUSTER}]'
         delay: '0'
@@ -603,7 +603,7 @@ zabbix_export:
           value: '{#CLUSTER}'
         units: '%'
       - uuid: 92f2a1d8610942609680c4624a6ed04c
-        name: 'Cluster {#CLUSTER}: Busiest host CPU - name'
+        name: 'Cluster {#CLUSTER}: Busiest Host CPU - Name'
         type: DEPENDENT
         key: 'vmc.cluster.host.cpu.max.name[{#CLUSTER}]'
         delay: '0'
@@ -625,7 +625,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: 49d3b95f55d04a87b3c4bc1353558887
-        name: 'Cluster {#CLUSTER}: Busiest host memory - name'
+        name: 'Cluster {#CLUSTER}: Busiest Host Memory - Name'
         type: DEPENDENT
         key: 'vmc.cluster.host.mem.max.name[{#CLUSTER}]'
         delay: '0'
@@ -647,7 +647,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: c6b579542086466e89f0c72cb8e93575
-        name: 'Cluster {#CLUSTER}: Longest uptime host - name'
+        name: 'Cluster {#CLUSTER}: Longest Uptime Host - Name'
         type: DEPENDENT
         key: 'vmc.cluster.host.uptime.max.name[{#CLUSTER}]'
         delay: '0'
@@ -669,7 +669,7 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
       - uuid: a2e4388c4b9343f084d5b6db524dae52
-        name: 'Cluster {#CLUSTER}: CPU usage (%)'
+        name: 'Cluster {#CLUSTER}: CPU Usage (%)'
         type: DEPENDENT
         key: 'vmc.cluster.cpu.pused[{#CLUSTER}]'
         delay: '0'
@@ -698,18 +698,18 @@ zabbix_export:
           value: '{#CLUSTER}'
         trigger_prototypes:
         - uuid: 060a3bcff02347de8633ead092ef61e4
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
           priority: HIGH
         - uuid: 098dd7aab4d14f45b1fbd97e9e73c27f
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.WARN:"{#CLUSTER}"}%'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.WARN:"{#CLUSTER}"}%'
           priority: WARNING
           dependencies:
-          - name: 'Cluster {#CLUSTER}: CPU used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
-            expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
+          - name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
+            expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
       - uuid: 16c725a0870b4628ba2b32d605350bb1
-        name: 'Cluster {#CLUSTER}: Memory usage (%)'
+        name: 'Cluster {#CLUSTER}: Memory Usage (%)'
         type: DEPENDENT
         key: 'vmc.cluster.mem.pused[{#CLUSTER}]'
         delay: '0'
@@ -738,18 +738,18 @@ zabbix_export:
           value: '{#CLUSTER}'
         trigger_prototypes:
         - uuid: 7bc945439e97496c8f5db6d77c3c8105
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
           priority: HIGH
         - uuid: 2c3d4b2579dc4e949d8993695353bddc
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.WARN:"{#CLUSTER}"}%'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.WARN:"{#CLUSTER}"}%'
           priority: WARNING
           dependencies:
-          - name: 'Cluster {#CLUSTER}: Memory used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
-            expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
+          - name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
+            expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
       - uuid: d220f55d1184416eb92d4c42cd73dea6
-        name: 'Cluster {#CLUSTER}: vSAN used (%)'
+        name: 'Cluster {#CLUSTER}: vSAN Used (%)'
         type: DEPENDENT
         key: 'vmc.cluster.vsan.pused[{#CLUSTER}]'
         delay: '0'
@@ -778,52 +778,58 @@ zabbix_export:
           value: '{#CLUSTER}'
         trigger_prototypes:
         - uuid: cfad50b8ac484c05b540805f8ff84caf
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
           priority: HIGH
         - uuid: cdf783f0d4e240b684e1b3b3b8de9cb1
-          expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.WARN:"{#CLUSTER}"}%'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.WARN:"{#CLUSTER}"}'
+          name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.WARN:"{#CLUSTER}"}%'
           priority: WARNING
           dependencies:
-          - name: 'Cluster {#CLUSTER}: vSAN used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
-            expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
+          - name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
+            expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
       trigger_prototypes:
       - uuid: f6bf7e6edf1f4c36b7555c2abecaba39
-        expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.hosts.effective[{#CLUSTER}])<last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.hosts[{#CLUSTER}])'
-        name: 'Cluster {#CLUSTER}: some hosts are not effective'
+        expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts.effective[{#CLUSTER}])<last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts[{#CLUSTER}])'
+        name: 'Cluster {#CLUSTER}: Some Hosts Are Not Effective'
         priority: AVERAGE
         description: 'Effective hosts < total hosts: a host is disconnected, in maintenance or not responding'
       - uuid: 1f390f0cdc404cc98fa24f8bcaa207a2
-        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
-        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+          Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
         priority: AVERAGE
       - uuid: 5a98c96d7b3545a3ada28b8f69905271
-        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
-        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.WARN:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+          Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
         priority: WARNING
         dependencies:
-        - name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
+        - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+            Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
       - uuid: 0e0d852aa0c44a3ea72334a9c6ef63b6
-        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
-        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+          Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
         priority: AVERAGE
       - uuid: 3eaeed3a5ac5433d8bd0b4c3740017fb
-        expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
-        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.WARN:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
+        expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+          Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
         priority: WARNING
         dependencies:
-        - name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (now {ITEM.LASTVALUE1})'
-          expression: 'min(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
+        - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
+          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
+            Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
       - uuid: 67e328fe9db14fe2b575047677f192fc
-        expression: 'last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.uptime.max[{#CLUSTER}])>={$VMC.UPTIME.MAX:"{#CLUSTER}"} and length(last(/VMware Cluster HCM by vmware-cluster-exporter/vmc.cluster.host.uptime.max.name[{#CLUSTER}]))>=0'
-        name: 'Cluster {#CLUSTER}: host {ITEM.LASTVALUE2} up longer than {$VMC.UPTIME.MAX} (now {ITEM.LASTVALUE1})'
+        expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.uptime.max[{#CLUSTER}])>={$VMC.UPTIME.MAX:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.uptime.max.name[{#CLUSTER}]))>=0'
+        name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Up Longer Than {$VMC.UPTIME.MAX} (Now {ITEM.LASTVALUE1})'
         priority: INFO
         description: Long-running hosts should be patched / rebooted
       graph_prototypes:
       - uuid: 2773db3b851b4b4296e033f013ca1d1e
-        name: 'Cluster {#CLUSTER}: resource usage (%)'
+        name: 'Cluster {#CLUSTER}: Resource Usage (%)'
         ymin_type_1: FIXED
         ymax_type_1: FIXED
         yaxismax: '100'
@@ -831,27 +837,27 @@ zabbix_export:
         - sortorder: '0'
           color: 1A7C11
           item:
-            host: VMware Cluster HCM by vmware-cluster-exporter
+            host: VMware Cluster HCM By VMware Cluster Exporter
             key: 'vmc.cluster.cpu.pused[{#CLUSTER}]'
         - sortorder: '1'
           color: 2774A4
           item:
-            host: VMware Cluster HCM by vmware-cluster-exporter
+            host: VMware Cluster HCM By VMware Cluster Exporter
             key: 'vmc.cluster.mem.pused[{#CLUSTER}]'
         - sortorder: '2'
           color: F63100
           item:
-            host: VMware Cluster HCM by vmware-cluster-exporter
+            host: VMware Cluster HCM By VMware Cluster Exporter
             key: 'vmc.cluster.vsan.pused[{#CLUSTER}]'
         - sortorder: '3'
           color: A54F10
           item:
-            host: VMware Cluster HCM by vmware-cluster-exporter
+            host: VMware Cluster HCM By VMware Cluster Exporter
             key: 'vmc.cluster.host.cpu.max[{#CLUSTER}]'
         - sortorder: '4'
           color: 6C59DC
           item:
-            host: VMware Cluster HCM by vmware-cluster-exporter
+            host: VMware Cluster HCM By VMware Cluster Exporter
             key: 'vmc.cluster.host.mem.max[{#CLUSTER}]'
     tags:
     - tag: class

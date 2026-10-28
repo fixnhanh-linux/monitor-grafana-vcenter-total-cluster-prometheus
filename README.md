@@ -573,12 +573,15 @@ khối **mới thêm** và khi tạo lại từ đầu (`--rebuild` hoặc impor
 - **CPU Total** hiển thị đúng đơn vị Hz (vd THz cho cluster lớn); dashboard cũ ghi nhầm GHz.
 - **Cluster Status** lấy từ vSAN Skyline Health thật của vCenter (điểm health score), không phải giá trị cố định.
 
-## Zabbix 6.0 — template `VMware Cluster HCM by vmware-cluster-exporter`
+## Zabbix 6.0 — template `VMware Cluster HCM By VMware Cluster Exporter`
 
 File `zabbix_template_vmware_cluster_hcm.yaml`. Zabbix đọc thẳng
 `/metrics` của exporter bằng HTTP agent, không cần mật khẩu vCenter trong Zabbix.
 
 1. Configuration → Templates → Import (Zabbix 6.4+: Data collection → Templates) → chọn file YAML → Import.
+   Đã import bản cũ (tên `VMware Cluster HCM by vmware-cluster-exporter`): import đè file mới, để mặc định
+   **Update existing** → template, item, trigger tự đổi sang tên mới viết hoa chữ đầu; UUID giữ nguyên nên
+   **không** tạo template / trigger trùng, các host đang gắn template giữ nguyên lịch sử.
 2. Tạo 4 host (mỗi instance exporter 1 host), interface Agent IP `10.0.0.10`, gắn template, đặt macro `{$VMC.PORT}`:
 
 | Host | `{$VMC.PORT}` | Cluster tự phát hiện |
@@ -725,7 +728,7 @@ Toàn bộ IP, tên và số liệu trong mục này là **giả lập** để m
 | Prometheus HCM | `10.0.0.5:9090` | scrape exporter (job `vmware_cluster`) |
 | prometheus-all | `10.0.0.6:9090` | federation, nguồn của dashboard |
 | Grafana | `10.0.0.7:3000` | dashboard uid `vmware-cluster-hcm` |
-| Zabbix 6.0 | `10.0.0.8` | template `VMware Cluster HCM by vmware-cluster-exporter` |
+| Zabbix 6.0 | `10.0.0.8` | template `VMware Cluster HCM By VMware Cluster Exporter` |
 
 ### Bước 1 — Cài exporter cho vCenter mới (trên server exporter `10.0.0.10`)
 
