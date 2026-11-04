@@ -54,6 +54,7 @@ script/
   install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
 template-zabbix/
   zabbix_template_vmware_cluster_hcm.yaml  template Zabbix 6.0 (import vào Zabbix)
+  make_zabbix_template.py                  script sinh lại file YAML (đổi ngưỡng / mức cảnh báo)
   README.md                                cách import, gắn host, macro lọc cluster
 docs/
   so-do-kien-truc.svg                      sơ đồ

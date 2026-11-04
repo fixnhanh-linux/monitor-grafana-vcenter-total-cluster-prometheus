@@ -9,6 +9,18 @@ Configuration → Templates → **Import** (Zabbix 6.4+: Data collection → Tem
 **Update existing** → Import. UUID cố định nên import lại bản mới chỉ cập nhật template đang dùng, không tạo bản trùng,
 host giữ nguyên lịch sử.
 
+## Sinh lại template
+
+Template sinh từ `make_zabbix_template.py` (cần `pip install pyyaml`). Muốn đổi ngưỡng mặc định, mức cảnh báo hay
+thêm trigger: sửa bảng `MACROS` / các hàm `trig(...)` trong script rồi chạy
+
+```bash
+python make_zabbix_template.py
+```
+
+Script ghi đè `zabbix_template_vmware_cluster_hcm.yaml` cùng thư mục. UUID tính cố định từ key / biểu thức nên import
+lại không tạo trùng (trigger đổi biểu thức sẽ là trigger mới, bản cũ bị xoá khi tick **Delete missing**).
+
 ## Gắn cho host
 
 Mỗi instance exporter = 1 host: interface Agent = IP máy chạy exporter (nếu Zabbix proxy chạy cùng máy: `127.0.0.1`,
