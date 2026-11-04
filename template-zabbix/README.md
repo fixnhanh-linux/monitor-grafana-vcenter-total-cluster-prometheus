@@ -21,7 +21,7 @@ Mỗi instance exporter = 1 host: interface Agent = IP máy chạy exporter (n�
 | `{$VMC.CLUSTER.NOT_MATCHES}` | `^POOL17$` | bỏ cluster khớp regex |
 
 Tên cluster trong regex là tên thật trên vCenter (không phải tên hiển thị trên dashboard). Ngưỡng cảnh báo là macro,
-đổi riêng 1 cluster bằng macro context, vd `{$VMC.CPU.CRIT:"POOL17"}` = 60. Bảng trigger đầy đủ: README chính của repo,
+đổi riêng 1 cluster bằng macro context, vd `{$VMC.HOST.CPU.CRIT:"POOL17"}` = 70. Bảng trigger đầy đủ: README chính của repo,
 mục **Zabbix 6.0**.
 
 ## Cảnh báo đáng chú ý

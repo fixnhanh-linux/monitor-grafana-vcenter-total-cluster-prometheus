@@ -475,6 +475,12 @@ zabbix_export:
         - tag: cluster
           value: '{#CLUSTER}'
         units: B
+        trigger_prototypes:
+        - uuid: e03d29be888e4fc2be7f7a2d67787c25
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.total[{#CLUSTER}])=0'
+          name: 'Cluster {#CLUSTER}: vSAN Datastore Offline (Capacity 0)'
+          priority: DISASTER
+          description: 'vSAN datastore reports 0 capacity: datastore offline or vSAN cluster dropped'
       - uuid: 638d4f93ab9040d7a12a213f0ca3d3e7
         name: 'Cluster {#CLUSTER}: vSAN Free'
         type: DEPENDENT
@@ -524,7 +530,7 @@ zabbix_export:
         - uuid: 4c25c070091e4186af4a8392467d4a2e
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.resync.bytes[{#CLUSTER}],{$VMC.RESYNC.TIME})>0'
           name: 'Cluster {#CLUSTER}: vSAN Resync {ITEM.LASTVALUE} Remaining, Running Longer Than {$VMC.RESYNC.TIME}'
-          priority: WARNING
+          priority: HIGH
           opdata: 'Remaining: {ITEM.LASTVALUE}'
           description: vSAN is still resyncing data. The name and operational data show how much is left to resync.
       - uuid: c656ef3d873442a2b88574d0503529ae
@@ -708,18 +714,6 @@ zabbix_export:
           value: cluster
         - tag: cluster
           value: '{#CLUSTER}'
-        trigger_prototypes:
-        - uuid: 060a3bcff02347de8633ead092ef61e4
-          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
-          priority: HIGH
-        - uuid: 098dd7aab4d14f45b1fbd97e9e73c27f
-          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.WARN:"{#CLUSTER}"}%'
-          priority: WARNING
-          dependencies:
-          - name: 'Cluster {#CLUSTER}: CPU Used >= {$VMC.CPU.CRIT:"{#CLUSTER}"}%'
-            expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.cpu.pused[{#CLUSTER}],5m)>={$VMC.CPU.CRIT:"{#CLUSTER}"}'
       - uuid: 16c725a0870b4628ba2b32d605350bb1
         name: 'Cluster {#CLUSTER}: Memory Usage (%)'
         type: DEPENDENT
@@ -748,18 +742,6 @@ zabbix_export:
           value: cluster
         - tag: cluster
           value: '{#CLUSTER}'
-        trigger_prototypes:
-        - uuid: 7bc945439e97496c8f5db6d77c3c8105
-          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
-          priority: HIGH
-        - uuid: 2c3d4b2579dc4e949d8993695353bddc
-          expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.WARN:"{#CLUSTER}"}%'
-          priority: WARNING
-          dependencies:
-          - name: 'Cluster {#CLUSTER}: Memory Used >= {$VMC.MEM.CRIT:"{#CLUSTER}"}%'
-            expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.mem.pused[{#CLUSTER}],5m)>={$VMC.MEM.CRIT:"{#CLUSTER}"}'
       - uuid: d220f55d1184416eb92d4c42cd73dea6
         name: 'Cluster {#CLUSTER}: vSAN Used (%)'
         type: DEPENDENT
@@ -793,29 +775,30 @@ zabbix_export:
           expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
           name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
           priority: HIGH
-        - uuid: cdf783f0d4e240b684e1b3b3b8de9cb1
-          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.WARN:"{#CLUSTER}"}'
-          name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.WARN:"{#CLUSTER}"}%'
-          priority: WARNING
-          dependencies:
-          - name: 'Cluster {#CLUSTER}: vSAN Used >= {$VMC.VSAN.CRIT:"{#CLUSTER}"}%'
-            expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.pused[{#CLUSTER}])>={$VMC.VSAN.CRIT:"{#CLUSTER}"}'
       trigger_prototypes:
+      - uuid: fb220f438f394739bd7cce2c5e6c33fa
+        expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts.effective[{#CLUSTER}])=0 and last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts[{#CLUSTER}])>0'
+        name: 'Cluster {#CLUSTER}: All ESXi Hosts Down'
+        priority: DISASTER
+        description: No ESXi host in the cluster is running
       - uuid: f6bf7e6edf1f4c36b7555c2abecaba39
         expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts.effective[{#CLUSTER}])<last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts[{#CLUSTER}])'
-        name: 'Cluster {#CLUSTER}: Some Hosts Are Not Effective'
-        priority: AVERAGE
-        description: 'Effective hosts < total hosts: a host is disconnected, in maintenance or not responding'
+        name: 'Cluster {#CLUSTER}: ESXi Host Down ({ITEM.LASTVALUE1} Of {ITEM.LASTVALUE2} Running)'
+        priority: HIGH
+        description: 'Effective hosts < total hosts: a host is down (hardware/service), disconnected or in maintenance'
+        dependencies:
+        - name: 'Cluster {#CLUSTER}: All ESXi Hosts Down'
+          expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts.effective[{#CLUSTER}])=0 and last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts[{#CLUSTER}])>0'
       - uuid: 1f390f0cdc404cc98fa24f8bcaa207a2
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: AVERAGE
+        priority: HIGH
       - uuid: 5a98c96d7b3545a3ada28b8f69905271
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: WARNING
+        priority: AVERAGE
         dependencies:
         - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
@@ -824,12 +807,12 @@ zabbix_export:
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: AVERAGE
+        priority: HIGH
       - uuid: 3eaeed3a5ac5433d8bd0b4c3740017fb
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: WARNING
+        priority: AVERAGE
         dependencies:
         - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
@@ -886,42 +869,27 @@ zabbix_export:
     - macro: '{$VMC.SCORE.CRIT}'
       value: '60'
       description: 'vSAN Skyline Health score below this -> High'
-    - macro: '{$VMC.CPU.WARN}'
-      value: '20'
-      description: 'Cluster CPU usage (%) -> Warning'
-    - macro: '{$VMC.CPU.CRIT}'
-      value: '50'
-      description: 'Cluster CPU usage (%) -> High'
-    - macro: '{$VMC.MEM.WARN}'
-      value: '80'
-      description: 'Cluster memory usage (%) -> Warning'
-    - macro: '{$VMC.MEM.CRIT}'
-      value: '90'
-      description: 'Cluster memory usage (%) -> High'
-    - macro: '{$VMC.VSAN.WARN}'
-      value: '70'
-      description: 'vSAN used space (%) -> Warning'
     - macro: '{$VMC.VSAN.CRIT}'
-      value: '80'
-      description: 'vSAN used space (%) -> High'
+      value: '85'
+      description: 'vSAN used space (%) above this -> High (level 2)'
     - macro: '{$VMC.HOST.CPU.WARN}'
-      value: '30'
-      description: 'Busiest host CPU (%) -> Warning'
+      value: '40'
+      description: 'Busiest host CPU (%) above this -> Average (level 3)'
     - macro: '{$VMC.HOST.CPU.CRIT}'
-      value: '35'
-      description: 'Busiest host CPU (%) -> Average'
+      value: '60'
+      description: 'Busiest host CPU (%) above this -> High (level 2)'
     - macro: '{$VMC.HOST.MEM.WARN}'
-      value: '76'
-      description: 'Busiest host memory (%) -> Warning'
-    - macro: '{$VMC.HOST.MEM.CRIT}'
       value: '80'
-      description: 'Busiest host memory (%) -> Average'
+      description: 'Busiest host memory (%) above this -> Average (level 3)'
+    - macro: '{$VMC.HOST.MEM.CRIT}'
+      value: '90'
+      description: 'Busiest host memory (%) above this -> High (level 2)'
     - macro: '{$VMC.UPTIME.MAX}'
       value: 180d
       description: 'Host uptime above this -> Info (needs patching)'
     - macro: '{$VMC.RESYNC.TIME}'
       value: 30m
-      description: 'vSAN resync running longer than this -> Warning'
+      description: 'vSAN resync running longer than this -> High (level 2)'
     - macro: '{$VMC.NODATA}'
       value: 5m
       description: 'No data from /metrics for this long -> High'

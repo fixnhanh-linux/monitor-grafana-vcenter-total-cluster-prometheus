@@ -612,18 +612,25 @@ File [`template-zabbix/zabbix_template_vmware_cluster_hcm.yaml`](template-zabbix
 Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ thuộc; LLD `vmc.cluster.discovery` tạo
 19 item + 3 item tính % cho mỗi cluster, 1 graph tài nguyên %.
 
-| Trigger | Mức | Macro (mặc định) |
-|---|---|---|
-| vSAN health score < ngưỡng | High / Warning | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
-| CPU cluster dùng ≥ (min 5 phút) | High / Warning | `{$VMC.CPU.CRIT}` 50 · `{$VMC.CPU.WARN}` 20 |
-| RAM cluster dùng ≥ (min 5 phút) | High / Warning | `{$VMC.MEM.CRIT}` 90 · `{$VMC.MEM.WARN}` 80 |
-| vSAN đã dùng ≥ | High / Warning | `{$VMC.VSAN.CRIT}` 80 · `{$VMC.VSAN.WARN}` 70 |
-| CPU / RAM host cao nhất ≥ (min 5 phút) | Average / Warning | `{$VMC.HOST.CPU.*}` 35/30 · `{$VMC.HOST.MEM.*}` 80/76 |
-| vSAN resync kéo dài — tên cảnh báo ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Warning | `{$VMC.RESYNC.TIME}` 30m |
-| Có host không hoạt động (effective < tổng) | Average | — |
-| vCenter báo cluster red | Average | — |
-| vSAN Skyline có mục red · DRS tắt · host chạy lâu | Info | `{$VMC.UPTIME.MAX}` 180d |
-| Exporter không lấy được dữ liệu vCenter / không đọc được /metrics / số liệu cũ > 10 phút | High / High / Warning | `{$VMC.NODATA}` 5m |
+Mức cảnh báo theo bảng yêu cầu vận hành: **Mức 1 = Disaster (Thảm họa)**, **Mức 2 = High (Cao)**,
+**Mức 3 = Average (Trung bình)**.
+
+| Chỉ số | Trigger | Mức | Macro (mặc định) |
+|---|---|---|---|
+| Cluster Status / vSAN datastore | vSAN datastore offline (dung lượng = 0) | Mức 1 – Disaster | — |
+| Trạng thái ESXi | Tất cả ESXi trong cluster down (effective = 0) | Mức 1 – Disaster | — |
+| Số host / trạng thái host | Một ESXi host down (effective < tổng), tên ghi `x Of y Running` | Mức 2 – High | — |
+| vSAN Used / Free | vSAN đã dùng > ngưỡng | Mức 2 – High | `{$VMC.VSAN.CRIT}` 85 |
+| CPU Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.CPU.CRIT}` 60 · `{$VMC.HOST.CPU.WARN}` 40 |
+| RAM Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.MEM.CRIT}` 90 · `{$VMC.HOST.MEM.WARN}` 80 |
+| vSAN Resync | Resync kéo dài, tên ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Mức 2 – High | `{$VMC.RESYNC.TIME}` 30m |
+| vSAN health score | Điểm Skyline Health < ngưỡng | High / Warning | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
+| Cluster Status (vCenter) | vCenter báo cluster red | Average | — |
+| DRS, tổng CPU/RAM, tổng VM, Host Uptime | Chỉ hiển thị; DRS tắt, Skyline có mục red, host chạy lâu → Info | Thông tin | `{$VMC.UPTIME.MAX}` 180d |
+| Exporter | Không lấy được dữ liệu vCenter / không đọc được /metrics / số liệu cũ > 10 phút | High / High / Warning | `{$VMC.NODATA}` 5m |
+
+CPU / RAM tổng cluster không còn trigger (chỉ hiển thị). Disk congestion chưa có metric trong exporter,
+nên chưa có trigger.
 
 Đổi ngưỡng riêng 1 cluster bằng macro context trên host, ví dụ `{$VMC.HOST.CPU.CRIT:"POOL17"}` = 60.
 
