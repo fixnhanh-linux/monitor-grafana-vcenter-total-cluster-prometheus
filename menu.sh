@@ -2,7 +2,7 @@
 # Menu quan ly VMware cluster exporter + dashboard Grafana "VMWARE CLUSTER HCM".
 #   sudo bash menu.sh
 # Moi viec (cai pool moi, doi mat khau, xem trang thai, cau hinh Prometheus, them/xoa khoi tren dashboard,
-# cap nhat ban moi) chon bang so. Mat khau vCenter va token Grafana luon tu go, khong in ra man hinh.
+# cap nhat ban moi, import template / them host Zabbix) chon bang so. Mat khau vCenter, token Grafana / Zabbix luon tu go, khong in ra man hinh.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,6 +14,9 @@ SVC=vmware-cluster-exporter
 DASH_ENV=/etc/vmware-cluster-dashboard.env
 DASH_APP=/opt/vmware-cluster-dashboard/make_dashboard.py
 DASH_NAME=vmware-cluster-dashboard
+ZBX_ENV=/etc/vmware-cluster-zabbix.env      # chi luu URL Zabbix, KHONG luu token
+ZBX_TOOL="$SCRIPT/zabbix_tool.py"
+ZBX_TPL="$REPO/template-zabbix/zabbix_template_vmware_cluster_hcm.yaml"
 
 if [ "$(id -u)" -ne 0 ]; then
   exec sudo bash "$0" "$@"
@@ -426,6 +429,88 @@ m_arrange() {  # keo khoi len/xuong/trai/phai, doi cho, doi hang; xem so do tren
     python3 "$DASH_APP" --grafana "$GRAFANA_URL" ${GRAFANA_OPTS:-} --out /var/lib/vmware-cluster-dashboard --arrange )
 }
 
+zbx_login() {  # hoi URL Zabbix (nho lai) + API token (go khong hien, khong luu) -> ZBX_URL, ZBX_OPT, ZBX_TOKEN
+  local def="" ins="" u rc y
+  [ -f "$ZBX_ENV" ] && { def=$(set -a; . "$ZBX_ENV"; echo "${ZBX_URL:-}"); ins=$(set -a; . "$ZBX_ENV"; echo "${ZBX_INSECURE:-}"); }
+  read -r -p "URL Zabbix (vd http://<ip>/zabbix)${def:+ [$def]}: " u
+  ZBX_URL=${u:-$def}
+  [ -n "$ZBX_URL" ] || { err "Chua nhap URL"; return 1; }
+  [ "$u" ] && [ "$u" != "$def" ] && ins=""
+  echo "API token: Zabbix > User settings > API tokens > Create (user quyen Admin/Super admin)."
+  read -r -s -p "API token (go khong hien): " ZBX_TOKEN; echo
+  [ -n "$ZBX_TOKEN" ] || { err "Chua nhap token"; return 1; }
+  export ZBX_TOKEN
+  ZBX_OPT=""; [ "$ins" = 1 ] && ZBX_OPT=--insecure
+  python3 "$ZBX_TOOL" --url "$ZBX_URL" $ZBX_OPT version; rc=$?
+  if [ $rc = 3 ]; then
+    read -r -p "Chung chi HTTPS tu ky - bo qua kiem tra chung chi? (Y/n): " y
+    [[ "$y" =~ ^[nN] ]] && return 1
+    ZBX_OPT=--insecure; ins=1
+    python3 "$ZBX_TOOL" --url "$ZBX_URL" $ZBX_OPT version || return 1
+  elif [ $rc != 0 ]; then
+    return 1
+  fi
+  ( umask 077; { printf 'ZBX_URL=%q\n' "$ZBX_URL"; printf 'ZBX_INSECURE=%s\n' "$ins"; } > "$ZBX_ENV" )
+}
+
+zbx() { python3 "$ZBX_TOOL" --url "$ZBX_URL" $ZBX_OPT "$@"; }
+
+m_zbx_import() {  # import / cap nhat template Zabbix tu repo, chay lai discovery moi host
+  [ -f "$ZBX_TPL" ] || { err "Khong thay $ZBX_TPL - cap nhat repo (muc 15)."; return; }
+  echo "Import file: template-zabbix/$(basename "$ZBX_TPL")"
+  echo "(Update existing + Delete missing: trigger cu khong con trong template se bi xoa)"
+  echo
+  zbx_login || return
+  echo
+  zbx import "$ZBX_TPL"
+}
+
+m_zbx_host() {  # tao host Zabbix cho 1 instance exporter, gan template + macro port / loc cluster
+  local name ip port proxy="" group pxs=() gs=() i c p mt nmt y
+  zbx_login || return
+  echo
+  if [ -n "$(instances)" ]; then
+    echo "${B}Exporter tren may nay:${N}"
+    if pick_instance; then
+      port=$(env_get "$PICK" PORT)
+      name="VMware Cluster $(echo "$PICK" | tr '[:lower:]' '[:upper:]')"
+    fi
+  fi
+  if [ -z "${port:-}" ]; then
+    read -r -p "Port exporter (vd 9821): " port
+  fi
+  [[ "$port" =~ ^[0-9]+$ ]] || { err "Port khong hop le"; return; }
+  read -r -p "Ten host tren Zabbix${name:+ [$name]}: " c; name=${c:-${name:-}}
+  [ -n "$name" ] || { err "Chua nhap ten"; return; }
+  ip=$(my_ip)
+  read -r -p "IP may chay exporter [$ip]: " c; ip=${c:-$ip}
+  mapfile -t pxs < <(zbx proxies)
+  if [ ${#pxs[@]} -gt 0 ]; then
+    echo "${B}Zabbix lay du lieu qua:${N}"
+    echo "  ${C}0)${N} Zabbix server (khong qua proxy)"
+    i=1
+    for p in "${pxs[@]}"; do echo "  $C$i)$N ${p#*$'\t'}"; i=$((i + 1)); done
+    read -r -p "Chon [0]: " c
+    if [[ "$c" =~ ^[0-9]+$ ]] && [ "$c" -ge 1 ] && [ "$c" -le ${#pxs[@]} ]; then
+      proxy=${pxs[$((c - 1))]%%$'\t'*}
+    fi
+  fi
+  mapfile -t gs < <(zbx groups)
+  group=${gs[0]:-VMware}
+  read -r -p "Nhom host [$group]: " c; group=${c:-$group}
+  echo "Loc cluster (ten that tren vCenter, regex). Enter = lay tat ca."
+  read -r -p "  Chi lay cluster khop (vd ^POOL18-XD\$): " mt
+  read -r -p "  Bo cluster khop (vd ^POOL17\$): " nmt
+  echo
+  echo "Tao host ${B}$name${N}: IP $ip, port $port${proxy:+, qua proxy}, nhom $group${mt:+, chi lay $mt}${nmt:+, bo $nmt}"
+  read -r -p "Xac nhan? (Y/n): " y
+  [[ "$y" =~ ^[nN] ]] && return
+  zbx addhost --name "$name" --ip "$ip" --port "$port" --proxy "$proxy" --group "$group" \
+    --matches "$mt" --not-matches "$nmt" || return
+  echo
+  echo "Nho mo port $port tren may nay cho Zabbix server/proxy, vd: ufw allow from <ip-zabbix> to any port $port proto tcp"
+}
+
 m_remove_auto() {
   [ -f "$SCRIPT/install_auto_dashboard.sh" ] && bash "$SCRIPT/install_auto_dashboard.sh" --uninstall
 }
@@ -497,6 +582,9 @@ draw_menu() {
   section "$BL" "KHAC"
   item 15 "$BL" "Cap Nhat Ban Moi Tu GitHub"
   item 16 "$BL" "Go Phan Tu Dong Dashboard"
+  section "$R" "ZABBIX"
+  item 17 "$R" "Import / Cap Nhat Template Zabbix"
+  item 18 "$R" "Them Host Pool Moi Vao Zabbix"
   item 0 "$R" "Thoat"
   border "$BLc" "$BR"
   printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
@@ -522,7 +610,7 @@ fi
 
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-16]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-18]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
@@ -541,6 +629,8 @@ while true; do
     14) fn=m_arrange; t="Sap Xep Vi Tri Khoi" ;;
     15) fn=m_update; t="Cap Nhat Ban Moi Tu GitHub" ;;
     16) fn=m_remove_auto; t="Go Phan Tu Dong Dashboard" ;;
+    17) fn=m_zbx_import; t="Import / Cap Nhat Template Zabbix" ;;
+    18) fn=m_zbx_host; t="Them Host Pool Moi Vao Zabbix" ;;
     0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac
