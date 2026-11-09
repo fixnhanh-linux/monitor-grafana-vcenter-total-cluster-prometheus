@@ -38,12 +38,12 @@ def ref(key):
 
 MACROS = [
     ("{$VMC.PORT}", "9821", "Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824"),
-    ("{$VMC.SCORE.WARN}", "80", "vSAN Skyline Health score below this -> Average (level 3, health < 80%)"),
+    ("{$VMC.SCORE.WARN}", "80", "vSAN Skyline Health score below this -> Warning (level 3, health < 80%)"),
     ("{$VMC.SCORE.CRIT}", "60", "vSAN Skyline Health score below this -> High (level 2)"),
     ("{$VMC.VSAN.CRIT}", "85", "vSAN used space (%) above this -> High (level 2)"),
-    ("{$VMC.HOST.CPU.WARN}", "40", "Busiest host CPU (%) above this -> Average (level 3)"),
+    ("{$VMC.HOST.CPU.WARN}", "40", "Busiest host CPU (%) above this -> Warning (level 3)"),
     ("{$VMC.HOST.CPU.CRIT}", "60", "Busiest host CPU (%) above this -> High (level 2)"),
-    ("{$VMC.HOST.MEM.WARN}", "80", "Busiest host memory (%) above this -> Average (level 3)"),
+    ("{$VMC.HOST.MEM.WARN}", "80", "Busiest host memory (%) above this -> Warning (level 3)"),
     ("{$VMC.HOST.MEM.CRIT}", "90", "Busiest host memory (%) above this -> High (level 2)"),
     ("{$VMC.UPTIME.MAX}", "180d", "Host uptime above this -> Info (needs patching)"),
     ("{$VMC.RESYNC.TIME}", "30m", "vSAN resync running longer than this -> High (level 2)"),
@@ -195,7 +195,7 @@ def item_prototypes():
     add("vmc.cluster.vsan.score", [
         trig(hi[0], hi[1], "HIGH", "Check vCenter > Cluster > Monitor > vSAN > Skyline Health"),
         trig("Cluster %s: vSAN health score < {$VMC.SCORE.WARN}" % C,
-             'last(%s)<{$VMC.SCORE.WARN:"%s"}' % (score, C), "AVERAGE", depends=hi)])
+             'last(%s)<{$VMC.SCORE.WARN:"%s"}' % (score, C), "WARNING", depends=hi)])
     add("vmc.cluster.vsan.health", [trig(
         "Cluster %s: vSAN Skyline Health has a red check" % C, "last(%s)=2" % ref(k("vmc.cluster.vsan.health")), "INFO",
         "vSAN overall health is red (at least one Unhealthy finding). Main alerting uses the health score.")])
@@ -226,8 +226,8 @@ def trigger_prototypes():
                  "last(%s)<last(%s)" % (eff, hosts), "HIGH",
                  "Effective hosts < total hosts: a host is down (hardware/service), disconnected or in maintenance",
                  depends=all_down)] +         two_level("CPU", k("vmc.cluster.host.cpu.max"), "{$VMC.HOST.CPU.WARN}", "{$VMC.HOST.CPU.CRIT}",
-                  "min(%s,5m)", "HIGH", host_key=k("vmc.cluster.host.cpu.max.name"), warn_prio="AVERAGE") +         two_level("memory", k("vmc.cluster.host.mem.max"), "{$VMC.HOST.MEM.WARN}", "{$VMC.HOST.MEM.CRIT}",
-                  "min(%s,5m)", "HIGH", host_key=k("vmc.cluster.host.mem.max.name"), warn_prio="AVERAGE") +         [trig("Cluster %s: host {ITEM.LASTVALUE2} up longer than {$VMC.UPTIME.MAX} (now {ITEM.LASTVALUE1})" % C,
+                  "min(%s,5m)", "HIGH", host_key=k("vmc.cluster.host.cpu.max.name"), warn_prio="WARNING") +         two_level("memory", k("vmc.cluster.host.mem.max"), "{$VMC.HOST.MEM.WARN}", "{$VMC.HOST.MEM.CRIT}",
+                  "min(%s,5m)", "HIGH", host_key=k("vmc.cluster.host.mem.max.name"), warn_prio="WARNING") +         [trig("Cluster %s: host {ITEM.LASTVALUE2} up longer than {$VMC.UPTIME.MAX} (now {ITEM.LASTVALUE1})" % C,
               'last(%s)>={$VMC.UPTIME.MAX:"%s"} and length(last(%s))>=0'
               % (ref(k("vmc.cluster.host.uptime.max")), C, ref(k("vmc.cluster.host.uptime.max.name"))), "INFO",
               "Long-running hosts should be patched / rebooted")]

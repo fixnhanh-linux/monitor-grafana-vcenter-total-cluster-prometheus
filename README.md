@@ -662,7 +662,7 @@ Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ
 19 item + 3 item tính % cho mỗi cluster, 1 graph tài nguyên %.
 
 Mức cảnh báo theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: **Mức 1 = Disaster** (đỏ, gắn tag
-`System`), **Mức 2 = High (Cao)** (đỏ), **Mức 3 = Average (Cảnh báo)** (vàng), **Mức 4 = Information (Bình thường)**.
+`System`), **Mức 2 = High (Cao)** (đỏ), **Mức 3 = Warning (Cảnh báo)** (vàng), **Mức 4 = Information (Bình thường)**.
 
 | Chỉ số | Trigger | Mức | Macro (mặc định) |
 |---|---|---|---|
@@ -670,10 +670,10 @@ Mức cảnh báo theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**
 | Trạng thái ESXi | Tất cả ESXi trong cluster down (effective = 0), tag `System` | Mức 1 – Disaster | — |
 | Số host / trạng thái host | Một ESXi host down (effective < tổng), tên ghi `x Of y Running` | Mức 2 – High | — |
 | vSAN Used / Free | vSAN đã dùng > ngưỡng | Mức 2 – High | `{$VMC.VSAN.CRIT}` 85 |
-| CPU Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.CPU.CRIT}` 60 · `{$VMC.HOST.CPU.WARN}` 40 |
-| RAM Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.MEM.CRIT}` 90 · `{$VMC.HOST.MEM.WARN}` 80 |
+| CPU Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Warning | `{$VMC.HOST.CPU.CRIT}` 60 · `{$VMC.HOST.CPU.WARN}` 40 |
+| RAM Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Warning | `{$VMC.HOST.MEM.CRIT}` 90 · `{$VMC.HOST.MEM.WARN}` 80 |
 | vSAN Resync | Resync kéo dài, tên ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Mức 2 – High | `{$VMC.RESYNC.TIME}` 30m |
-| vSAN health score | Điểm Skyline Health < ngưỡng (health dưới 80% → Mức 3) | Mức 2 – High / Mức 3 – Average | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
+| vSAN health score | Điểm Skyline Health < ngưỡng (health dưới 80% → Mức 3) | Mức 2 – High / Mức 3 – Warning | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
 | Cluster Status (vCenter) | vCenter báo cluster red | Average | — |
 | DRS, tổng CPU/RAM, tổng VM, Host Uptime | Chỉ hiển thị; DRS tắt, Skyline có mục red, host chạy lâu → Info | Thông tin | `{$VMC.UPTIME.MAX}` 180d |
 | Exporter | Không lấy được dữ liệu vCenter / không đọc được /metrics / số liệu cũ > 10 phút | High / High / Warning | `{$VMC.NODATA}` 5m |

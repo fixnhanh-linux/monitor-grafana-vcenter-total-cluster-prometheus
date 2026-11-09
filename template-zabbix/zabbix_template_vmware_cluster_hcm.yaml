@@ -248,7 +248,7 @@ zabbix_export:
         - uuid: 6b6c373c86b640d09eb42e5961758cef
           expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.WARN:"{#CLUSTER}"}'
           name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.WARN}'
-          priority: AVERAGE
+          priority: WARNING
           dependencies:
           - name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.CRIT}'
             expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
@@ -802,7 +802,7 @@ zabbix_export:
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.cpu.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: AVERAGE
+        priority: WARNING
         dependencies:
         - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} CPU >= {$VMC.HOST.CPU.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.cpu.max[{#CLUSTER}],5m)>={$VMC.HOST.CPU.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
@@ -816,7 +816,7 @@ zabbix_export:
         expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.WARN:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
           Exporter/vmc.cluster.host.mem.max.name[{#CLUSTER}]))>=0'
         name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.WARN:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
-        priority: AVERAGE
+        priority: WARNING
         dependencies:
         - name: 'Cluster {#CLUSTER}: Host {ITEM.LASTVALUE2} Memory >= {$VMC.HOST.MEM.CRIT:"{#CLUSTER}"}% (Now {ITEM.LASTVALUE1})'
           expression: 'min(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.host.mem.max[{#CLUSTER}],5m)>={$VMC.HOST.MEM.CRIT:"{#CLUSTER}"} and length(last(/VMware Cluster HCM By VMware Cluster
@@ -869,7 +869,7 @@ zabbix_export:
       description: 'Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824'
     - macro: '{$VMC.SCORE.WARN}'
       value: '80'
-      description: 'vSAN Skyline Health score below this -> Average (level 3, health < 80%)'
+      description: 'vSAN Skyline Health score below this -> Warning (level 3, health < 80%)'
     - macro: '{$VMC.SCORE.CRIT}'
       value: '60'
       description: 'vSAN Skyline Health score below this -> High (level 2)'
@@ -878,13 +878,13 @@ zabbix_export:
       description: 'vSAN used space (%) above this -> High (level 2)'
     - macro: '{$VMC.HOST.CPU.WARN}'
       value: '40'
-      description: 'Busiest host CPU (%) above this -> Average (level 3)'
+      description: 'Busiest host CPU (%) above this -> Warning (level 3)'
     - macro: '{$VMC.HOST.CPU.CRIT}'
       value: '60'
       description: 'Busiest host CPU (%) above this -> High (level 2)'
     - macro: '{$VMC.HOST.MEM.WARN}'
       value: '80'
-      description: 'Busiest host memory (%) above this -> Average (level 3)'
+      description: 'Busiest host memory (%) above this -> Warning (level 3)'
     - macro: '{$VMC.HOST.MEM.CRIT}'
       value: '90'
       description: 'Busiest host memory (%) above this -> High (level 2)'
