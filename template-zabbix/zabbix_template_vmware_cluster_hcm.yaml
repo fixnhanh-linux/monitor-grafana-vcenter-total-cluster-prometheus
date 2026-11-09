@@ -248,7 +248,7 @@ zabbix_export:
         - uuid: 6b6c373c86b640d09eb42e5961758cef
           expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.WARN:"{#CLUSTER}"}'
           name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.WARN}'
-          priority: WARNING
+          priority: AVERAGE
           dependencies:
           - name: 'Cluster {#CLUSTER}: vSAN Health Score < {$VMC.SCORE.CRIT}'
             expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.vsan.score[{#CLUSTER}])<{$VMC.SCORE.CRIT:"{#CLUSTER}"}'
@@ -481,6 +481,8 @@ zabbix_export:
           name: 'Cluster {#CLUSTER}: vSAN Datastore Offline (Capacity 0)'
           priority: DISASTER
           description: 'vSAN datastore reports 0 capacity: datastore offline or vSAN cluster dropped'
+          tags:
+          - tag: System
       - uuid: 638d4f93ab9040d7a12a213f0ca3d3e7
         name: 'Cluster {#CLUSTER}: vSAN Free'
         type: DEPENDENT
@@ -781,6 +783,8 @@ zabbix_export:
         name: 'Cluster {#CLUSTER}: All ESXi Hosts Down'
         priority: DISASTER
         description: No ESXi host in the cluster is running
+        tags:
+        - tag: System
       - uuid: f6bf7e6edf1f4c36b7555c2abecaba39
         expression: 'last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts.effective[{#CLUSTER}])<last(/VMware Cluster HCM By VMware Cluster Exporter/vmc.cluster.hosts[{#CLUSTER}])'
         name: 'Cluster {#CLUSTER}: ESXi Host Down ({ITEM.LASTVALUE1} Of {ITEM.LASTVALUE2} Running)'
@@ -865,10 +869,10 @@ zabbix_export:
       description: 'Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824'
     - macro: '{$VMC.SCORE.WARN}'
       value: '80'
-      description: 'vSAN Skyline Health score below this -> Warning'
+      description: 'vSAN Skyline Health score below this -> Average (level 3, health < 80%)'
     - macro: '{$VMC.SCORE.CRIT}'
       value: '60'
-      description: 'vSAN Skyline Health score below this -> High'
+      description: 'vSAN Skyline Health score below this -> High (level 2)'
     - macro: '{$VMC.VSAN.CRIT}'
       value: '85'
       description: 'vSAN used space (%) above this -> High (level 2)'

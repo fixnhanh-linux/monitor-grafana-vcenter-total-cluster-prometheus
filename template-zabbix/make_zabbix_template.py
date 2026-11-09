@@ -38,8 +38,8 @@ def ref(key):
 
 MACROS = [
     ("{$VMC.PORT}", "9821", "Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824"),
-    ("{$VMC.SCORE.WARN}", "80", "vSAN Skyline Health score below this -> Warning"),
-    ("{$VMC.SCORE.CRIT}", "60", "vSAN Skyline Health score below this -> High"),
+    ("{$VMC.SCORE.WARN}", "80", "vSAN Skyline Health score below this -> Average (level 3, health < 80%)"),
+    ("{$VMC.SCORE.CRIT}", "60", "vSAN Skyline Health score below this -> High (level 2)"),
     ("{$VMC.VSAN.CRIT}", "85", "vSAN used space (%) above this -> High (level 2)"),
     ("{$VMC.HOST.CPU.WARN}", "40", "Busiest host CPU (%) above this -> Average (level 3)"),
     ("{$VMC.HOST.CPU.CRIT}", "60", "Busiest host CPU (%) above this -> High (level 2)"),
@@ -70,6 +70,8 @@ def trig(name, expr, priority, desc="", depends=None, opdata=""):
         t["description"] = desc
     if depends:
         t["dependencies"] = [{"name": depends[0], "expression": depends[1]}]
+    if priority == "DISASTER":  # Muc 1 - Disaster: do, gan tag System (bang yeu cau canh bao)
+        t["tags"] = [{"tag": "System"}]
     return t
 
 
@@ -193,7 +195,7 @@ def item_prototypes():
     add("vmc.cluster.vsan.score", [
         trig(hi[0], hi[1], "HIGH", "Check vCenter > Cluster > Monitor > vSAN > Skyline Health"),
         trig("Cluster %s: vSAN health score < {$VMC.SCORE.WARN}" % C,
-             'last(%s)<{$VMC.SCORE.WARN:"%s"}' % (score, C), "WARNING", depends=hi)])
+             'last(%s)<{$VMC.SCORE.WARN:"%s"}' % (score, C), "AVERAGE", depends=hi)])
     add("vmc.cluster.vsan.health", [trig(
         "Cluster %s: vSAN Skyline Health has a red check" % C, "last(%s)=2" % ref(k("vmc.cluster.vsan.health")), "INFO",
         "vSAN overall health is red (at least one Unhealthy finding). Main alerting uses the health score.")])

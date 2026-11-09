@@ -25,15 +25,17 @@ PROM_DS = "prometheus-all"  # ten datasource Prometheus tren Grafana
 DS = {"type": "prometheus", "uid": "${datasource}"}
 C = 'cluster="$cluster"'  # $cluster duoc thay bang ten tung cluster trong CLUSTERS
 
-# Nguong mau (xanh -> cam -> do). None = khong dung muc do.
+# Nguong mau theo bang yeu cau canh bao VMware/vSAN: xanh -> vang (Muc 3 - Canh bao) -> do (Muc 2 - Cao).
+# (vang, do); None = khong co muc vang. Giong macro trigger Zabbix (template-zabbix/make_zabbix_template.py).
 THRESHOLDS = {
-    "CPU Used": (20, 50),         # % CPU dang dung cua ca cluster
-    "Ram Used": (80, 90),         # % RAM dang dung cua ca cluster
-    "vSAN Used": (70, 80),        # % dung luong vSAN da dung
+    "CPU Used": (40, 60),         # % CPU dang dung cua ca cluster: vang > 40% (Muc 3), do = nguong cao 60%
+    "Ram Used": (80, 90),         # % RAM dang dung cua ca cluster: vang > 80% (Muc 3), do = nguong cao 90%
+    "vSAN Used": (None, 85),      # % dung luong vSAN da dung: do > 85% (Muc 2); bang chua co muc vang
     "Host - Uptime": (None, 180),  # ngay - host chay lau nhat, do khi >= 180 ngay (can va/patch)
-    "CPU Host (Max)": (30, 35),    # % CPU cua host cao nhat
-    "RAM Host (Max)": (76, 80),    # % RAM cua host cao nhat
+    "CPU Host (Max)": (40, 60),    # % CPU cua host cao nhat: vang > 40% (Muc 3), do = nguong cao 60% (Muc 2)
+    "RAM Host (Max)": (80, 90),    # % RAM cua host cao nhat: vang > 80% (Muc 3), do = nguong cao 90% (Muc 2)
 }
+THRESHOLDS_VERSION = 2  # doi THRESHOLDS -> tang so nay de o dang co tren Grafana duoc cap nhat nguong 1 lan
 
 # (ten o, PromQL, don vi, kieu mau)  - thu tu = thu tu hien tren o
 TILES = [
@@ -64,7 +66,7 @@ TILES = [
     ("RAM Host (Max)", "max(vmware_cluster_host_mem_max_percent{%s})" % C, "percent", "thr"),
 ]
 
-GREEN, ORANGE, RED, GRAY = "green", "orange", "red", "#8e8e8e"
+GREEN, YELLOW, ORANGE, RED, GRAY = "green", "yellow", "orange", "red", "#8e8e8e"
 
 
 def steps(*pairs):
@@ -93,7 +95,7 @@ def tile_override(ref, name, unit, kind):
                   {"id": "thresholds", "value": steps((None, RED), (0, GREEN), (1, RED))}]
     elif kind == "thr":
         warn, crit = THRESHOLDS[name]
-        st = [(None, GREEN)] + ([(warn, ORANGE)] if warn is not None else []) + [(crit, RED)]
+        st = [(None, GREEN)] + ([(warn, YELLOW)] if warn is not None else []) + [(crit, RED)]
         props += [{"id": "thresholds", "value": steps(*st)}, {"id": "decimals", "value": 0 if unit.startswith("suffix") else 1}]
     else:  # fixed
         props += [{"id": "thresholds", "value": steps((None, GREEN))}]
@@ -1025,6 +1027,23 @@ def upgrade_resync_tiles(dash):
     return n
 
 
+def upgrade_threshold_tiles(dash):
+    """Dat lai nguong mau cac o co nguong (CPU/RAM/vSAN Used, Host Uptime, CPU/RAM Host) theo THRESHOLDS.
+    Chi doi thresholds, giu nguyen vi tri, bieu thuc, datasource. Tra ve so o da doi."""
+    fresh = {t[0]: tile_override("A", t[0], t[2], t[3])["properties"] for t in TILES if t[3] == "thr"}
+    n = 0
+    for p in all_panels(dash):
+        props = fresh.get(tile_name(p))
+        if not props:
+            continue
+        new = next(pr["value"] for pr in props if pr["id"] == "thresholds")
+        d = p.setdefault("fieldConfig", {}).setdefault("defaults", {})
+        if d.get("thresholds") != new:
+            d["thresholds"] = new
+            n += 1
+    return n
+
+
 def hide_datasource_picker(dash):
     """An o chon datasource tren dashboard (giu nguyen gia tri dang chon). Tra ve True neu co thay doi."""
     changed = False
@@ -1048,6 +1067,9 @@ ap.add_argument("--arrange", action="store_true",
                 help="Sap xep vi tri khoi tren SSH (len/xuong/trai/phai, doi cho, doi hang), xem truoc roi moi luu")
 ap.add_argument("--relayout", action="store_true",
                 help="Xep lai o trong moi khoi theo bo cuc chuan 4-4-4-3 (mac dinh tu lam 1 lan sau khi cap nhat)")
+ap.add_argument("--update-thresholds", action="store_true",
+                help="Dat lai nguong mau cac o tren dashboard dang co theo THRESHOLDS (mac dinh tu lam 1 lan "
+                     "moi khi THRESHOLDS_VERSION tang; mat nguong da sua tay tren Grafana)")
 ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
@@ -1201,6 +1223,12 @@ if existing is not None:
         if moved:
             print("Xep lai o theo bo cuc moi (4-4-4-3): %d o" % moved)
             hidden = True
+    thr_marker = os.path.join(outdir, "thresholds-v%d.done" % THRESHOLDS_VERSION)
+    if args.update_thresholds or not os.path.exists(thr_marker):
+        changed = upgrade_threshold_tiles(existing)
+        if changed:
+            print("Cap nhat nguong mau theo bang canh bao: %d o" % changed)
+            hidden = True
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
         add_blocks(existing, new, args.row)
@@ -1214,8 +1242,9 @@ if existing is not None:
         save_and_push(existing, len(present) + len(new), args.folder_uid or folder)
     else:
         print("Khong co cluster moi (%d cluster tren dashboard) - giu nguyen dashboard" % len(present))
-    if args.grafana:  # da xep bo cuc moi 1 lan -> lan sau giu nguyen chinh sua tay
+    if args.grafana:  # da xep bo cuc / nguong moi 1 lan -> lan sau giu nguyen chinh sua tay
         open(marker, "w").close()
+        open(thr_marker, "w").close()
     sys.exit(0)
 
 # 2) Chua co dashboard (hoac --rebuild): sinh moi toan bo tu CLUSTERS + cluster tren Prometheus.

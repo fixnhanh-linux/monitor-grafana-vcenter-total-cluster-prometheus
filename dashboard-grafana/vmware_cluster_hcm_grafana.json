@@ -529,12 +529,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -675,7 +675,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -821,12 +821,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -1129,12 +1125,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -1206,12 +1202,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
@@ -1716,12 +1712,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -1862,7 +1858,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -2008,12 +2004,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -2316,12 +2308,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -2393,12 +2385,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
@@ -2903,12 +2895,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -3049,7 +3041,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -3195,12 +3187,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -3503,12 +3491,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -3580,12 +3568,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
@@ -4090,12 +4078,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -4236,7 +4224,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -4382,12 +4370,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -4690,12 +4674,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -4767,12 +4751,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
@@ -5277,12 +5261,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -5423,7 +5407,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -5569,12 +5553,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -5877,12 +5857,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -5954,12 +5934,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },
@@ -6464,12 +6444,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 20
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 50
+                "value": 60
               }
             ]
           },
@@ -6610,7 +6590,7 @@
                 "value": null
               },
               {
-                "color": "orange",
+                "color": "yellow",
                 "value": 80
               },
               {
@@ -6756,12 +6736,8 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 70
-              },
-              {
                 "color": "red",
-                "value": 80
+                "value": 85
               }
             ]
           },
@@ -7064,12 +7040,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 30
+                "color": "yellow",
+                "value": 40
               },
               {
                 "color": "red",
-                "value": 35
+                "value": 60
               }
             ]
           },
@@ -7141,12 +7117,12 @@
                 "value": null
               },
               {
-                "color": "orange",
-                "value": 76
+                "color": "yellow",
+                "value": 80
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 90
               }
             ]
           },

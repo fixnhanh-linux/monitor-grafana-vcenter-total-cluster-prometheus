@@ -613,19 +613,24 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | Total Host | `vmware_cluster_hosts` | xanh |
 | Total VM | `vmware_cluster_vms_total` (cả VM đang tắt) | xanh |
 | CPU Total | `vmware_cluster_cpu_total_hz` | xanh |
-| CPU Used | `cpu_used_hz / cpu_total_hz` | cam ≥ 20% · đỏ ≥ 50% |
+| CPU Used | `cpu_used_hz / cpu_total_hz` | vàng ≥ 40% · đỏ ≥ 60% |
 | Ram Total | `vmware_cluster_mem_total_bytes` | xanh |
-| Ram Used | `mem_used_bytes / mem_total_bytes` | cam ≥ 80% · đỏ ≥ 90% |
+| Ram Used | `mem_used_bytes / mem_total_bytes` | vàng ≥ 80% · đỏ ≥ 90% |
 | vSAN Total / Free | `vmware_cluster_vsan_capacity_bytes` / `_free_bytes` (vSAN datastore) | xanh |
-| vSAN Used | `(capacity − free) / capacity` | cam ≥ 70% · đỏ ≥ 80% |
+| vSAN Used | `(capacity − free) / capacity` | đỏ ≥ 85% |
 | vSAN Resync | `vmware_cluster_vsan_resync_bytes` (vCenter cũ: exporter tự hỏi qua host) | xanh = 0 · **đỏ** khi > 0 (đang resync) · **LỖI** đỏ khi cluster có vSAN mà không lấy được số resync |
 | Host - Uptime | `vmware_cluster_host_uptime_max_seconds` (host chạy lâu nhất, ngày) | đỏ ≥ 180 ngày |
-| CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | cam ≥ 30% · đỏ ≥ 35% |
-| RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | cam ≥ 76% · đỏ ≥ 80% |
+| CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | vàng ≥ 40% · đỏ ≥ 60% |
+| RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | vàng ≥ 80% · đỏ ≥ 90% |
 
-Ngưỡng được suy ra từ màu của dashboard mẫu. Đổi ngưỡng cho dashboard **đang dùng**: sửa thẳng trên Grafana
-(Edit ô → Thresholds), giữ được mọi chỉnh sửa khác. `THRESHOLDS` trong `script/make_dashboard.py` chỉ áp dụng cho
-khối **mới thêm** và khi tạo lại từ đầu (`--rebuild` hoặc import Overwrite — cách này **mất** chỉnh sửa tay).
+Ngưỡng màu theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: **vàng = Mức 3 – Cảnh báo** (CPU trên 40%, RAM
+trên 80%), **đỏ = Mức 2 – Cao** (vSAN trên 85%, CPU/RAM vượt ngưỡng cao 60% / 90%), cùng giá trị với macro trigger
+Zabbix bên dưới. vSAN Used chưa có mức vàng vì bảng yêu cầu chưa ghi ngưỡng.
+
+`THRESHOLDS` trong `script/make_dashboard.py` áp dụng cho khối mới thêm, khi tạo lại từ đầu, và **1 lần** cho
+dashboard đang dùng mỗi khi tăng `THRESHOLDS_VERSION` (timer / menu chạy `make_dashboard.py` tự cập nhật ngưỡng
+các ô có ngưỡng, giữ nguyên vị trí, tên, datasource; lần sau giữ nguyên ngưỡng sửa tay). Muốn ép đặt lại ngưỡng
+theo `THRESHOLDS` bất cứ lúc nào: thêm `--update-thresholds` (mất ngưỡng đã sửa tay trên Grafana).
 
 ## 4. Khác với dashboard cũ
 
@@ -656,25 +661,26 @@ File [`template-zabbix/zabbix_template_vmware_cluster_hcm.yaml`](template-zabbix
 Item chính `vmc.metrics` (1 phút, không lưu lịch sử) → các item phụ thuộc; LLD `vmc.cluster.discovery` tạo
 19 item + 3 item tính % cho mỗi cluster, 1 graph tài nguyên %.
 
-Mức cảnh báo theo bảng yêu cầu vận hành: **Mức 1 = Disaster (Thảm họa)**, **Mức 2 = High (Cao)**,
-**Mức 3 = Average (Trung bình)**.
+Mức cảnh báo theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: **Mức 1 = Disaster** (đỏ, gắn tag
+`System`), **Mức 2 = High (Cao)** (đỏ), **Mức 3 = Average (Cảnh báo)** (vàng), **Mức 4 = Information (Bình thường)**.
 
 | Chỉ số | Trigger | Mức | Macro (mặc định) |
 |---|---|---|---|
-| Cluster Status / vSAN datastore | vSAN datastore offline (dung lượng = 0) | Mức 1 – Disaster | — |
-| Trạng thái ESXi | Tất cả ESXi trong cluster down (effective = 0) | Mức 1 – Disaster | — |
+| Cluster Status / vSAN datastore | vSAN datastore offline / vSAN cluster rớt (dung lượng = 0), tag `System` | Mức 1 – Disaster | — |
+| Trạng thái ESXi | Tất cả ESXi trong cluster down (effective = 0), tag `System` | Mức 1 – Disaster | — |
 | Số host / trạng thái host | Một ESXi host down (effective < tổng), tên ghi `x Of y Running` | Mức 2 – High | — |
 | vSAN Used / Free | vSAN đã dùng > ngưỡng | Mức 2 – High | `{$VMC.VSAN.CRIT}` 85 |
 | CPU Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.CPU.CRIT}` 60 · `{$VMC.HOST.CPU.WARN}` 40 |
 | RAM Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Average | `{$VMC.HOST.MEM.CRIT}` 90 · `{$VMC.HOST.MEM.WARN}` 80 |
 | vSAN Resync | Resync kéo dài, tên ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Mức 2 – High | `{$VMC.RESYNC.TIME}` 30m |
-| vSAN health score | Điểm Skyline Health < ngưỡng | High / Warning | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
+| vSAN health score | Điểm Skyline Health < ngưỡng (health dưới 80% → Mức 3) | Mức 2 – High / Mức 3 – Average | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
 | Cluster Status (vCenter) | vCenter báo cluster red | Average | — |
 | DRS, tổng CPU/RAM, tổng VM, Host Uptime | Chỉ hiển thị; DRS tắt, Skyline có mục red, host chạy lâu → Info | Thông tin | `{$VMC.UPTIME.MAX}` 180d |
 | Exporter | Không lấy được dữ liệu vCenter / không đọc được /metrics / số liệu cũ > 10 phút | High / High / Warning | `{$VMC.NODATA}` 5m |
 
-CPU / RAM tổng cluster không còn trigger (chỉ hiển thị). Disk congestion chưa có metric trong exporter,
-nên chưa có trigger.
+CPU / RAM tổng cluster không còn trigger (chỉ hiển thị). Các mục trong bảng yêu cầu **chưa có metric** trong
+exporter nên chưa có trigger: disk lỗi / disk health, latency (Mức 2 > 1 ms, Mức 3 0,5–1 ms), congestion, port down,
+host maintenance (hiện gộp vào trigger "ESXi host down"), backup, service restart.
 
 Đổi ngưỡng riêng 1 cluster bằng macro context trên host, ví dụ `{$VMC.HOST.CPU.CRIT:"POOL17"}` = 60.
 
