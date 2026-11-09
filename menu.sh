@@ -3,6 +3,7 @@
 #   sudo bash menu.sh
 # Moi viec (cai pool moi, doi mat khau, xem trang thai, cau hinh Prometheus, them/xoa khoi tren dashboard,
 # cap nhat ban moi, import template / them host Zabbix) chon bang so. Mat khau vCenter, token Grafana / Zabbix luon tu go, khong in ra man hinh.
+# Token Zabbix chi luu tren may khi bat muc 19 (tu dong them host pool moi), file chmod 600; muc 20 go va xoa token.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,6 +16,8 @@ DASH_ENV=/etc/vmware-cluster-dashboard.env
 DASH_APP=/opt/vmware-cluster-dashboard/make_dashboard.py
 DASH_NAME=vmware-cluster-dashboard
 ZBX_ENV=/etc/vmware-cluster-zabbix.env      # chi luu URL Zabbix, KHONG luu token
+ZBX_AUTO_ENV=/etc/vmware-cluster-zabbix-auto.env  # muc 19: timer tu them host, CO token (chmod 600)
+ZBX_AUTO_NAME=vmware-cluster-zabbix
 ZBX_TOOL="$SCRIPT/zabbix_tool.py"
 ZBX_TPL="$REPO/template-zabbix/zabbix_template_vmware_cluster_hcm.yaml"
 
@@ -165,6 +168,13 @@ m_install() {
   if systemctl is-active --quiet "$SVC@$name"; then
     echo
     ok "Xong. Viec tiep theo: them target $(my_ip):$port vao Prometheus (muc 7)."
+    if [ -f "$ZBX_AUTO_ENV" ]; then  # da bat tu dong Zabbix -> tao host ngay, khong doi timer
+      echo "-> Them host Zabbix cho $name (tu dong, muc 19)"
+      systemctl start "$ZBX_AUTO_NAME.service" || true
+      journalctl -u "$ZBX_AUTO_NAME.service" -n 4 --no-pager -o cat 2>/dev/null || true
+    else
+      echo "Zabbix: them host bang muc 18, hoac bat muc 19 de pool moi tu len Zabbix."
+    fi
   fi
 }
 
@@ -405,6 +415,9 @@ update_rest() {  # giai nen goi moi, cap nhat script dashboard, chay lai tung ex
     install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
     ok "Da cap nhat $DASH_APP"
   fi
+  if [ -f "$ZBX_AUTO_ENV" ]; then  # tu dong Zabbix: chep script / template moi, giu cau hinh + token
+    bash "$SCRIPT/install_auto_zabbix.sh" --refresh >/dev/null && ok "-> Tu dong Zabbix: da cap nhat script"
+  fi
   local n
   for n in $(instances); do
     echo "-> Cap nhat exporter $n (giu cau hinh, mat khau cu)"
@@ -455,6 +468,25 @@ zbx_login() {  # hoi URL Zabbix (nho lai) + API token (go khong hien, khong luu)
 
 zbx() { python3 "$ZBX_TOOL" --url "$ZBX_URL" $ZBX_OPT "$@"; }
 
+zbx_pick_target() {  # hoi Zabbix server/proxy lay du lieu + nhom host -> ZPROXY (id, rong = server), ZGROUP
+  local pxs=() gs=() i c p
+  ZPROXY=""
+  mapfile -t pxs < <(zbx proxies)
+  if [ ${#pxs[@]} -gt 0 ]; then
+    echo "${B}Zabbix lay du lieu qua:${N}"
+    echo "  ${C}0)${N} Zabbix server (khong qua proxy)"
+    i=1
+    for p in "${pxs[@]}"; do echo "  $C$i)$N ${p#*$'\t'}"; i=$((i + 1)); done
+    read -r -p "Chon [0]: " c
+    if [[ "$c" =~ ^[0-9]+$ ]] && [ "$c" -ge 1 ] && [ "$c" -le ${#pxs[@]} ]; then
+      ZPROXY=${pxs[$((c - 1))]%%$'\t'*}
+    fi
+  fi
+  mapfile -t gs < <(zbx groups)
+  ZGROUP=${gs[0]:-VMware}
+  read -r -p "Nhom host [$ZGROUP]: " c; ZGROUP=${c:-$ZGROUP}
+}
+
 m_zbx_import() {  # import / cap nhat template Zabbix tu repo, chay lai discovery moi host
   [ -f "$ZBX_TPL" ] || { err "Khong thay $ZBX_TPL - cap nhat repo (muc 15)."; return; }
   echo "Import file: template-zabbix/$(basename "$ZBX_TPL")"
@@ -484,20 +516,8 @@ m_zbx_host() {  # tao host Zabbix cho 1 instance exporter, gan template + macro 
   [ -n "$name" ] || { err "Chua nhap ten"; return; }
   ip=$(my_ip)
   read -r -p "IP may chay exporter [$ip]: " c; ip=${c:-$ip}
-  mapfile -t pxs < <(zbx proxies)
-  if [ ${#pxs[@]} -gt 0 ]; then
-    echo "${B}Zabbix lay du lieu qua:${N}"
-    echo "  ${C}0)${N} Zabbix server (khong qua proxy)"
-    i=1
-    for p in "${pxs[@]}"; do echo "  $C$i)$N ${p#*$'\t'}"; i=$((i + 1)); done
-    read -r -p "Chon [0]: " c
-    if [[ "$c" =~ ^[0-9]+$ ]] && [ "$c" -ge 1 ] && [ "$c" -le ${#pxs[@]} ]; then
-      proxy=${pxs[$((c - 1))]%%$'\t'*}
-    fi
-  fi
-  mapfile -t gs < <(zbx groups)
-  group=${gs[0]:-VMware}
-  read -r -p "Nhom host [$group]: " c; group=${c:-$group}
+  zbx_pick_target
+  proxy=$ZPROXY; group=$ZGROUP
   echo "Loc cluster (ten that tren vCenter, regex). Enter = lay tat ca."
   read -r -p "  Chi lay cluster khop (vd ^POOL18-XD\$): " mt
   read -r -p "  Bo cluster khop (vd ^POOL17\$): " nmt
@@ -513,6 +533,33 @@ m_zbx_host() {  # tao host Zabbix cho 1 instance exporter, gan template + macro 
 
 m_remove_auto() {
   [ -f "$SCRIPT/install_auto_dashboard.sh" ] && bash "$SCRIPT/install_auto_dashboard.sh" --uninstall
+}
+
+m_zbx_auto() {  # timer tu them host Zabbix cho pool (instance exporter) moi - LUU token Zabbix tren may
+  local ip c iv y
+  echo "${B}Tu dong them host Zabbix khi cai exporter cho pool moi${N} (moi 10 phut + ngay sau muc 1)."
+  warn "Token API Zabbix se LUU tren may nay: $ZBX_AUTO_ENV (chmod 600, chi root doc). Go: muc 20."
+  echo "Nen tao token rieng cho viec nay (user chi co quyen tren nhom host VMware + template), dat ngay het han."
+  read -r -p "Tiep tuc? (Y/n): " y
+  [[ "$y" =~ ^[nN] ]] && return
+  echo
+  zbx_login || return
+  echo
+  ip=$(my_ip)
+  read -r -p "IP may chay exporter (interface host Zabbix) [$ip]: " c; ip=${c:-$ip}
+  zbx_pick_target
+  read -r -p "Chu ky kiem tra (phut) [10]: " iv; iv=${iv:-10}
+  echo
+  echo "Host moi: ten \"VMware Cluster <TEN POOL>\", IP $ip, nhom $ZGROUP${ZPROXY:+, qua proxy}."
+  echo "Instance da co host (cung IP + port, ke ca host tao tay) duoc bo qua; khong sua / xoa host nao."
+  ZBX_URL=$ZBX_URL ZBX_TOKEN=$ZBX_TOKEN ZBX_OPTS=$ZBX_OPT ZBX_HOST_IP=$ip ZBX_PROXY=$ZPROXY ZBX_GROUP=$ZGROUP \
+    INTERVAL=$iv bash "$SCRIPT/install_auto_zabbix.sh"
+  echo
+  echo "Nho mo port exporter tren may nay cho Zabbix server/proxy (vd ufw allow from <ip-zabbix> to any port 9821:9830 proto tcp)."
+}
+
+m_zbx_auto_remove() {
+  bash "$SCRIPT/install_auto_zabbix.sh" --uninstall
 }
 
 # ---------- menu chinh ----------
@@ -546,7 +593,7 @@ item() { row "   $2$B[$(printf '%2s' "$1")]$N  $3"; }
 badge() { [ "$1" = ok ] && printf '%s' "$G$DOT $2$N" || printf '%s' "$R$DOT $2$N"; }
 
 draw_menu() {
-  local n total=0 run=0 exp auto
+  local n total=0 run=0 exp auto zauto
   for n in $(instances); do
     total=$((total + 1))
     systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
@@ -556,12 +603,16 @@ draw_menu() {
   if [ ! -f "$DASH_ENV" ]; then auto=$(badge no "Chua Cai")
   elif systemctl is-active --quiet $DASH_NAME.timer; then auto=$(badge ok "Dang Bat")
   else auto=$(badge no "Dang Tat"); fi
+  if [ ! -f "$ZBX_AUTO_ENV" ]; then zauto=$(badge no "Chua Cai")
+  elif systemctl is-active --quiet $ZBX_AUTO_NAME.timer; then zauto=$(badge ok "Dang Bat")
+  else zauto=$(badge no "Dang Tat"); fi
 
   border "$TL" "$TR"
   center_row "$B${W}VMWARE CLUSTER HCM  $Y$DOT$N$B$W  MONITOR MENU$N"
   center_row "${D}May $(hostname)  $DOT  IP $(my_ip)$N"
   border "$ML" "$MR"
   row "  Exporter: $exp        Dashboard Tu Dong: $auto"
+  row "                                   Zabbix Tu Dong:    $zauto"
   section "$G" "EXPORTER  -  LAY SO LIEU VCENTER"
   item 1 "$G" "Cai Exporter Cho Pool / vCenter Moi"
   item 2 "$G" "Xem Trang Thai Cac Exporter"
@@ -585,6 +636,8 @@ draw_menu() {
   section "$R" "ZABBIX"
   item 17 "$R" "Import / Cap Nhat Template Zabbix"
   item 18 "$R" "Them Host Pool Moi Vao Zabbix"
+  item 19 "$R" "Cai Tu Dong Them Pool Moi Len Zabbix"
+  item 20 "$R" "Go Phan Tu Dong Zabbix (Xoa Token)"
   item 0 "$R" "Thoat"
   border "$BLc" "$BR"
   printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
@@ -610,7 +663,7 @@ fi
 
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-18]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-20]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
@@ -631,6 +684,8 @@ while true; do
     16) fn=m_remove_auto; t="Go Phan Tu Dong Dashboard" ;;
     17) fn=m_zbx_import; t="Import / Cap Nhat Template Zabbix" ;;
     18) fn=m_zbx_host; t="Them Host Pool Moi Vao Zabbix" ;;
+    19) fn=m_zbx_auto; t="Cai Tu Dong Them Pool Moi Len Zabbix" ;;
+    20) fn=m_zbx_auto_remove; t="Go Phan Tu Dong Zabbix" ;;
     0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac

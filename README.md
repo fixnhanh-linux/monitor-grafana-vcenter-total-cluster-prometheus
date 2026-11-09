@@ -51,8 +51,10 @@ script/
   vmware-cluster-exporter-linux.zip        gói cài exporter (bản 2026.10.28-2)
   vmware-cluster-exporter-linux.zip.sha256
   make_dashboard.py                        chèn khối pool mới / xoá khối / liệt kê, đẩy lên Grafana
-  zabbix_tool.py                           import template / thêm host Zabbix qua API (menu 17, 18)
+  zabbix_tool.py                           import template / thêm host Zabbix qua API (menu 17, 18, 19)
   install_auto_dashboard.sh                cài timer tự thêm khối cho pool mới (mỗi 10 phút)
+  install_auto_zabbix.sh                   cài timer tự thêm host Zabbix cho pool mới (menu 19 / 20)
+  zabbix_autosync.sh                       việc timer Zabbix chạy: liệt kê exporter trên máy → tạo host còn thiếu
 template-zabbix/
   zabbix_template_vmware_cluster_hcm.yaml  template Zabbix 6.0 (import vào Zabbix)
   make_zabbix_template.py                  script sinh lại file YAML (đổi ngưỡng / mức cảnh báo)
@@ -105,8 +107,11 @@ sudo bash menu.sh
 | 16 | Gỡ phần tự động dashboard |
 | 17 | Import / cập nhật template Zabbix lên Zabbix server qua API, rồi chạy lại discovery mọi host gắn template |
 | 18 | Thêm host pool mới vào Zabbix: tên, IP, port exporter, proxy, nhóm host, lọc cluster — gắn sẵn template |
+| 19 | Cài tự động thêm host Zabbix cho pool mới (timer 10 phút + chạy ngay sau mục 1) — **lưu token Zabbix trên máy** |
+| 20 | Gỡ phần tự động Zabbix và **xoá token** khỏi máy (host trên Zabbix giữ nguyên) |
 
 Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard) → **18** (thêm host Zabbix).
+Đã bật **9** và **19** thì chỉ cần **1** → **7**: dashboard và Zabbix tự có pool mới.
 Chi tiết từng mục, câu hỏi và kết quả mẫu: xem **Hướng dẫn dùng menu (chi tiết)** ngay bên dưới.
 
 ## Hướng dẫn dùng menu (chi tiết)
@@ -131,6 +136,7 @@ tự chuyển sang khung ASCII `+ = |`:
 ║            May srv-exporter  ●  IP 10.0.0.10                     ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Exporter: ● 1/1 Dang Chay        Dashboard Tu Dong: ● Dang Bat  ║
+║                                   Zabbix Tu Dong:    ● Dang Bat  ║
 ╠══ EXPORTER  -  LAY SO LIEU VCENTER ══════════════════════════════╣
 ║   [ 1]  Cai Exporter Cho Pool / vCenter Moi                      ║
 ║   [ 2]  Xem Trang Thai Cac Exporter                              ║
@@ -154,13 +160,15 @@ tự chuyển sang khung ASCII `+ = |`:
 ╠══ ZABBIX ════════════════════════════════════════════════════════╣
 ║   [17]  Import / Cap Nhat Template Zabbix                        ║
 ║   [18]  Them Host Pool Moi Vao Zabbix                            ║
+║   [19]  Cai Tu Dong Them Pool Moi Len Zabbix                     ║
+║   [20]  Go Phan Tu Dong Zabbix (Xoa Token)                       ║
 ║   [ 0]  Thoat                                                    ║
 ╚══════════════════════════════════════════════════════════════════╝
          Ban Quyen © 2026 FIX NHANH  -  License: FIX NHANH
 ```
 
-Dòng trạng thái: chấm **xanh** = mọi exporter đang chạy / timer dashboard đang bật; chấm **đỏ** = có exporter
-dừng, hoặc phần tự động dashboard chưa cài / đang tắt. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
+Dòng trạng thái: chấm **xanh** = mọi exporter đang chạy / timer dashboard, timer Zabbix đang bật; chấm **đỏ** = có
+exporter dừng, hoặc phần tự động dashboard / Zabbix chưa cài / đang tắt. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
 
 ### Quy trình hay dùng
 
@@ -490,12 +498,36 @@ Hỏi URL + token như mục 17, rồi:
 Xác nhận → tạo host (interface Agent `IP:10050`, macro `{$VMC.PORT}`, tag `monitor: vmware`, gắn template),
 chạy discovery ngay. Host trùng tên thì báo và không tạo. Nhớ mở port exporter cho Zabbix server / proxy.
 
+### [19] Tự động thêm host Zabbix cho pool mới
+
+Giống mục 9 của dashboard nhưng cho Zabbix: cài timer `vmware-cluster-zabbix` chạy **mỗi 10 phút** (và chạy ngay
+khi mục **1** cài xong exporter). Mỗi lần chạy, timer liệt kê exporter trên máy (`/etc/vmware-cluster-exporter/*.env`),
+instance nào **chưa có host Zabbix** thì tạo host `VMware Cluster <TÊN INSTANCE>` như mục 18 (gắn template, macro
+`{$VMC.PORT}`, chạy discovery). Zabbix chưa có template thì tự import.
+
+- **Đã có** = có host gắn template với cùng **IP + port exporter** (tên bất kỳ, kể cả host tạo tay ở mục 18 hoặc
+  host tách cluster bằng macro lọc) → bỏ qua, không tạo trùng.
+- Timer **không sửa, không xoá** host nào. Gỡ exporter (mục 6) thì host Zabbix vẫn còn, tự xoá trên Zabbix nếu cần.
+- Host tạo tự động lấy **tất cả cluster** của exporter. Muốn tách cluster (vd pool18 thấy POOL17 và POOL18-XD) thì
+  thêm macro lọc trên host sau đó, hoặc tạo tay bằng mục 18 trước.
+
+Menu hỏi URL + token (như mục 17), IP máy chạy exporter, proxy, nhóm host, chu kỳ. **Token Zabbix được lưu** trong
+`/etc/vmware-cluster-zabbix-auto.env` (`chmod 600`, chỉ root đọc), khác với mục 17/18 là gõ mỗi lần. Nên tạo token
+riêng cho việc này: user chỉ có quyền trên nhóm host VMware và template, đặt ngày hết hạn. Đổi token: chạy lại
+mục 19. Mục **15** (cập nhật) tự chép script mới, giữ cấu hình và token. Mục **20** gỡ timer và **xoá token**.
+
+```bash
+journalctl -u vmware-cluster-zabbix.service -n 20     # xem lần chạy gần nhất
+systemctl start vmware-cluster-zabbix.service         # chạy ngay
+```
+
 ### Lỗi hay gặp
 
 | Hiện tượng | Nguyên nhân | Xử lý |
 |---|---|---|
 | `Dang nhap that bai` / Up = 0, service failed mã 3 | sai user / mật khẩu vCenter | mục **3** |
 | Mục 17/18: `Not authorized` | token Zabbix sai, hết hạn hoặc user không đủ quyền | tạo token mới (user Admin / Super admin) |
+| Pool mới không tự lên Zabbix (đã bật 19) | token lưu ở mục 19 hết hạn, hoặc không gọi được Zabbix | `journalctl -u vmware-cluster-zabbix.service -n 20`; token hết hạn → chạy lại mục 19 |
 | Mục 9 báo `curl: (28) ... Connection timed out` tới Prometheus | firewall chặn máy này tới port 9090 | dùng IP Prometheus nội bộ, hoặc mở firewall, hoặc cài mục 9 trên chính server Prometheus |
 | Mục 9 báo `SSL certificate problem: self-signed certificate` | Grafana https chứng chỉ tự ký | trả lời `y` khi được hỏi (hoặc `sudo GRAFANA_INSECURE=1 bash menu.sh`) |
 | Mọi ô dashboard hiện `–` | dashboard đang dùng datasource không có metric `vmware_cluster_*` | Grafana → Explore → chọn datasource → chạy `vmware_cluster_hosts`; dùng datasource có kết quả |
