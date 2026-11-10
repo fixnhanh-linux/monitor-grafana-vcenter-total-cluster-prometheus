@@ -361,13 +361,20 @@ m_dash_now() {  # chon hang (row) roi them pool moi vao hang do, hoac chuyen kho
   echo "${B}-> Them cluster moi vao hang: ${row:-hang dau}${N}"
   run_dash --row "$row" --fix-datasource
   echo
+  read -r -p "Them lai cluster DA XOA khoi dashboard vao hang '${row:-hang dau}'? Nhap ten (vd POOL5, Enter = bo qua): " names
+  if [ -n "$names" ]; then
+    # shellcheck disable=SC2086
+    run_dash --row "$row" --readd $names
+    echo
+  fi
   read -r -p "Chuyen cluster DA CO sang hang '${row:-hang dau}'? Nhap ten (vd POOL5, Enter = bo qua): " names
   if [ -n "$names" ]; then
     # shellcheck disable=SC2086
     run_dash --row "${row:-${rows[0]:-}}" --move $names
   fi
   echo
-  echo "Bam F5 tren dashboard. Pool moi sau nay timer tu them vao hang mac dinh${def:+ \"$def\"} (doi o muc 9)."
+  echo "Bam F5 tren dashboard. Pool moi sau nay timer tu them vao hang mac dinh${def:+ \"$def\"} (doi o muc 9);"
+  echo "cluster da xoa khoi dashboard thi timer khong them lai."
 }
 
 m_dash_list() {
@@ -384,7 +391,7 @@ m_dash_remove() {
   [ -n "$names" ] || return
   # shellcheck disable=SC2086
   run_dash --remove $names
-  warn "Luu y: cluster con tren Prometheus thi timer se tu them lai (<= 10 phut). Muon bo han: xoa target trong Prometheus."
+  ok "Timer ghi nho cluster da xoa, KHONG tu them lai. Muon them lai: muc 10 (nhap ten o cau 'Them lai cluster DA XOA')."
 }
 
 m_update() {

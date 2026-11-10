@@ -399,6 +399,23 @@ def save_names(path, names):
         return False
 
 
+def load_known(path):
+    """Cluster da tung co tren dashboard (file JSON). Chua co file -> None."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return {str(c) for c in json.load(f)}
+    except (OSError, ValueError):
+        return None
+
+
+def save_known(path, names):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(sorted(names), f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        print("Khong ghi duoc file cluster da biet %s: %s" % (path, e))
+
+
 def learn_names(dash, names):
     """Ghi nhan ten khoi da doi tay tren Grafana (thanh tieu de khac ten cluster). Tra ve True neu co thay doi."""
     changed = False
@@ -1067,6 +1084,9 @@ ap.add_argument("--arrange", action="store_true",
                 help="Sap xep vi tri khoi tren SSH (len/xuong/trai/phai, doi cho, doi hang), xem truoc roi moi luu")
 ap.add_argument("--relayout", action="store_true",
                 help="Xep lai o trong moi khoi theo bo cuc chuan 4-4-4-3 (mac dinh tu lam 1 lan sau khi cap nhat)")
+ap.add_argument("--readd", nargs="*", metavar="CLUSTER",
+                help="Them lai khoi cluster da xoa (timer khong tu them lai cluster da tung co). "
+                     "Khong ten = moi cluster tren Prometheus chua co tren dashboard")
 ap.add_argument("--update-thresholds", action="store_true",
                 help="Dat lai nguong mau cac o tren dashboard dang co theo THRESHOLDS (mac dinh tu lam 1 lan "
                      "moi khi THRESHOLDS_VERSION tang; mat nguong da sua tay tren Grafana)")
@@ -1121,6 +1141,9 @@ def save_and_push(dash, n, folder_uid):
     if args.grafana:
         r = push_grafana(args.grafana, TOKEN, dash, n, folder_uid)
         print("Da day len Grafana:", r.get("status"), r.get("url"))
+        if KNOWN is not None:  # cluster dang co tren dashboard -> da biet (xoa sau nay thi timer khong them lai)
+            KNOWN.update(clusters_on(dash))
+            save_known(KNOWN_FILE, KNOWN)
 
 
 # 1) Dashboard da co tren Grafana: giu nguyen moi chinh sua tay (tieu de, datasource, khoi/hang tu them),
@@ -1135,6 +1158,17 @@ NAMES_FILE = args.names or os.environ.get("NAMES_FILE") or (
 NAMES.update(load_names(NAMES_FILE))
 if existing is not None and learn_names(existing, NAMES) and save_names(NAMES_FILE, NAMES):
     print("Ghi nhan ten khoi doi tay tren Grafana ->", NAMES_FILE)
+# Cluster da tung co tren dashboard: xoa khoi (menu 12, xoa tay tren Grafana, Restore ban cu) -> timer KHONG them lai,
+# chi tu them cluster that su moi. Them lai cluster da xoa: --readd TEN (menu 10).
+KNOWN_FILE = os.path.join(outdir, "known-clusters.json")
+KNOWN = load_known(KNOWN_FILE)
+if KNOWN is None and existing is not None and args.prometheus:
+    # Lan dau (ban cu chua co file): coi cluster dang tren dashboard + dang tren Prometheus la da biet ->
+    # cluster da xoa truoc do khong bi them lai. Cluster moi dung luc nay: them bang menu 10 / --readd.
+    KNOWN = clusters_on(existing) | set(found)
+    if args.grafana:
+        save_known(KNOWN_FILE, KNOWN)
+        print("Ghi nho %d cluster da biet -> %s" % (len(KNOWN), KNOWN_FILE))
 if args.rename:
     if existing is None:
         sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
@@ -1151,8 +1185,12 @@ if args.list:
     print("Dashboard: %s (uid %s)" % (existing.get("title"), UID))
     list_rows(existing)
     if found:
-        miss = sorted(c for c in found if c not in clusters_on(existing))
+        on = clusters_on(existing)
+        miss = sorted(c for c in found if c not in on and c not in (KNOWN or ()))
+        gone = sorted(c for c in found if c not in on and c in (KNOWN or ()))
         print("Cluster tren Prometheus chua co tren dashboard:", ", ".join(miss) or "khong co")
+        if gone:
+            print("Cluster da xoa khoi dashboard (timer khong them lai; them lai: muc 10):", ", ".join(gone))
     sys.exit(0)
 if args.arrange:  # sap xep vi tri khoi tren SSH, chi day len Grafana khi nguoi dung xac nhan luu
     if existing is None:
@@ -1209,7 +1247,15 @@ if args.remove:
     sys.exit(0)
 if existing is not None:
     present = clusters_on(existing)
-    new = sorted(c for c in found if c not in present)
+    readd = set()
+    if args.readd is not None:  # --readd (khong ten) = them lai moi cluster da xoa; --readd A B = chi A, B
+        readd = set(args.readd) if args.readd else set(found) - present
+        for c in sorted(set(args.readd) - set(found)):
+            print("Bo qua %s: khong co so lieu tren Prometheus" % c)
+    gone = sorted(c for c in found if c not in present and c in (KNOWN or ()) and c not in readd)
+    if gone:
+        print("Khong them lai cluster da xoa khoi dashboard:", ", ".join(gone), "(them lai: muc 10 / --readd)")
+    new = sorted(c for c in found if c not in present and (c not in (KNOWN or ()) or c in readd))
     hidden = hide_datasource_picker(existing)
     if hidden:
         print("An o chon datasource tren dashboard")

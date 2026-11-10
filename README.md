@@ -339,11 +339,14 @@ So hang (Enter = hang mac dinh "HN"): 2
 Cluster moi tu Prometheus: POOL5
   + POOL5 -> hang 'CLUSTER VMWARE HN' (x=8, y=41, datasource ab12cd34E = Prometheus HN)
 Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
+Them lai cluster DA XOA khoi dashboard vao hang 'CLUSTER VMWARE HN'? Nhap ten (vd POOL5, Enter = bo qua):
 Chuyen cluster DA CO sang hang 'CLUSTER VMWARE HN'? Nhap ten (vd POOL5, Enter = bo qua):
 ```
 
-- Cluster có trên Prometheus mà **chưa có** trên dashboard → chèn vào hàng vừa chọn, tự dùng đúng Prometheus
-  có cluster đó; đồng thời sửa các khối đang hiện `–` (như mục 13).
+- Cluster **mới** (có trên Prometheus, chưa từng có trên dashboard) → chèn vào hàng vừa chọn, tự dùng đúng
+  Prometheus có cluster đó; đồng thời sửa các khối đang hiện `–` (như mục 13).
+- **Thêm lại cluster đã xoá** (xoá ở mục 12, xoá tay hay Restore bản cũ trên Grafana): timer không tự thêm lại,
+  gõ tên cluster ở câu `Them lai cluster DA XOA` (lệnh: `make_dashboard.py ... --readd POOL5`).
 - **Chuyển khối đã có** sang hàng vừa chọn (vd POOL5 đang ở hàng HCM → HN): gõ tên cluster ở câu cuối (nhiều tên
   cách nhau dấu cách). Khối cũ được gỡ, khối mới chèn vào chỗ trống của hàng mới.
 - Enter ở câu chọn hàng = hàng mặc định đặt ở mục 9 (cũng là hàng timer dùng cho pool mới sau này).
@@ -352,7 +355,8 @@ Mở dashboard, bấm F5. Báo `Khong co cluster moi` mà dashboard chưa có po
 
 ### [11] Xem hàng và cluster trên dashboard
 
-In từng hàng (row), datasource và các cluster đang có, cùng cluster có trên Prometheus nhưng chưa có trên dashboard.
+In từng hàng (row), datasource và các cluster đang có, cùng cluster có trên Prometheus nhưng chưa có trên dashboard
+(tách riêng dòng `Cluster da xoa khoi dashboard` cho cluster đã xoá, timer không thêm lại).
 
 ### [12] Xoá khối 1 cluster khỏi dashboard
 
@@ -364,8 +368,11 @@ Da xoa 16 panel cua: POOL5
 Da day len Grafana: success /d/vmware-cluster-hcm/vmware-cluster-hcm-hn
 ```
 
-Cluster còn trên Prometheus thì timer **tự thêm lại** trong ≤ 10 phút (dùng để thử lại / chuyển sang hàng khác:
-mục 12 → mục 9 đổi hàng → mục 10). Muốn bỏ hẳn: xoá target của pool trong Prometheus trước, rồi mục 12.
+Timer **ghi nhớ** mọi cluster đã từng có trên dashboard (`/var/lib/vmware-cluster-dashboard/known-clusters.json`):
+cluster đã xoá — bằng mục 12, xoá tay trên Grafana hay **Restore** bản cũ — **không bị tự thêm lại**, kể cả khi còn
+trên Prometheus. Timer chỉ tự thêm cluster **thật sự mới**. Muốn đưa cluster đã xoá trở lại: mục **10**.
+Lần đầu chạy bản này (chưa có file), cluster đang trên dashboard và đang trên Prometheus đều được coi là đã biết,
+nên cluster đã xoá trước đó cũng không quay lại.
 
 ### [13] Sửa datasource khối hiện `–`
 
@@ -532,7 +539,8 @@ systemctl start vmware-cluster-zabbix.service         # chạy ngay
 | Mục 9 báo `SSL certificate problem: self-signed certificate` | Grafana https chứng chỉ tự ký | trả lời `y` khi được hỏi (hoặc `sudo GRAFANA_INSECURE=1 bash menu.sh`) |
 | Mọi ô dashboard hiện `–` | dashboard đang dùng datasource không có metric `vmware_cluster_*` | Grafana → Explore → chọn datasource → chạy `vmware_cluster_hosts`; dùng datasource có kết quả |
 | Khối pool mới hiện `–` | khối đọc Prometheus của site khác | mục **13** (timer cũng tự sửa trong ≤ 10 phút) |
-| Pool vừa xoá lại xuất hiện | timer tự thêm cluster còn trên Prometheus | xoá target trong Prometheus trước |
+| Pool vừa xoá lại xuất hiện | bản cũ: timer tự thêm mọi cluster còn trên Prometheus | cập nhật (mục 15): timer ghi nhớ cluster đã xoá, không thêm lại |
+| Pool mới không tự lên dashboard | cluster trùng tên cluster đã xoá trước đây (timer coi là đã xoá) | mục 10, gõ tên ở câu `Them lai cluster DA XOA` |
 | `bash: http://...: No such file or directory` | dán URL vào terminal như lệnh | dùng `curl -s <url>` |
 
 ### Lệnh từng việc
