@@ -32,6 +32,206 @@
           "text": "prometheus-all",
           "value": "prometheus-all"
         }
+      },
+      {
+        "name": "thr_cpu_warn",
+        "label": "CPU Used vàng ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "40",
+        "description": "Ngưỡng vàng của ô CPU Used. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "40",
+          "value": "40"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "40",
+            "value": "40"
+          }
+        ]
+      },
+      {
+        "name": "thr_cpu_crit",
+        "label": "CPU Used đỏ ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "60",
+        "description": "Ngưỡng đỏ của ô CPU Used. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "60",
+          "value": "60"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "60",
+            "value": "60"
+          }
+        ]
+      },
+      {
+        "name": "thr_ram_warn",
+        "label": "Ram Used vàng ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "80",
+        "description": "Ngưỡng vàng của ô Ram Used. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "80",
+          "value": "80"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "80",
+            "value": "80"
+          }
+        ]
+      },
+      {
+        "name": "thr_ram_crit",
+        "label": "Ram Used đỏ ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "90",
+        "description": "Ngưỡng đỏ của ô Ram Used. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "90",
+          "value": "90"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "90",
+            "value": "90"
+          }
+        ]
+      },
+      {
+        "name": "thr_vsan_crit",
+        "label": "vSAN Used đỏ ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "85",
+        "description": "Ngưỡng đỏ của ô vSAN Used. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "85",
+          "value": "85"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "85",
+            "value": "85"
+          }
+        ]
+      },
+      {
+        "name": "thr_uptime_crit",
+        "label": "Host - Uptime đỏ ≥ (ngày)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "180",
+        "description": "Ngưỡng đỏ của ô Host - Uptime. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "180",
+          "value": "180"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "180",
+            "value": "180"
+          }
+        ]
+      },
+      {
+        "name": "thr_host_cpu_warn",
+        "label": "CPU Host (Max) vàng ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "40",
+        "description": "Ngưỡng vàng của ô CPU Host (Max). Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "40",
+          "value": "40"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "40",
+            "value": "40"
+          }
+        ]
+      },
+      {
+        "name": "thr_host_cpu_crit",
+        "label": "CPU Host (Max) đỏ ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "60",
+        "description": "Ngưỡng đỏ của ô CPU Host (Max). Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "60",
+          "value": "60"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "60",
+            "value": "60"
+          }
+        ]
+      },
+      {
+        "name": "thr_host_ram_warn",
+        "label": "RAM Host (Max) vàng ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "80",
+        "description": "Ngưỡng vàng của ô RAM Host (Max). Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "80",
+          "value": "80"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "80",
+            "value": "80"
+          }
+        ]
+      },
+      {
+        "name": "thr_host_ram_crit",
+        "label": "RAM Host (Max) đỏ ≥ (%)",
+        "type": "textbox",
+        "hide": 0,
+        "query": "90",
+        "description": "Ngưỡng đỏ của ô RAM Host (Max). Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
+        "current": {
+          "selected": false,
+          "text": "90",
+          "value": "90"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "90",
+            "value": "90"
+          }
+        ]
       }
     ]
   },
@@ -102,6 +302,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -209,6 +410,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -308,6 +510,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -376,6 +579,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -444,6 +648,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -511,6 +716,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -522,7 +783,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -530,11 +791,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -590,6 +851,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -657,6 +919,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -668,7 +986,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -676,11 +994,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -736,6 +1054,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -803,6 +1122,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -814,7 +1189,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -822,7 +1197,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -878,6 +1253,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -947,6 +1323,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1034,6 +1411,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1045,7 +1478,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -1053,7 +1486,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -1107,6 +1540,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1118,7 +1607,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -1126,11 +1615,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -1184,6 +1673,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1195,7 +1740,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -1203,11 +1748,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -1285,6 +1830,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1392,6 +1938,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1491,6 +2038,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1559,6 +2107,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1627,6 +2176,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1694,6 +2244,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1705,7 +2311,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -1713,11 +2319,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -1773,6 +2379,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1840,6 +2447,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1851,7 +2514,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -1859,11 +2522,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -1919,6 +2582,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1986,6 +2650,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -1997,7 +2717,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -2005,7 +2725,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -2061,6 +2781,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2130,6 +2851,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2217,6 +2939,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -2228,7 +3006,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -2236,7 +3014,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -2290,6 +3068,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -2301,7 +3135,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -2309,11 +3143,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -2367,6 +3201,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -2378,7 +3268,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -2386,11 +3276,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -2468,6 +3358,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2575,6 +3466,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2674,6 +3566,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2742,6 +3635,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2810,6 +3704,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2877,6 +3772,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -2888,7 +3839,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -2896,11 +3847,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -2956,6 +3907,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3023,6 +3975,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -3034,7 +4042,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -3042,11 +4050,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -3102,6 +4110,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3169,6 +4178,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -3180,7 +4245,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -3188,7 +4253,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -3244,6 +4309,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3313,6 +4379,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3400,6 +4467,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -3411,7 +4534,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -3419,7 +4542,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -3473,6 +4596,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -3484,7 +4663,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -3492,11 +4671,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -3550,6 +4729,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -3561,7 +4796,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -3569,11 +4804,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -3651,6 +4886,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3758,6 +4994,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3857,6 +5094,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3925,6 +5163,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3993,6 +5232,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4060,6 +5300,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4071,7 +5367,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4079,11 +5375,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -4139,6 +5435,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4206,6 +5503,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4217,7 +5570,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4225,11 +5578,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -4285,6 +5638,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4352,6 +5706,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4363,7 +5773,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4371,7 +5781,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -4427,6 +5837,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4496,6 +5907,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4583,6 +5995,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4594,7 +6062,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4602,7 +6070,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -4656,6 +6124,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4667,7 +6191,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4675,11 +6199,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -4733,6 +6257,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -4744,7 +6324,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -4752,11 +6332,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -4834,6 +6414,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4941,6 +6522,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5040,6 +6622,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5108,6 +6691,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5176,6 +6760,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5243,6 +6828,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5254,7 +6895,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5262,11 +6903,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -5322,6 +6963,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5389,6 +7031,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5400,7 +7098,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5408,11 +7106,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -5468,6 +7166,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5535,6 +7234,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5546,7 +7301,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5554,7 +7309,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -5610,6 +7365,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5679,6 +7435,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5766,6 +7523,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5777,7 +7590,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5785,7 +7598,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -5839,6 +7652,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5850,7 +7719,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5858,11 +7727,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -5916,6 +7785,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -5927,7 +7852,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -5935,11 +7860,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -6017,6 +7942,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6124,6 +8050,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6223,6 +8150,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6291,6 +8219,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6359,6 +8288,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6426,6 +8356,62 @@
           "legendFormat": "CPU Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_cpu_warn - $thr_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -6437,7 +8423,7 @@
           "displayName": "CPU Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -6445,11 +8431,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -6505,6 +8491,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6572,6 +8559,62 @@
           "legendFormat": "Ram Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_ram_warn - $thr_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -6583,7 +8626,7 @@
           "displayName": "Ram Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -6591,11 +8634,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },
@@ -6651,6 +8694,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6718,6 +8762,62 @@
           "legendFormat": "vSAN Used",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_vsan_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -6729,7 +8829,7 @@
           "displayName": "vSAN Used",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -6737,7 +8837,7 @@
               },
               {
                 "color": "red",
-                "value": 85
+                "value": 100
               }
             ]
           },
@@ -6793,6 +8893,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6862,6 +8963,7 @@
           "range": false
         }
       ],
+      "transformations": [],
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -6949,6 +9051,62 @@
           "legendFormat": "Host - Uptime",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(0)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_uptime_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -6960,7 +9118,7 @@
           "displayName": "Host - Uptime",
           "unit": "suffix: d",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -6968,7 +9126,7 @@
               },
               {
                 "color": "red",
-                "value": 180
+                "value": 100
               }
             ]
           },
@@ -7022,6 +9180,62 @@
           "legendFormat": "CPU Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_cpu_warn - $thr_host_cpu_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_cpu_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -7033,7 +9247,7 @@
           "displayName": "CPU Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -7041,11 +9255,11 @@
               },
               {
                 "color": "yellow",
-                "value": 40
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 60
+                "value": 100
               }
             ]
           },
@@ -7099,6 +9313,62 @@
           "legendFormat": "RAM Host (Max)",
           "instant": true,
           "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MIN",
+          "expr": "vector(2 * $thr_host_ram_warn - $thr_host_ram_crit)",
+          "legendFormat": "Min",
+          "instant": true,
+          "range": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "refId": "MAX",
+          "expr": "vector($thr_host_ram_crit)",
+          "legendFormat": "Max",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MIN",
+            "mappings": [
+              {
+                "fieldName": "Min",
+                "handlerKey": "min"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "min"
+              }
+            ]
+          }
+        },
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "MAX",
+            "mappings": [
+              {
+                "fieldName": "Max",
+                "handlerKey": "max"
+              },
+              {
+                "fieldName": "Value",
+                "handlerKey": "max"
+              }
+            ]
+          }
         }
       ],
       "fieldConfig": {
@@ -7110,7 +9380,7 @@
           "displayName": "RAM Host (Max)",
           "unit": "percent",
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
@@ -7118,11 +9388,11 @@
               },
               {
                 "color": "yellow",
-                "value": 80
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 90
+                "value": 100
               }
             ]
           },

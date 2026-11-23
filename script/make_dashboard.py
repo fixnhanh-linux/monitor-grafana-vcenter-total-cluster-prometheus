@@ -35,7 +35,9 @@ THRESHOLDS = {
     "CPU Host (Max)": (40, 60),    # % CPU cua host cao nhat: vang > 40% (Muc 3), do = nguong cao 60% (Muc 2)
     "RAM Host (Max)": (80, 90),    # % RAM cua host cao nhat: vang > 80% (Muc 3), do = nguong cao 90% (Muc 2)
 }
-THRESHOLDS_VERSION = 2  # doi THRESHOLDS -> tang so nay de o dang co tren Grafana duoc cap nhat nguong 1 lan
+THRESHOLDS_VERSION = 2  # doi THRESHOLDS -> tang so nay de menu nguong tren Grafana duoc dat lai theo bang nay 1 lan
+# Tren dashboard, nguong nam o hang o nhap tren cung (bien thr_*): sua o do roi Save dashboard
+# (tick "Update default variable values"). Bang nay la gia tri ban dau / gia tri khi dat lai.
 
 # (ten o, PromQL, don vi, kieu mau)  - thu tu = thu tu hien tren o
 TILES = [
@@ -68,6 +70,51 @@ TILES = [
 
 GREEN, YELLOW, ORANGE, RED, GRAY = "green", "yellow", "orange", "red", "#8e8e8e"
 
+# Ten o -> phan giua ten bien nguong tren dashboard (thr_<x>_warn = vang, thr_<x>_crit = do)
+THR_VARS = {"CPU Used": "cpu", "Ram Used": "ram", "vSAN Used": "vsan", "Host - Uptime": "uptime",
+            "CPU Host (Max)": "host_cpu", "RAM Host (Max)": "host_ram"}
+
+
+def thr_var(name, level):
+    return "thr_%s_%s" % (THR_VARS[name], level)
+
+
+def threshold_variables():
+    """O nhap nguong (bien textbox) hien tren cung dashboard, gia tri lay tu THRESHOLDS."""
+    out = []
+    for name, (warn, crit) in THRESHOLDS.items():
+        unit = "ngày" if name == "Host - Uptime" else "%"
+        for level, val, color in (("warn", warn, "vàng"), ("crit", crit, "đỏ")):
+            if val is None:
+                continue
+            v = str(val)
+            out.append({"name": thr_var(name, level), "label": "%s %s ≥ (%s)" % (name, color, unit),
+                        "type": "textbox", "hide": 0, "query": v,
+                        "description": "Ngưỡng %s của ô %s. Sửa xong bấm Save dashboard, tick "
+                                       "'Update default variable values' để giữ cho mọi người." % (color, name),
+                        "current": {"selected": False, "text": v, "value": v},
+                        "options": [{"selected": True, "text": v, "value": v}]})
+    return out
+
+
+def threshold_extras(name):
+    """Query + transformation de o `name` lay nguong tu bien thr_* (Grafana khong cho dung bien trong thresholds).
+    Cach lam: dat min/max cua o tu 2 query vector(...) (transformation "Config from query results"), mau theo
+    phan tram cua khoang min..max: >= 50% vang, >= 100% do. Chon min = 2*vang - do, max = do thi
+    50% dung bang nguong vang, 100% dung bang nguong do. O khong co muc vang: min = 0, max = do."""
+    warn, crit = THRESHOLDS[name]
+    hi = "$" + thr_var(name, "crit")
+    lo = "2 * $%s - %s" % (thr_var(name, "warn"), hi) if warn is not None else "0"
+    targets, trans = [], []
+    for ref, expr, key in (("MIN", lo, "min"), ("MAX", hi, "max")):
+        label = key.capitalize()
+        targets.append({"datasource": DS, "refId": ref, "expr": "vector(%s)" % expr, "legendFormat": label,
+                        "instant": True, "range": False})
+        trans.append({"id": "configFromData", "options": {"configRefId": ref, "mappings": [
+            {"fieldName": label, "handlerKey": key}, {"fieldName": "Value", "handlerKey": key}]}})
+    st = [(None, GREEN)] + ([(50, YELLOW)] if warn is not None else []) + [(100, RED)]
+    return targets, trans, dict(steps(*st), mode="percentage")
+
 
 def steps(*pairs):
     return {"mode": "absolute", "steps": [{"color": c, "value": v} for v, c in pairs]}
@@ -93,10 +140,9 @@ def tile_override(ref, name, unit, kind):
         props += [{"id": "mappings", "value": [{"type": "value", "options": {
             "-1": {"text": "LỖI", "color": RED, "index": 0}}}]},
                   {"id": "thresholds", "value": steps((None, RED), (0, GREEN), (1, RED))}]
-    elif kind == "thr":
-        warn, crit = THRESHOLDS[name]
-        st = [(None, GREEN)] + ([(warn, YELLOW)] if warn is not None else []) + [(crit, RED)]
-        props += [{"id": "thresholds", "value": steps(*st)}, {"id": "decimals", "value": 0 if unit.startswith("suffix") else 1}]
+    elif kind == "thr":  # nguong lay tu bien tren dashboard - xem threshold_extras
+        props += [{"id": "thresholds", "value": threshold_extras(name)[2]},
+                  {"id": "decimals", "value": 0 if unit.startswith("suffix") else 1}]
     else:  # fixed
         props += [{"id": "thresholds", "value": steps((None, GREEN))}]
     if unit in ("hertz", "decbytes", "bytes"):
@@ -128,11 +174,16 @@ def tile_panel(pid, cluster, x, y, w, tile):
     defaults = {"color": {"mode": "thresholds"}, "noValue": "–"}
     for prop in props:
         defaults[prop["id"]] = prop["value"]
+    targets = [{"datasource": DS, "refId": "A", "expr": expr.replace("$cluster", cluster),
+                "legendFormat": name, "instant": True, "range": False}]
+    trans = []
+    if kind == "thr":
+        more, trans, _ = threshold_extras(name)
+        targets += more
     return {
         "id": pid, "type": "stat", "title": "", "datasource": DS, "transparent": False,
         "gridPos": {"x": x, "y": y, "w": w, "h": TILE_H},
-        "targets": [{"datasource": DS, "refId": "A", "expr": expr.replace("$cluster", cluster),
-                     "legendFormat": name, "instant": True, "range": False}],
+        "targets": targets, "transformations": trans,
         "fieldConfig": {"defaults": defaults, "overrides": []},
         "options": {"colorMode": "background", "graphMode": "none", "textMode": "value_and_name",
                     "justifyMode": "center", "orientation": "auto", "wideLayout": True,
@@ -1044,21 +1095,56 @@ def upgrade_resync_tiles(dash):
     return n
 
 
-def upgrade_threshold_tiles(dash):
-    """Dat lai nguong mau cac o co nguong (CPU/RAM/vSAN Used, Host Uptime, CPU/RAM Host) theo THRESHOLDS.
-    Chi doi thresholds, giu nguyen vi tri, bieu thuc, datasource. Tra ve so o da doi."""
-    fresh = {t[0]: tile_override("A", t[0], t[2], t[3])["properties"] for t in TILES if t[3] == "thr"}
+def upgrade_threshold_tiles(dash, reset=False):
+    """Menu nguong: them o nhap nguong (bien thr_*) con thieu, bo bien thr_* khong con dung.
+    reset=True (THRESHOLDS_VERSION tang / --update-thresholds): dat lai gia tri menu theo THRESHOLDS,
+    khong thi GIU gia tri da sua tren Grafana. O co nguong kieu cu (nguong co dinh trong o) hoac khac cau truc
+    hien tai -> doc nguong tu menu; giu vi tri, bieu thuc, datasource cua o.
+    Tra ve (so o da doi, so bien da them / bo / dat lai)."""
+    tl = dash.setdefault("templating", {}).setdefault("list", [])
+    fresh = {v["name"]: v for v in threshold_variables()}
+    nvar = 0
+    keep = []
+    for v in tl:
+        name = v.get("name", "")
+        if name.startswith("thr_") and name not in fresh:
+            nvar += 1  # muc nguong da bo khoi THRESHOLDS
+            continue
+        if name in fresh and reset and (v.get("query") != fresh[name]["query"]
+                                        or (v.get("current") or {}).get("value") != fresh[name]["query"]):
+            v.update({k: fresh[name][k] for k in ("query", "current", "options")})
+            nvar += 1
+        keep.append(v)
+    have = {v.get("name") for v in keep}
+    added = [v for v in fresh.values() if v["name"] not in have]
+    tl[:] = keep + added
+    nvar += len(added)
+    key3 = ("refId", "expr", "legendFormat")
     n = 0
     for p in all_panels(dash):
-        props = fresh.get(tile_name(p))
-        if not props:
+        name = tile_name(p)
+        tg = p.get("targets") or []
+        if p.get("type") != "stat" or name not in THRESHOLDS or not tg:
             continue
-        new = next(pr["value"] for pr in props if pr["id"] == "thresholds")
+        more, trans, thr = threshold_extras(name)
+        main = [t for t in tg if t.get("refId") not in ("MIN", "MAX")]
+        old_tr = [t for t in (p.get("transformations") or []) if not (
+            t.get("id") == "configFromData" and (t.get("options") or {}).get("configRefId") in ("MIN", "MAX"))]
         d = p.setdefault("fieldConfig", {}).setdefault("defaults", {})
-        if d.get("thresholds") != new:
-            d["thresholds"] = new
-            n += 1
-    return n
+        mine = [{k: t.get(k) for k in key3} for t in tg if t.get("refId") in ("MIN", "MAX")]
+        if mine == [{k: t[k] for k in key3} for t in more] \
+                and (p.get("transformations") or []) == old_tr + trans and d.get("thresholds") == thr:
+            continue
+        for t in more:
+            if main and "datasource" in main[0]:
+                t["datasource"] = main[0]["datasource"]
+        p["targets"] = main + more
+        p["transformations"] = old_tr + trans
+        d["thresholds"] = thr
+        d.pop("min", None)  # min/max lay tu query MIN/MAX
+        d.pop("max", None)
+        n += 1
+    return n, nvar
 
 
 def hide_datasource_picker(dash):
@@ -1088,8 +1174,8 @@ ap.add_argument("--readd", nargs="*", metavar="CLUSTER",
                 help="Them lai khoi cluster da xoa (timer khong tu them lai cluster da tung co). "
                      "Khong ten = moi cluster tren Prometheus chua co tren dashboard")
 ap.add_argument("--update-thresholds", action="store_true",
-                help="Dat lai nguong mau cac o tren dashboard dang co theo THRESHOLDS (mac dinh tu lam 1 lan "
-                     "moi khi THRESHOLDS_VERSION tang; mat nguong da sua tay tren Grafana)")
+                help="Dat lai gia tri menu nguong tren dashboard theo THRESHOLDS (mac dinh tu lam 1 lan "
+                     "moi khi THRESHOLDS_VERSION tang; mat nguong da sua tren menu Grafana)")
 ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
@@ -1270,11 +1356,11 @@ if existing is not None:
             print("Xep lai o theo bo cuc moi (4-4-4-3): %d o" % moved)
             hidden = True
     thr_marker = os.path.join(outdir, "thresholds-v%d.done" % THRESHOLDS_VERSION)
-    if args.update_thresholds or not os.path.exists(thr_marker):
-        changed = upgrade_threshold_tiles(existing)
-        if changed:
-            print("Cap nhat nguong mau theo bang canh bao: %d o" % changed)
-            hidden = True
+    changed, nvar = upgrade_threshold_tiles(existing, args.update_thresholds or not os.path.exists(thr_marker))
+    if changed or nvar:
+        print("Menu nguong: %d o mau doc nguong tu menu, %d o nhap nguong them / dat lai theo THRESHOLDS"
+              % (changed, nvar))
+        hidden = True
     if new:
         print("Cluster moi tu Prometheus:", ", ".join(new))
         add_blocks(existing, new, args.row)
@@ -1316,7 +1402,7 @@ dash = {
         {"name": "datasource", "label": "Prometheus", "type": "datasource", "query": "prometheus",
          "regex": "/^%s$/" % PROM_DS, "hide": 2, "refresh": 1,
          "current": {"selected": True, "text": PROM_DS, "value": PROM_DS}},
-    ]},
+    ] + threshold_variables()},  # menu chinh nguong (o nhap tren cung dashboard)
     "annotations": {"list": []},
     "panels": panels,
 }

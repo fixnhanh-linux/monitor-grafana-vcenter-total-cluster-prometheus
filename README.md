@@ -667,10 +667,27 @@ Ngưỡng màu theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: *
 trên 80%), **đỏ = Mức 2 – Cao** (vSAN trên 85%, CPU/RAM vượt ngưỡng cao 60% / 90%), cùng giá trị với macro trigger
 Zabbix bên dưới. vSAN Used chưa có mức vàng vì bảng yêu cầu chưa ghi ngưỡng.
 
-`THRESHOLDS` trong `script/make_dashboard.py` áp dụng cho khối mới thêm, khi tạo lại từ đầu, và **1 lần** cho
-dashboard đang dùng mỗi khi tăng `THRESHOLDS_VERSION` (timer / menu chạy `make_dashboard.py` tự cập nhật ngưỡng
-các ô có ngưỡng, giữ nguyên vị trí, tên, datasource; lần sau giữ nguyên ngưỡng sửa tay). Muốn ép đặt lại ngưỡng
-theo `THRESHOLDS` bất cứ lúc nào: thêm `--update-thresholds` (mất ngưỡng đã sửa tay trên Grafana).
+### Menu chỉnh ngưỡng (ngay trên dashboard)
+
+Trên cùng dashboard có hàng ô nhập ngưỡng (biến `thr_*` của Grafana), 10 ô: `CPU Used vàng ≥ (%)`, `CPU Used đỏ ≥ (%)`,
+Ram Used, CPU Host (Max), RAM Host (Max) (mỗi ô 2 mức), `vSAN Used đỏ ≥ (%)` và `Host - Uptime đỏ ≥ (ngày)`.
+Gõ số mới rồi Enter: mọi khối cluster đổi màu theo ngay. Muốn giữ cho mọi người: bấm **Save dashboard** và tick
+**Update default variable values** (Grafana cũ: "Save current variable values as dashboard default").
+Không lưu thì chỉ áp dụng cho lần xem đó.
+
+- Ngưỡng vàng phải **nhỏ hơn** ngưỡng đỏ; không để trống ô (trống thì ô màu báo lỗi query).
+- Ngưỡng áp dụng chung cho mọi cluster trên dashboard.
+- Cần Grafana có transformation *Config from query results* (Grafana 8 trở lên).
+
+`THRESHOLDS` trong `script/make_dashboard.py` là giá trị ban đầu của menu. Dashboard đang dùng tự có menu ở lần chạy
+kế tiếp của timer / menu (`make_dashboard.py`), giữ nguyên vị trí, tên, datasource các ô; ngưỡng sửa tay trong từng
+ô trước đây được thay bằng menu (bản cũ sao lưu trong `backup/`). Các lần chạy sau **giữ nguyên** giá trị đã sửa
+trên menu, trừ khi tăng `THRESHOLDS_VERSION` (đặt lại menu theo `THRESHOLDS` **1 lần**) hoặc chạy với
+`--update-thresholds` (đặt lại ngay, mất giá trị đã sửa trên menu).
+
+Cách hoạt động: Grafana không cho dùng biến trong ngưỡng màu, nên mỗi ô có thêm 2 query `vector(...)` tính từ biến
+(min = 2×vàng − đỏ, max = đỏ; ô không có mức vàng: min = 0), đưa vào ô bằng transformation *Config from query results*.
+Ngưỡng màu đặt theo phần trăm khoảng min…max: ≥ 50% vàng (đúng bằng ngưỡng vàng), ≥ 100% đỏ (đúng bằng ngưỡng đỏ).
 
 ## 4. Khác với dashboard cũ
 
