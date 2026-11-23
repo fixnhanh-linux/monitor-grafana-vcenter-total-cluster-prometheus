@@ -889,7 +889,7 @@ zabbix_export:
       value: '90'
       description: 'Busiest host memory (%) above this -> High (level 2)'
     - macro: '{$VMC.UPTIME.MAX}'
-      value: 180d
+      value: 120d
       description: 'Host uptime above this -> Info (needs patching)'
     - macro: '{$VMC.RESYNC.TIME}'
       value: 30m

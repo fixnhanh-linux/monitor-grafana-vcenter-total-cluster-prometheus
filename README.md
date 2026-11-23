@@ -664,7 +664,7 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | vSAN Total / Free | `vmware_cluster_vsan_capacity_bytes` / `_free_bytes` (vSAN datastore) | xanh |
 | vSAN Used | `(capacity − free) / capacity` | đỏ ≥ 80% |
 | vSAN Resync | `vmware_cluster_vsan_resync_bytes` (vCenter cũ: exporter tự hỏi qua host) | xanh = 0 · **đỏ** khi > 0 (đang resync) · **LỖI** đỏ khi cluster có vSAN mà không lấy được số resync |
-| Host - Uptime | `vmware_cluster_host_uptime_max_seconds` (host chạy lâu nhất, ngày) | đỏ ≥ 180 ngày |
+| Host - Uptime | `vmware_cluster_host_uptime_max_seconds` (host chạy lâu nhất, ngày) | đỏ ≥ 120 ngày |
 | CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | vàng ≥ 40% · đỏ ≥ 60% |
 | RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | vàng ≥ 80% · đỏ ≥ 90% |
 
@@ -738,7 +738,7 @@ Mức cảnh báo theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**
 | vSAN Resync | Resync kéo dài, tên ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Mức 2 – High | `{$VMC.RESYNC.TIME}` 30m |
 | vSAN health score | Điểm Skyline Health < ngưỡng (health dưới 80% → Mức 3) | Mức 2 – High / Mức 3 – Warning | `{$VMC.SCORE.CRIT}` 60 · `{$VMC.SCORE.WARN}` 80 |
 | Cluster Status (vCenter) | vCenter báo cluster red | Average | — |
-| DRS, tổng CPU/RAM, tổng VM, Host Uptime | Chỉ hiển thị; DRS tắt, Skyline có mục red, host chạy lâu → Info | Thông tin | `{$VMC.UPTIME.MAX}` 180d |
+| DRS, tổng CPU/RAM, tổng VM, Host Uptime | Chỉ hiển thị; DRS tắt, Skyline có mục red, host chạy lâu → Info | Thông tin | `{$VMC.UPTIME.MAX}` 120d |
 | Exporter | Không lấy được dữ liệu vCenter / không đọc được /metrics / số liệu cũ > 10 phút | High / High / Warning | `{$VMC.NODATA}` 5m |
 
 CPU / RAM tổng cluster không còn trigger (chỉ hiển thị). Các mục trong bảng yêu cầu **chưa có metric** trong

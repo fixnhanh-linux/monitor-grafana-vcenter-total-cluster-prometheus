@@ -31,11 +31,11 @@ THRESHOLDS = {
     "CPU Used": (25, 40),         # % CPU dang dung cua ca cluster: vang >= 25% (Muc 3), do >= 40% (Muc 2)
     "Ram Used": (80, 90),         # % RAM dang dung cua ca cluster: vang > 80% (Muc 3), do = nguong cao 90%
     "vSAN Used": (None, 80),      # % dung luong vSAN da dung: do >= 80% (Muc 2); bang chua co muc vang
-    "Host - Uptime": (None, 180),  # ngay - host chay lau nhat, do khi >= 180 ngay (can va/patch)
+    "Host - Uptime": (None, 120),  # ngay - host chay lau nhat, do khi >= 120 ngay (can va/patch)
     "CPU Host (Max)": (40, 60),    # % CPU cua host cao nhat: vang > 40% (Muc 3), do = nguong cao 60% (Muc 2)
     "RAM Host (Max)": (80, 90),    # % RAM cua host cao nhat: vang > 80% (Muc 3), do = nguong cao 90% (Muc 2)
 }
-THRESHOLDS_VERSION = 3  # doi THRESHOLDS -> tang so nay de menu nguong tren Grafana duoc dat lai theo bang nay 1 lan
+THRESHOLDS_VERSION = 4  # doi THRESHOLDS -> tang so nay de menu nguong tren Grafana duoc dat lai theo bang nay 1 lan
 # Tren dashboard, nguong nam o hang o nhap tren cung (bien thr_*): sua o do roi Save dashboard
 # (tick "Update default variable values"). Bang nay la gia tri ban dau / gia tri khi dat lai.
 

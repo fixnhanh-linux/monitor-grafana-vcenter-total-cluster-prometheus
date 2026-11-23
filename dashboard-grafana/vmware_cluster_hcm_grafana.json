@@ -138,18 +138,18 @@
         "label": "Host - Uptime đỏ ≥ (ngày)",
         "type": "textbox",
         "hide": 0,
-        "query": "180",
+        "query": "120",
         "description": "Ngưỡng đỏ của ô Host - Uptime. Sửa xong bấm Save dashboard, tick 'Update default variable values' để giữ cho mọi người.",
         "current": {
           "selected": false,
-          "text": "180",
-          "value": "180"
+          "text": "120",
+          "value": "120"
         },
         "options": [
           {
             "selected": true,
-            "text": "180",
-            "value": "180"
+            "text": "120",
+            "value": "120"
           }
         ]
       },

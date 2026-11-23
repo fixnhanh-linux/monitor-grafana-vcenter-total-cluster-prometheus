@@ -45,7 +45,7 @@ MACROS = [
     ("{$VMC.HOST.CPU.CRIT}", "60", "Busiest host CPU (%) above this -> High (level 2)"),
     ("{$VMC.HOST.MEM.WARN}", "80", "Busiest host memory (%) above this -> Warning (level 3)"),
     ("{$VMC.HOST.MEM.CRIT}", "90", "Busiest host memory (%) above this -> High (level 2)"),
-    ("{$VMC.UPTIME.MAX}", "180d", "Host uptime above this -> Info (needs patching)"),
+    ("{$VMC.UPTIME.MAX}", "120d", "Host uptime above this -> Info (needs patching)"),
     ("{$VMC.RESYNC.TIME}", "30m", "vSAN resync running longer than this -> High (level 2)"),
     ("{$VMC.NODATA}", "5m", "No data from /metrics for this long -> High"),
     ("{$VMC.CLUSTER.MATCHES}", ".*", "Discover only clusters matching this regex, e.g. ^POOL18-XD$ or ^(POOL17|CORE)$"),
