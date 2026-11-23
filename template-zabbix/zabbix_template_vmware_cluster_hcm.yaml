@@ -874,7 +874,7 @@ zabbix_export:
       value: '60'
       description: 'vSAN Skyline Health score below this -> High (level 2)'
     - macro: '{$VMC.VSAN.CRIT}'
-      value: '85'
+      value: '80'
       description: 'vSAN used space (%) above this -> High (level 2)'
     - macro: '{$VMC.HOST.CPU.WARN}'
       value: '40'

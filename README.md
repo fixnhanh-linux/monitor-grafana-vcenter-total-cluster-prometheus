@@ -658,18 +658,18 @@ Nếu trước đó đã import bản thử "CLUSTER VMWARE HCM" (uid `cluster-v
 | Total Host | `vmware_cluster_hosts` | xanh |
 | Total VM | `vmware_cluster_vms_total` (cả VM đang tắt) | xanh |
 | CPU Total | `vmware_cluster_cpu_total_hz` | xanh |
-| CPU Used | `cpu_used_hz / cpu_total_hz` | vàng ≥ 40% · đỏ ≥ 60% |
+| CPU Used | `cpu_used_hz / cpu_total_hz` | vàng ≥ 25% · đỏ ≥ 40% |
 | Ram Total | `vmware_cluster_mem_total_bytes` | xanh |
 | Ram Used | `mem_used_bytes / mem_total_bytes` | vàng ≥ 80% · đỏ ≥ 90% |
 | vSAN Total / Free | `vmware_cluster_vsan_capacity_bytes` / `_free_bytes` (vSAN datastore) | xanh |
-| vSAN Used | `(capacity − free) / capacity` | đỏ ≥ 85% |
+| vSAN Used | `(capacity − free) / capacity` | đỏ ≥ 80% |
 | vSAN Resync | `vmware_cluster_vsan_resync_bytes` (vCenter cũ: exporter tự hỏi qua host) | xanh = 0 · **đỏ** khi > 0 (đang resync) · **LỖI** đỏ khi cluster có vSAN mà không lấy được số resync |
 | Host - Uptime | `vmware_cluster_host_uptime_max_seconds` (host chạy lâu nhất, ngày) | đỏ ≥ 180 ngày |
 | CPU Host (Max) | `vmware_cluster_host_cpu_max_percent` | vàng ≥ 40% · đỏ ≥ 60% |
 | RAM Host (Max) | `vmware_cluster_host_mem_max_percent` | vàng ≥ 80% · đỏ ≥ 90% |
 
-Ngưỡng màu theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: **vàng = Mức 3 – Cảnh báo** (CPU trên 40%, RAM
-trên 80%), **đỏ = Mức 2 – Cao** (vSAN trên 85%, CPU/RAM vượt ngưỡng cao 60% / 90%), cùng giá trị với macro trigger
+Ngưỡng màu theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**: **vàng = Mức 3 – Cảnh báo** (CPU cluster ≥ 25%, RAM
+≥ 80%, CPU / RAM host ≥ 40% / 80%), **đỏ = Mức 2 – Cao** (vSAN ≥ 80%, CPU cluster ≥ 40%, RAM ≥ 90%, CPU / RAM host ≥ 60% / 90%), cùng giá trị với macro trigger
 Zabbix bên dưới. vSAN Used chưa có mức vàng vì bảng yêu cầu chưa ghi ngưỡng.
 
 ### Menu chỉnh ngưỡng (ngay trên dashboard)
@@ -732,7 +732,7 @@ Mức cảnh báo theo **Bảng yêu cầu cấu hình cảnh báo VMware/vSAN**
 | Cluster Status / vSAN datastore | vSAN datastore offline / vSAN cluster rớt (dung lượng = 0), tag `System` | Mức 1 – Disaster | — |
 | Trạng thái ESXi | Tất cả ESXi trong cluster down (effective = 0), tag `System` | Mức 1 – Disaster | — |
 | Số host / trạng thái host | Một ESXi host down (effective < tổng), tên ghi `x Of y Running` | Mức 2 – High | — |
-| vSAN Used / Free | vSAN đã dùng > ngưỡng | Mức 2 – High | `{$VMC.VSAN.CRIT}` 85 |
+| vSAN Used / Free | vSAN đã dùng > ngưỡng | Mức 2 – High | `{$VMC.VSAN.CRIT}` 80 |
 | CPU Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Warning | `{$VMC.HOST.CPU.CRIT}` 60 · `{$VMC.HOST.CPU.WARN}` 40 |
 | RAM Host (Max) | Host cao nhất (min 5 phút), tên ghi tên host | Mức 2 – High / Mức 3 – Warning | `{$VMC.HOST.MEM.CRIT}` 90 · `{$VMC.HOST.MEM.WARN}` 80 |
 | vSAN Resync | Resync kéo dài, tên ghi **dung lượng còn phải resync**, vd `Cluster POOL17: vSAN Resync 435.2 GB Remaining, Running Longer Than 30m` | Mức 2 – High | `{$VMC.RESYNC.TIME}` 30m |

@@ -40,7 +40,7 @@ MACROS = [
     ("{$VMC.PORT}", "9821", "Exporter port: pool18 9821, pool25 9822, pool6 9823, core 9824"),
     ("{$VMC.SCORE.WARN}", "80", "vSAN Skyline Health score below this -> Warning (level 3, health < 80%)"),
     ("{$VMC.SCORE.CRIT}", "60", "vSAN Skyline Health score below this -> High (level 2)"),
-    ("{$VMC.VSAN.CRIT}", "85", "vSAN used space (%) above this -> High (level 2)"),
+    ("{$VMC.VSAN.CRIT}", "80", "vSAN used space (%) above this -> High (level 2)"),
     ("{$VMC.HOST.CPU.WARN}", "40", "Busiest host CPU (%) above this -> Warning (level 3)"),
     ("{$VMC.HOST.CPU.CRIT}", "60", "Busiest host CPU (%) above this -> High (level 2)"),
     ("{$VMC.HOST.MEM.WARN}", "80", "Busiest host memory (%) above this -> Warning (level 3)"),
