@@ -531,8 +531,9 @@ m_watchdog() {  # tu khoi dong lai exporter / Prometheus / Grafana / timer bi du
   fi
   cat <<EOF
 Watchdog lam gi:
-  - Exporter bi dung (systemctl stop, failed...) -> chay lai. Khong chay lai khi: sai mat khau vCenter
-    (tranh khoa tai khoan - doi o muc 3), dung bang muc 4 (chon 2), hoac da disable.
+  - Exporter bi dung (systemctl stop, failed...) -> chay lai. Khong chay lai khi dung bang muc 4 (chon 2)
+    hoac da disable. vCenter bao sai mat khau -> chi thu lai 1 lan / gio (khong khoa tai khoan; SSO vCenter
+    loi tam luc khoi dong lai cung bao sai mat khau). Sai that: doi o muc 3.
   - Exporter van chay nhung /metrics khong tra loi 2 lan lien tiep (treo) -> restart.
   - So lieu exporter cu hon 15 phut -> restart (toi da 1 lan / 30 phut).
   - Prometheus / grafana-server (neu cai tren may nay va dang enable) bi dung -> chay lai.

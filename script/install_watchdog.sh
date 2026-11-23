@@ -38,7 +38,13 @@ STALE=900
 STALE_GAP=1800
 # Service moi chay chua du GRACE giay thi chua xet treo / so lieu cu
 GRACE=300
+# Exporter dung vi vCenter bao sai mat khau: thu lai moi PW_RETRY giay (0 = khong bao gio)
+PW_RETRY=3600
 EOF
+fi
+if ! grep -q '^PW_RETRY=' "$ENV_FILE"; then  # cau hinh tu ban truoc: them dong moi
+  echo '# Exporter dung vi vCenter bao sai mat khau: thu lai moi PW_RETRY giay (0 = khong bao gio)' >> "$ENV_FILE"
+  echo 'PW_RETRY=3600' >> "$ENV_FILE"
 fi
 
 # Exporter crash -> systemd tu chay lai sau 30s, khong bao gio bo cuoc (mac dinh systemd ngung sau 5 lan / 10s)

@@ -488,7 +488,7 @@ Chọn **1** để bật. Menu cài timer `vmware-cluster-watchdog`, cứ **2 ph
 | Số liệu exporter cũ hơn 15 phút (không lấy được từ vCenter) | Restart, tối đa 1 lần / 30 phút |
 | `prometheus` / `grafana-server` (nếu cài trên máy này và đang enable) bị dừng | Chạy lại |
 | Timer tự động dashboard / Zabbix bị dừng | Bật lại |
-| Exporter dừng vì **sai mật khẩu vCenter** (mã thoát 3) | **Không** chạy lại (tránh khóa tài khoản), ghi nhật ký; đổi mật khẩu ở mục 3 |
+| Exporter dừng vì vCenter báo **sai user / mật khẩu** (mã thoát 3) | Chỉ thử lại **1 lần / giờ** (`PW_RETRY`, 0 = không bao giờ), ghi nhật ký. 1 lần / giờ không đủ để khóa tài khoản, mà cứu được trường hợp SSO vCenter chưa sẵn sàng lúc khởi động lại (cũng báo sai mật khẩu). Sai thật: đổi ở mục 3 |
 | Exporter dừng bằng mục 4 (chọn 2 – Dừng) hoặc đã `systemctl disable` | **Không** chạy lại; chọn 1 / 3 ở mục 4 là watchdog theo dõi tiếp |
 
 Ngoài ra menu thêm drop-in `StartLimitIntervalSec=0` cho exporter để systemd không bao giờ bỏ cuộc khi exporter

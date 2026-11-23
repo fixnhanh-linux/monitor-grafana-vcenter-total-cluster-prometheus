@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Watchdog: timer chay moi 2 phut (cai bang install_watchdog.sh / menu muc 22), tu khoi dong lai service bi dung / treo.
 #  - Exporter (vmware-cluster-exporter@<ten>): dang enable ma khong chay -> restart.
-#      Bo qua: sai mat khau vCenter (ma thoat 3, tranh khoa tai khoan) va instance dung tay o menu muc 4.
+#      Bo qua instance dung tay o menu muc 4. Sai mat khau vCenter (ma thoat 3): chi thu lai 1 lan / PW_RETRY giay
+#      (vCenter co the bao sai mat khau khi SSO chua san sang luc khoi dong lai; 1 lan / gio khong du de khoa tai khoan).
 #    Dang chay ma /metrics khong tra loi 2 lan lien tiep (treo) -> restart.
 #    So lieu cu hon STALE giay (khong lay duoc vCenter) -> restart, toi da 1 lan / STALE_GAP giay.
 #  - EXTRA (mac dinh prometheus, grafana-server): co cai + enable ma khong chay -> restart.
@@ -16,6 +17,7 @@ EXTRA=${EXTRA-prometheus grafana-server}
 STALE=${STALE:-900}          # giay
 STALE_GAP=${STALE_GAP:-1800}  # giay giua 2 lan restart vi so lieu cu
 GRACE=${GRACE:-300}           # service moi chay < GRACE giay thi chua xet treo / so lieu cu
+PW_RETRY=${PW_RETRY:-3600}    # giay giua 2 lan thu lai exporter dung vi sai mat khau (0 = khong bao gio thu lai)
 
 mkdir -p "$STATE"
 now=$(date +%s)
@@ -49,8 +51,19 @@ for f in "$CONF"/*.env; do
     state=$(prop "$u" ActiveState); code=$(prop "$u" ExecMainStatus)
     [ "$state" = activating ] && continue  # systemd dang tu chay lai (RestartSec)
     if [ "$code" = 3 ]; then
-      [ -f "$STATE/$k.pw" ] || echo "$u dung vi SAI MAT KHAU vCenter (ma 3) - khong tu chay lai; doi mat khau o menu muc 3"
-      touch "$STATE/$k.pw"
+      t=$(prop "$u" InactiveEnterTimestamp)  # luc exporter dung (lan dang nhap that bai gan nhat)
+      [ -n "$t" ] && t=$(date -d "$t" +%s 2>/dev/null) || t=$now
+      if (( PW_RETRY > 0 && now - t >= PW_RETRY )); then
+        do_restart "$u" "thu dang nhap lai sau $(( (now - t) / 60 )) phut (lan truoc vCenter bao sai user / mat khau)"
+        rm -f "$STATE/$k.pw"
+      elif [ ! -f "$STATE/$k.pw" ]; then
+        if (( PW_RETRY > 0 )); then
+          echo "$u dung vi vCenter bao SAI USER / MAT KHAU (ma 3) - se thu lai sau $((PW_RETRY / 60)) phut; sai that thi doi o menu muc 3"
+        else
+          echo "$u dung vi vCenter bao SAI USER / MAT KHAU (ma 3) - khong tu thu lai (PW_RETRY=0); doi o menu muc 3"
+        fi
+        touch "$STATE/$k.pw"
+      fi
       continue
     fi
     do_restart "$u" "service khong chay ($state, ma thoat ${code:-?})"
