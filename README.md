@@ -142,6 +142,7 @@ tự chuyển sang khung ASCII `+ = |`:
 ╠═════════════════════════════════════════════════════════════════════════════════════════════╣
 ║  Exporter   ● 1/1 Dang Chay                  Dashboard Tu Dong  ● Dang Bat                  ║
 ║  Watchdog   ● Dang Bat                       Zabbix Tu Dong     ○ Chua Cai                  ║
+║  Pool       ● pool18                                                                        ║
 ╠══════════════════════════════════════════════╦══════════════════════════════════════════════╣
 ║ ▌ EXPORTER  -  LAY SO LIEU VCENTER ───────── ║ ▌ DASHBOARD GRAFANA ──────────────────────── ║
 ║  [ 1]  Cai Exporter Cho Pool / vCenter Moi   ║  [ 9]  Cai Tu Dong Them Pool Len Dashboard   ║
@@ -165,7 +166,7 @@ Terminal rộng từ 95 cột trở lên: menu chia **2 cột** như trên; hẹ
 Dòng thứ 2 ghi **phiên bản code** đang chạy trên máy (commit + ngày) – so với GitHub để biết server đã cập nhật chưa.
 
 Trạng thái: chấm **xanh** `●` = đang chạy / đang bật; chấm **đỏ** `●` = có exporter dừng hoặc timer bị tắt;
-vòng **vàng** `○` = chưa cài. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
+vòng **vàng** `○` = chưa cài. Dòng **Pool** liệt kê từng exporter: tên xanh = đang chạy, **đỏ** = đang dừng. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
 
 ### Quy trình hay dùng
 

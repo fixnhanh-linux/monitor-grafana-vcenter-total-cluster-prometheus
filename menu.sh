@@ -787,10 +787,14 @@ menu_cells() {  # menu_cells <rong cot> <phan tu...> -> moi o 1 dong (da du rong
 }
 
 draw_menu() {
-  local n total=0 run=0 exp ver l r i left=() right=() w2
+  local n total=0 run=0 exp ver l r i left=() right=() w2 chips=() line chip
   for n in $(instances); do
     total=$((total + 1))
-    systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
+    if systemctl is-active --quiet "$SVC@$n"; then
+      run=$((run + 1)); chips+=("$G$DOT$N $n")
+    else
+      chips+=("$R$DOT $n$N")  # pool dang dung: ten mau do
+    fi
   done
   if [ "$total" = 0 ]; then exp=$(badge warn "Chua Cai (muc 1)")
   elif [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total Dang Chay")
@@ -804,6 +808,14 @@ draw_menu() {
   w2=$(((BOX_W - 4) / 2))
   row "  $(fit "${B}Exporter$N   $exp" "$w2")${B}Dashboard Tu Dong$N  $(timer_badge "$DASH_ENV" $DASH_NAME.timer)"
   row "  $(fit "${B}Watchdog$N   $(timer_badge "/etc/systemd/system/$WD_NAME.timer" $WD_NAME.timer)" "$w2")${B}Zabbix Tu Dong$N     $(timer_badge "$ZBX_AUTO_ENV" $ZBX_AUTO_NAME.timer)"
+  if [ ${#chips[@]} -gt 0 ]; then  # tung pool: cham xanh = dang chay, do = dung; dai qua thi xuong dong
+    line="  ${B}Pool$N       "
+    for chip in "${chips[@]}"; do
+      if (($(vis_len "$line$chip") > BOX_W - 2)); then row "$line"; line="             "; fi
+      line+="$chip   "
+    done
+    row "$line"
+  fi
   if [ "$BOX_W" -ge $((COL_W * 2 + 1)) ]; then  # 2 cot
     printf '%s%s%s%s%s%s\n' "$MARGIN" "$C" "$ML" "$(rep "$H" $COL_W)$TT$(rep "$H" $((BOX_W - COL_W - 1)))" "$MR" "$N"
     mapfile -t left < <(menu_cells "$COL_W" "${MENU_LEFT[@]}")
