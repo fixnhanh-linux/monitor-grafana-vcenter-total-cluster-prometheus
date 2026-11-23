@@ -21,6 +21,7 @@ ZBX_AUTO_NAME=vmware-cluster-zabbix
 ZBX_TOOL="$SCRIPT/zabbix_tool.py"
 ZBX_TPL="$REPO/template-zabbix/zabbix_template_vmware_cluster_hcm.yaml"
 WD_NAME=vmware-cluster-watchdog   # muc 22: tu khoi dong lai service bi dung / treo
+WD_OFF=/etc/vmware-cluster-watchdog.off  # co file nay = nguoi dung da tat watchdog o muc 22 -> menu khong tu bat lai
 
 if [ "$(id -u)" -ne 0 ]; then
   exec sudo bash "$0" "$@"
@@ -426,6 +427,8 @@ update_rest() {  # giai nen goi moi, cap nhat script dashboard, chay lai tung ex
   fi
   if [ -f "/etc/systemd/system/$WD_NAME.timer" ]; then
     bash "$SCRIPT/install_watchdog.sh" >/dev/null && ok "-> Watchdog: da cap nhat script"
+  else
+    ensure_watchdog
   fi
   if [ -f "$ZBX_AUTO_ENV" ]; then  # tu dong Zabbix: chep script / template moi, giu cau hinh + token
     bash "$SCRIPT/install_auto_zabbix.sh" --refresh >/dev/null && ok "-> Tu dong Zabbix: da cap nhat script"
@@ -522,6 +525,17 @@ m_thresholds() {  # xem / sua menu nguong mau tren dashboard (bien thr_*), day t
   dash_py --set-threshold "${sets[@]}" && ok "Da luu. Bam F5 tren dashboard de thay mau moi."
 }
 
+ensure_watchdog() {  # watchdog bat mac dinh: chua cai / bi tat -> tu cai / bat lai (tru khi da tat o muc 22)
+  [ -f "$WD_OFF" ] && return 0
+  [ -n "$(instances)" ] || return 0  # chua co exporter nao thi chua can
+  if [ ! -f "/etc/systemd/system/$WD_NAME.timer" ]; then
+    bash "$SCRIPT/install_watchdog.sh" >/dev/null 2>&1 && ok "Da tu bat watchdog (muc 22) - tu khoi dong lai service bi dung / treo."
+  elif ! systemctl is-active --quiet $WD_NAME.timer; then
+    systemctl enable --now $WD_NAME.timer >/dev/null 2>&1 && ok "Watchdog dang tat -> da bat lai."
+  fi
+  return 0
+}
+
 m_watchdog() {  # tu khoi dong lai exporter / Prometheus / Grafana / timer bi dung hoac treo
   local a
   if systemctl is-active --quiet $WD_NAME.timer; then
@@ -543,8 +557,12 @@ EOF
   echo "  1) Bat / cap nhat watchdog   2) Tat (go) watchdog   3) Xem nhat ky (50 dong)"
   read -r -p "Chon (Enter = quay lai): " a
   case "$a" in
-    1) bash "$SCRIPT/install_watchdog.sh" ;;
-    2) read -r -p "Tat watchdog? (y/N): " a; [[ "$a" =~ ^[yY] ]] && bash "$SCRIPT/install_watchdog.sh" --uninstall ;;
+    1) rm -f "$WD_OFF"; bash "$SCRIPT/install_watchdog.sh" ;;
+    2) read -r -p "Tat watchdog? (y/N): " a
+       if [[ "$a" =~ ^[yY] ]]; then
+         bash "$SCRIPT/install_watchdog.sh" --uninstall && touch "$WD_OFF"
+         echo "Menu se KHONG tu bat lai watchdog nua (bat lai: muc 22 -> 1)."
+       fi ;;
     3) journalctl -u $WD_NAME.service -n 50 --no-pager -o short-iso 2>/dev/null | grep -v -e 'Starting ' -e 'Finished ' -e 'Deactivated'          | tail -30 || true
        echo "(Khong co dong 'KHOI DONG LAI' nao = moi service van chay binh thuong)" ;;
   esac
@@ -785,6 +803,7 @@ fi
 
 install_shortcut 2>/dev/null || true
 while true; do
+  ensure_watchdog >/dev/null  # moi lan ve menu: watchdog chua cai / bi tat -> bat (tru khi da tat o muc 22)
   header
   read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-22]:${N} " choice || exit 0
   echo

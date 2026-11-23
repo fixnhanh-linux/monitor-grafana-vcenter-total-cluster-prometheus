@@ -479,7 +479,7 @@ Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard tr
 
 ### [22] Tự khởi động lại service bị dừng / treo (watchdog)
 
-Chọn **1** để bật. Menu cài timer `vmware-cluster-watchdog`, cứ **2 phút** kiểm tra một lần:
+**Bật sẵn mặc định**: mỗi lần mở menu (và khi cập nhật ở mục 15), nếu đã có exporter mà watchdog chưa cài hoặc đang tắt thì menu tự cài / bật lại; chỉ khi bạn tắt ở mục 22 (chọn **2**) thì menu mới để yên, bật lại bằng chọn **1**. Timer `vmware-cluster-watchdog` cứ **2 phút** kiểm tra một lần:
 
 | Tình huống | Watchdog làm gì |
 |---|---|
@@ -493,7 +493,7 @@ Chọn **1** để bật. Menu cài timer `vmware-cluster-watchdog`, cứ **2 ph
 
 Ngoài ra menu thêm drop-in `StartLimitIntervalSec=0` cho exporter để systemd không bao giờ bỏ cuộc khi exporter
 crash liên tục. Chọn **3** để xem nhật ký (dòng `KHOI DONG LAI ...`), hoặc `journalctl -u vmware-cluster-watchdog -n 50`.
-Cấu hình (service cần theo dõi thêm, các ngưỡng thời gian): `/etc/vmware-cluster-watchdog.env`. Chọn **2** để gỡ.
+Cấu hình (service cần theo dõi thêm, các ngưỡng thời gian): `/etc/vmware-cluster-watchdog.env`.
 Mục 15 (cập nhật) tự chép script watchdog mới nếu đang bật.
 
 ### [17] Import / cập nhật template Zabbix
