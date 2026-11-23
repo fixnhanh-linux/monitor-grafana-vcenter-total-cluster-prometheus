@@ -136,47 +136,36 @@ khung màu, chữ không dấu để hiện đúng trên mọi terminal (MobaXte
 tự chuyển sang khung ASCII `+ = |`:
 
 ```text
-╔══════════════════════════════════════════════════════════════════╗
-║               VMWARE CLUSTER HCM  ●  MONITOR MENU                ║
-║            May srv-exporter  ●  IP 10.0.0.10                     ║
-╠══════════════════════════════════════════════════════════════════╣
-║  Exporter: ● 1/1 Dang Chay        Dashboard Tu Dong: ● Dang Bat  ║
-║                                   Zabbix Tu Dong:    ● Dang Bat  ║
-║                                   Tu Khoi Dong Lai:  ● Dang Bat  ║
-╠══ EXPORTER  -  LAY SO LIEU VCENTER ══════════════════════════════╣
-║   [ 1]  Cai Exporter Cho Pool / vCenter Moi                      ║
-║   [ 2]  Xem Trang Thai Cac Exporter                              ║
-║   [ 3]  Doi User / Mat Khau vCenter Cua 1 Pool                   ║
-║   [ 4]  Khoi Dong Lai / Dung / Chay 1 Exporter                   ║
-║   [ 5]  Xem Log 1 Exporter                                       ║
-║   [ 6]  Go Exporter                                              ║
-╠══ PROMETHEUS ════════════════════════════════════════════════════╣
-║   [ 7]  In Cau Hinh Prometheus Cho Cac Exporter                  ║
-║   [ 8]  Kiem Tra Ket Noi Exporter → Prometheus → Grafana         ║
-╠══ DASHBOARD GRAFANA ═════════════════════════════════════════════╣
-║   [ 9]  Cai Tu Dong Them Pool Len Dashboard                      ║
-║   [10]  Them Pool Moi Len Dashboard Ngay                         ║
-║   [11]  Xem Hang Va Cluster Tren Dashboard                       ║
-║   [12]  Xoa Khoi 1 Cluster Khoi Dashboard                        ║
-║   [13]  Sua Datasource Khoi Hien '-' (Dung Prometheus)           ║
-║   [14]  Sap Xep Vi Tri Khoi (Xem Truoc Roi Luu)                  ║
-║   [21]  Chinh Nguong Mau (CPU / RAM / vSAN / Uptime)             ║
-╠══ KHAC ══════════════════════════════════════════════════════════╣
-║   [15]  Cap Nhat Ban Moi Tu GitHub                               ║
-║   [16]  Go Phan Tu Dong Dashboard                                ║
-║   [22]  Tu Khoi Dong Lai Service Bi Dung / Treo (Watchdog)       ║
-╠══ ZABBIX ════════════════════════════════════════════════════════╣
-║   [17]  Import / Cap Nhat Template Zabbix                        ║
-║   [18]  Them Host Pool Moi Vao Zabbix                            ║
-║   [19]  Cai Tu Dong Them Pool Moi Len Zabbix                     ║
-║   [20]  Go Phan Tu Dong Zabbix (Xoa Token)                       ║
-║   [ 0]  Thoat                                                    ║
-╚══════════════════════════════════════════════════════════════════╝
-         Ban Quyen © 2026 FIX NHANH  -  License: FIX NHANH
+╔═════════════════════════════════════════════════════════════════════════════════════════════╗
+║                             VMWARE CLUSTER HCM  ●  MONITOR MENU                             ║
+║                May srv-exporter  ●  IP 10.0.0.10  ●  Ban 49af24b 23/11/2026                 ║
+╠═════════════════════════════════════════════════════════════════════════════════════════════╣
+║  Exporter   ● 1/1 Dang Chay                  Dashboard Tu Dong  ● Dang Bat                  ║
+║  Watchdog   ● Dang Bat                       Zabbix Tu Dong     ○ Chua Cai                  ║
+╠══════════════════════════════════════════════╦══════════════════════════════════════════════╣
+║ ▌ EXPORTER  -  LAY SO LIEU VCENTER ───────── ║ ▌ DASHBOARD GRAFANA ──────────────────────── ║
+║  [ 1]  Cai Exporter Cho Pool / vCenter Moi   ║  [ 9]  Cai Tu Dong Them Pool Len Dashboard   ║
+║  [ 2]  Xem Trang Thai Cac Exporter           ║  [10]  Them Pool Moi Len Dashboard Ngay      ║
+║  [ 3]  Doi User / Mat Khau vCenter           ║  [11]  Xem Hang Va Cluster Tren Dashboard    ║
+║  [ 4]  Khoi Dong Lai / Dung / Chay Exporter  ║  [12]  Xoa Khoi 1 Cluster Khoi Dashboard     ║
+║  [ 5]  Xem Log Exporter                      ║  [13]  Sua Datasource Khoi Hien '-'          ║
+║  [ 6]  Go Exporter                           ║  [14]  Sap Xep Vi Tri Khoi (Xem Truoc)       ║
+║ ▌ PROMETHEUS ─────────────────────────────── ║  [21]  Chinh Nguong Mau CPU/RAM/vSAN/Uptime  ║
+║  [ 7]  In Cau Hinh Prometheus                ║  [16]  Go Phan Tu Dong Dashboard             ║
+║  [ 8]  Kiem Tra Ket Noi Exporter → Grafana   ║ ▌ ZABBIX ─────────────────────────────────── ║
+║ ▌ HE THONG ───────────────────────────────── ║  [17]  Import / Cap Nhat Template Zabbix     ║
+║  [15]  Cap Nhat Ban Moi Tu GitHub            ║  [18]  Them Host Pool Moi Vao Zabbix         ║
+║  [22]  Watchdog: Tu Chay Lai Service Dung    ║  [19]  Cai Tu Dong Them Pool Len Zabbix      ║
+║  [ 0]  Thoat                                 ║  [20]  Go Phan Tu Dong Zabbix (Xoa Token)    ║
+╚══════════════════════════════════════════════╩══════════════════════════════════════════════╝
+                              Ban Quyen © 2026 FIX NHANH  -  License: FIX NHANH
 ```
 
-Dòng trạng thái: chấm **xanh** = mọi exporter đang chạy / timer dashboard, timer Zabbix đang bật; chấm **đỏ** = có
-exporter dừng, hoặc phần tự động dashboard / Zabbix chưa cài / đang tắt. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
+Terminal rộng từ 95 cột trở lên: menu chia **2 cột** như trên; hẹp hơn thì tự về 1 cột (cùng nhóm, cùng số).
+Dòng thứ 2 ghi **phiên bản code** đang chạy trên máy (commit + ngày) – so với GitHub để biết server đã cập nhật chưa.
+
+Trạng thái: chấm **xanh** `●` = đang chạy / đang bật; chấm **đỏ** `●` = có exporter dừng hoặc timer bị tắt;
+vòng **vàng** `○` = chưa cài. Gõ số rồi Enter; xong mỗi việc bấm Enter để về menu.
 
 ### Quy trình hay dùng
 

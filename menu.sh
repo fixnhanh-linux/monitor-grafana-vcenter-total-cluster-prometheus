@@ -41,8 +41,10 @@ for loc in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
 done
 if [ -n "$UTF8" ]; then
   H="═"; V="║"; TL="╔"; TR="╗"; BLc="╚"; BR="╝"; ML="╠"; MR="╣"; DOT="●"; CP="©"
+  TT="╦"; TB="╩"; LN="─"; BAR="▌"; ODOT="○"
 else
   H="="; V="|"; TL="+"; TR="+"; BLc="+"; BR="+"; ML="+"; MR="+"; DOT="*"; CP="(c)"
+  TT="+"; TB="+"; LN="-"; BAR="#"; ODOT="o"
 fi
 BOX_W=66        # be rong ben trong khung
 COPYRIGHT="Ban Quyen $CP $(date +%Y) FIX NHANH  -  License: FIX NHANH"
@@ -705,87 +707,126 @@ m_zbx_auto_remove() {
 ARR="→"; [ -n "$UTF8" ] || ARR="->"
 MARGIN=""
 rep() { local s="" i; for ((i = 0; i < $2; i++)); do s+=$1; done; printf '%s' "$s"; }
-vis_len() { local s; s=$(printf '%s' "$1" | sed 's/\x1b\[[0-9;]*m//g'); echo "${#s}"; }
-if [ -z "$UTF8" ]; then  # locale khong UTF-8: bash dem byte -> dem ky tu bang python3
-  vis_len() {
-    python3 -c 'import re, sys
-s = sys.argv[1].encode("utf-8", "surrogateescape").decode("utf-8", "replace")
-print(len(re.sub(r"\x1b\[[0-9;]*m", "", s)))' "$1"
-  }
-fi
-row() {  # 1 dong trong khung, can trai
-  local pad=$((BOX_W - $(vis_len "$1")))
-  ((pad < 0)) && pad=0
-  printf '%s%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$V" "$N" "$1" "$(rep ' ' $pad)" "$C$V" "$N"
+shopt -s extglob
+vis_len() {  # do dai hien thi (bo ma mau)
+  local s=${1//$'\e'\[*([0-9;])m/}
+  if [ -z "$UTF8" ] && [[ "$s" == *[![:ascii:]]* ]]; then  # locale khong UTF-8: bash dem byte -> python dem ky tu
+    python3 -c 'import sys; print(len(sys.argv[1].encode("utf-8", "surrogateescape").decode("utf-8", "replace")))' "$s"
+  else
+    echo "${#s}"
+  fi
 }
+fit() {  # fit <chuoi> <rong> -> chuoi them khoang trang cho du rong
+  local pad=$(($2 - $(vis_len "$1")))
+  ((pad < 0)) && pad=0
+  printf '%s%s' "$1" "$(rep ' ' $pad)"
+}
+row() { printf '%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$V" "$N" "$(fit "$1" "$BOX_W")" "$C$V" "$N"; }
 center_row() { row "$(rep ' ' $(((BOX_W - $(vis_len "$1")) / 2)))$1"; }
 border() { printf '%s%s%s%s%s%s\n' "$MARGIN" "$C" "$1" "$(rep "$H" $BOX_W)" "$2" "$N"; }
-section() {  # ╠══ TEN NHOM ══════╣
-  local title=" $2 "
-  printf '%s%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$ML$H$H" "$1$B$title$N" "$C" \
-    "$(rep "$H" $((BOX_W - 2 - $(vis_len "$title"))))" "$MR" "$N"
+badge() {  # badge ok|warn|no <chu>
+  case "$1" in
+    ok) printf '%s' "$G$DOT $2$N" ;;
+    warn) printf '%s' "$Y$ODOT $2$N" ;;
+    *) printf '%s' "$R$DOT $2$N" ;;
+  esac
 }
-item() { row "   $2$B[$(printf '%2s' "$1")]$N  $3"; }
-badge() { [ "$1" = ok ] && printf '%s' "$G$DOT $2$N" || printf '%s' "$R$DOT $2$N"; }
+timer_badge() {  # timer_badge <file cau hinh> <timer>
+  if [ ! -f "$1" ]; then badge warn "Chua Cai"
+  elif systemctl is-active --quiet "$2"; then badge ok "Dang Bat"
+  else badge no "Dang Tat"; fi
+}
+
+# Nhom menu: "MAU|TEN NHOM" roi cac dong "SO|Chu". Cot trai / cot phai (1 cot khi terminal hep: trai roi phai).
+MENU_LEFT=(
+  "G|EXPORTER  -  LAY SO LIEU VCENTER"
+  "1|Cai Exporter Cho Pool / vCenter Moi"
+  "2|Xem Trang Thai Cac Exporter"
+  "3|Doi User / Mat Khau vCenter"
+  "4|Khoi Dong Lai / Dung / Chay Exporter"
+  "5|Xem Log Exporter"
+  "6|Go Exporter"
+  "Y|PROMETHEUS"
+  "7|In Cau Hinh Prometheus"
+  "8|Kiem Tra Ket Noi Exporter $ARR Grafana"
+  "BL|HE THONG"
+  "15|Cap Nhat Ban Moi Tu GitHub"
+  "22|Watchdog: Tu Chay Lai Service Dung"
+  "0|Thoat"
+)
+MENU_RIGHT=(
+  "M|DASHBOARD GRAFANA"
+  "9|Cai Tu Dong Them Pool Len Dashboard"
+  "10|Them Pool Moi Len Dashboard Ngay"
+  "11|Xem Hang Va Cluster Tren Dashboard"
+  "12|Xoa Khoi 1 Cluster Khoi Dashboard"
+  "13|Sua Datasource Khoi Hien '-'"
+  "14|Sap Xep Vi Tri Khoi (Xem Truoc)"
+  "21|Chinh Nguong Mau CPU/RAM/vSAN/Uptime"
+  "16|Go Phan Tu Dong Dashboard"
+  "R|ZABBIX"
+  "17|Import / Cap Nhat Template Zabbix"
+  "18|Them Host Pool Moi Vao Zabbix"
+  "19|Cai Tu Dong Them Pool Len Zabbix"
+  "20|Go Phan Tu Dong Zabbix (Xoa Token)"
+)
+COL_W=46   # be rong 1 cot (che do 2 cot)
+menu_cells() {  # menu_cells <rong cot> <phan tu...> -> moi o 1 dong (da du rong)
+  local w=$1 e k v col="" title; shift
+  for e in "$@"; do
+    k=${e%%|*}; v=${e#*|}
+    if [[ "$k" =~ ^[0-9]+$ ]]; then
+      if [ "$k" = 0 ]; then fit "  $R$B[ 0]$N  $R$v$N" "$w"
+      else fit "  $col$B[$(printf '%2s' "$k")]$N  $v" "$w"; fi
+    else
+      col=${!k}; title=" $BAR $v "
+      fit "$col$B$title$N$D$(rep "$LN" $((w - $(vis_len "$title") - 1)))$N" "$w"
+    fi
+    echo
+  done
+}
 
 draw_menu() {
-  local n total=0 run=0 exp auto zauto wd
+  local n total=0 run=0 exp ver l r i left=() right=() w2
   for n in $(instances); do
     total=$((total + 1))
     systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
   done
-  if [ "$total" -gt 0 ] && [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total Dang Chay")
+  if [ "$total" = 0 ]; then exp=$(badge warn "Chua Cai (muc 1)")
+  elif [ "$run" = "$total" ]; then exp=$(badge ok "$run/$total Dang Chay")
   else exp=$(badge no "$run/$total Dang Chay"); fi
-  if [ ! -f "$DASH_ENV" ]; then auto=$(badge no "Chua Cai")
-  elif systemctl is-active --quiet $DASH_NAME.timer; then auto=$(badge ok "Dang Bat")
-  else auto=$(badge no "Dang Tat"); fi
-  if [ ! -f "$ZBX_AUTO_ENV" ]; then zauto=$(badge no "Chua Cai")
-  elif systemctl is-active --quiet $ZBX_AUTO_NAME.timer; then zauto=$(badge ok "Dang Bat")
-  else zauto=$(badge no "Dang Tat"); fi
-  if systemctl is-active --quiet $WD_NAME.timer; then wd=$(badge ok "Dang Bat"); else wd=$(badge no "Dang Tat"); fi
+  ver=$(git -C "$REPO" log -1 --format='%h %cd' --date=format:'%d/%m/%Y' 2>/dev/null)
 
   border "$TL" "$TR"
-  center_row "$B${W}VMWARE CLUSTER HCM  $Y$DOT$N$B$W  MONITOR MENU$N"
-  center_row "${D}May $(hostname)  $DOT  IP $(my_ip)$N"
+  center_row "$B${W}VMWARE CLUSTER HCM$N  $Y$DOT$N  $B${W}MONITOR MENU$N"
+  center_row "${D}May $(hostname)  $DOT  IP $(my_ip)${ver:+  $DOT  Ban $ver}$N"
   border "$ML" "$MR"
-  row "  Exporter: $exp        Dashboard Tu Dong: $auto"
-  row "                                   Zabbix Tu Dong:    $zauto"
-  row "                                   Tu Khoi Dong Lai:  $wd"
-  section "$G" "EXPORTER  -  LAY SO LIEU VCENTER"
-  item 1 "$G" "Cai Exporter Cho Pool / vCenter Moi"
-  item 2 "$G" "Xem Trang Thai Cac Exporter"
-  item 3 "$G" "Doi User / Mat Khau vCenter Cua 1 Pool"
-  item 4 "$G" "Khoi Dong Lai / Dung / Chay 1 Exporter"
-  item 5 "$G" "Xem Log 1 Exporter"
-  item 6 "$G" "Go Exporter"
-  section "$Y" "PROMETHEUS"
-  item 7 "$Y" "In Cau Hinh Prometheus Cho Cac Exporter"
-  item 8 "$Y" "Kiem Tra Ket Noi Exporter $ARR Prometheus $ARR Grafana"
-  section "$M" "DASHBOARD GRAFANA"
-  item 9 "$M" "Cai Tu Dong Them Pool Len Dashboard"
-  item 10 "$M" "Them Pool Moi Len Dashboard Ngay"
-  item 11 "$M" "Xem Hang Va Cluster Tren Dashboard"
-  item 12 "$M" "Xoa Khoi 1 Cluster Khoi Dashboard"
-  item 13 "$M" "Sua Datasource Khoi Hien '-' (Dung Prometheus)"
-  item 14 "$M" "Sap Xep Vi Tri Khoi (Xem Truoc Roi Luu)"
-  item 21 "$M" "Chinh Nguong Mau (CPU / RAM / vSAN / Uptime)"
-  section "$BL" "KHAC"
-  item 15 "$BL" "Cap Nhat Ban Moi Tu GitHub"
-  item 16 "$BL" "Go Phan Tu Dong Dashboard"
-  item 22 "$BL" "Tu Khoi Dong Lai Service Bi Dung / Treo (Watchdog)"
-  section "$R" "ZABBIX"
-  item 17 "$R" "Import / Cap Nhat Template Zabbix"
-  item 18 "$R" "Them Host Pool Moi Vao Zabbix"
-  item 19 "$R" "Cai Tu Dong Them Pool Moi Len Zabbix"
-  item 20 "$R" "Go Phan Tu Dong Zabbix (Xoa Token)"
-  item 0 "$R" "Thoat"
-  border "$BLc" "$BR"
-  printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$Y$COPYRIGHT" "$N"
+  w2=$(((BOX_W - 4) / 2))
+  row "  $(fit "${B}Exporter$N   $exp" "$w2")${B}Dashboard Tu Dong$N  $(timer_badge "$DASH_ENV" $DASH_NAME.timer)"
+  row "  $(fit "${B}Watchdog$N   $(timer_badge "/etc/systemd/system/$WD_NAME.timer" $WD_NAME.timer)" "$w2")${B}Zabbix Tu Dong$N     $(timer_badge "$ZBX_AUTO_ENV" $ZBX_AUTO_NAME.timer)"
+  if [ "$BOX_W" -ge $((COL_W * 2 + 1)) ]; then  # 2 cot
+    printf '%s%s%s%s%s%s\n' "$MARGIN" "$C" "$ML" "$(rep "$H" $COL_W)$TT$(rep "$H" $((BOX_W - COL_W - 1)))" "$MR" "$N"
+    mapfile -t left < <(menu_cells "$COL_W" "${MENU_LEFT[@]}")
+    mapfile -t right < <(menu_cells $((BOX_W - COL_W - 1)) "${MENU_RIGHT[@]}")
+    for ((i = 0; i < ${#left[@]} || i < ${#right[@]}; i++)); do
+      l=${left[$i]:-$(rep ' ' $COL_W)}; r=${right[$i]:-$(rep ' ' $((BOX_W - COL_W - 1)))}
+      printf '%s%s%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$V" "$N" "$l" "$C$V$N" "$r" "$C$V" "$N"
+    done
+    printf '%s%s%s%s%s%s\n' "$MARGIN" "$C" "$BLc" "$(rep "$H" $COL_W)$TB$(rep "$H" $((BOX_W - COL_W - 1)))" "$BR" "$N"
+  else  # terminal hep: 1 cot
+    border "$ML" "$MR"
+    mapfile -t left < <(menu_cells "$BOX_W" "${MENU_LEFT[@]:0:${#MENU_LEFT[@]}-4}" "${MENU_RIGHT[@]}" \
+      "${MENU_LEFT[@]: -4}")
+    for l in "${left[@]}"; do printf '%s%s%s%s%s%s%s\n' "$MARGIN" "$C" "$V" "$N" "$l" "$C$V" "$N"; done
+    border "$BLc" "$BR"
+  fi
+  printf '%s%s%s%s\n' "$MARGIN" "$(rep ' ' $(((BOX_W + 2 - $(vis_len "$COPYRIGHT")) / 2)))" "$D$COPYRIGHT" "$N"
 }
 
 header() {  # ve menu giua man hinh (ngang + doc)
   local cols lines out height top
   cols=$(tput cols 2>/dev/null || echo 80); lines=$(tput lines 2>/dev/null || echo 24)
+  if ((cols >= COL_W * 2 + 3)); then BOX_W=$((COL_W * 2 + 1)); else BOX_W=66; fi  # du rong -> menu 2 cot
   MARGIN=$(rep ' ' $(((cols - BOX_W - 2) / 2 > 0 ? (cols - BOX_W - 2) / 2 : 0)))
   PAD="$MARGIN  "
   out=$(draw_menu)
@@ -805,7 +846,7 @@ install_shortcut 2>/dev/null || true
 while true; do
   ensure_watchdog >/dev/null  # moi lan ve menu: watchdog chua cai / bi tat -> bat (tru khi da tat o muc 22)
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-22]:${N} " choice || exit 0
+  read -r -p "$MARGIN  ${B}${W}Chon so chuc nang${N} ${D}[0-22]${N} ${B}$ARR${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
