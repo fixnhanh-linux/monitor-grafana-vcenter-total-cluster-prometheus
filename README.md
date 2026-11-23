@@ -108,6 +108,7 @@ là mở menu (không có `sudo` thì menu tự gọi lại bằng `sudo`). Nế
 | 14 | Sắp xếp vị trí khối: **kéo thả bằng chuột** (hoặc phím mũi tên), đổi chỗ, đổi hàng — xem sơ đồ trên SSH, lưu mới đổi Grafana |
 | 15 | Cập nhật bản mới từ GitHub: exporter + phần tự động dashboard (giữ cấu hình, mật khẩu, token) |
 | 16 | Gỡ phần tự động dashboard |
+| 22 | Watchdog: tự khởi động lại exporter / Prometheus / Grafana / timer tự động khi bị dừng hoặc treo (kiểm tra mỗi 2 phút) |
 | 17 | Import / cập nhật template Zabbix lên Zabbix server qua API, rồi chạy lại discovery mọi host gắn template |
 | 18 | Thêm host pool mới vào Zabbix: tên, IP, port exporter, proxy, nhóm host, lọc cluster — gắn sẵn template |
 | 19 | Cài tự động thêm host Zabbix cho pool mới (timer 10 phút + chạy ngay sau mục 1) — **lưu token Zabbix trên máy** |
@@ -141,6 +142,7 @@ tự chuyển sang khung ASCII `+ = |`:
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Exporter: ● 1/1 Dang Chay        Dashboard Tu Dong: ● Dang Bat  ║
 ║                                   Zabbix Tu Dong:    ● Dang Bat  ║
+║                                   Tu Khoi Dong Lai:  ● Dang Bat  ║
 ╠══ EXPORTER  -  LAY SO LIEU VCENTER ══════════════════════════════╣
 ║   [ 1]  Cai Exporter Cho Pool / vCenter Moi                      ║
 ║   [ 2]  Xem Trang Thai Cac Exporter                              ║
@@ -162,6 +164,7 @@ tự chuyển sang khung ASCII `+ = |`:
 ╠══ KHAC ══════════════════════════════════════════════════════════╣
 ║   [15]  Cap Nhat Ban Moi Tu GitHub                               ║
 ║   [16]  Go Phan Tu Dong Dashboard                                ║
+║   [22]  Tu Khoi Dong Lai Service Bi Dung / Treo (Watchdog)       ║
 ╠══ ZABBIX ════════════════════════════════════════════════════════╣
 ║   [17]  Import / Cap Nhat Template Zabbix                        ║
 ║   [18]  Them Host Pool Moi Vao Zabbix                            ║
@@ -473,6 +476,25 @@ Cập nhật xong **thoát menu (0) và mở lại** để dùng giao diện men
 ### [16] Gỡ phần tự động dashboard
 
 Gỡ timer, script và token (`/etc/vmware-cluster-dashboard.env`). Dashboard trên Grafana giữ nguyên.
+
+### [22] Tự khởi động lại service bị dừng / treo (watchdog)
+
+Chọn **1** để bật. Menu cài timer `vmware-cluster-watchdog`, cứ **2 phút** kiểm tra một lần:
+
+| Tình huống | Watchdog làm gì |
+|---|---|
+| Exporter bị dừng (`systemctl stop`, failed, OOM...) | Chạy lại ngay |
+| Exporter vẫn chạy nhưng `/metrics` không trả lời 2 lần liên tiếp (treo) | Restart |
+| Số liệu exporter cũ hơn 15 phút (không lấy được từ vCenter) | Restart, tối đa 1 lần / 30 phút |
+| `prometheus` / `grafana-server` (nếu cài trên máy này và đang enable) bị dừng | Chạy lại |
+| Timer tự động dashboard / Zabbix bị dừng | Bật lại |
+| Exporter dừng vì **sai mật khẩu vCenter** (mã thoát 3) | **Không** chạy lại (tránh khóa tài khoản), ghi nhật ký; đổi mật khẩu ở mục 3 |
+| Exporter dừng bằng mục 4 (chọn 2 – Dừng) hoặc đã `systemctl disable` | **Không** chạy lại; chọn 1 / 3 ở mục 4 là watchdog theo dõi tiếp |
+
+Ngoài ra menu thêm drop-in `StartLimitIntervalSec=0` cho exporter để systemd không bao giờ bỏ cuộc khi exporter
+crash liên tục. Chọn **3** để xem nhật ký (dòng `KHOI DONG LAI ...`), hoặc `journalctl -u vmware-cluster-watchdog -n 50`.
+Cấu hình (service cần theo dõi thêm, các ngưỡng thời gian): `/etc/vmware-cluster-watchdog.env`. Chọn **2** để gỡ.
+Mục 15 (cập nhật) tự chép script watchdog mới nếu đang bật.
 
 ### [17] Import / cập nhật template Zabbix
 

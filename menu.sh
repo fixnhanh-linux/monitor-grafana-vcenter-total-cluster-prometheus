@@ -20,6 +20,7 @@ ZBX_AUTO_ENV=/etc/vmware-cluster-zabbix-auto.env  # muc 19: timer tu them host, 
 ZBX_AUTO_NAME=vmware-cluster-zabbix
 ZBX_TOOL="$SCRIPT/zabbix_tool.py"
 ZBX_TPL="$REPO/template-zabbix/zabbix_template_vmware_cluster_hcm.yaml"
+WD_NAME=vmware-cluster-watchdog   # muc 22: tu khoi dong lai service bi dung / treo
 
 if [ "$(id -u)" -ne 0 ]; then
   exec sudo bash "$0" "$@"
@@ -228,9 +229,10 @@ m_service() {
   echo "  1) Khoi dong lai   2) Dung   3) Chay"
   read -r -p "Chon: " a
   case "$a" in
-    1) systemctl restart "$SVC@$PICK" ;;
-    2) systemctl stop "$SVC@$PICK" ;;
-    3) systemctl start "$SVC@$PICK" ;;
+    1) rm -f "$CONF/$PICK.stopped"; systemctl restart "$SVC@$PICK" ;;
+    2) touch "$CONF/$PICK.stopped"; systemctl stop "$SVC@$PICK"  # dau "dung tay" -> watchdog khong chay lai
+       systemctl is-active --quiet $WD_NAME.timer && echo "Watchdog se KHONG tu chay lai $PICK cho toi khi chon 1 hoac 3." ;;
+    3) rm -f "$CONF/$PICK.stopped"; systemctl start "$SVC@$PICK" ;;
     *) return ;;
   esac
   sleep 2
@@ -422,6 +424,9 @@ update_rest() {  # giai nen goi moi, cap nhat script dashboard, chay lai tung ex
     install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
     ok "Da cap nhat $DASH_APP"
   fi
+  if [ -f "/etc/systemd/system/$WD_NAME.timer" ]; then
+    bash "$SCRIPT/install_watchdog.sh" >/dev/null && ok "-> Watchdog: da cap nhat script"
+  fi
   if [ -f "$ZBX_AUTO_ENV" ]; then  # tu dong Zabbix: chep script / template moi, giu cau hinh + token
     bash "$SCRIPT/install_auto_zabbix.sh" --refresh >/dev/null && ok "-> Tu dong Zabbix: da cap nhat script"
   fi
@@ -515,6 +520,33 @@ m_thresholds() {  # xem / sua menu nguong mau tren dashboard (bien thr_*), day t
   read -r -p "Luu ${#sets[@]} nguong moi len dashboard Grafana? (Y/n): " y
   [[ "$y" =~ ^[nN] ]] && { echo "Chua luu."; return; }
   dash_py --set-threshold "${sets[@]}" && ok "Da luu. Bam F5 tren dashboard de thay mau moi."
+}
+
+m_watchdog() {  # tu khoi dong lai exporter / Prometheus / Grafana / timer bi dung hoac treo
+  local a
+  if systemctl is-active --quiet $WD_NAME.timer; then
+    ok "Watchdog DANG BAT - kiem tra moi 2 phut."
+  else
+    warn "Watchdog DANG TAT (exporter chi tu chay lai khi crash, nho systemd Restart=always)."
+  fi
+  cat <<EOF
+Watchdog lam gi:
+  - Exporter bi dung (systemctl stop, failed...) -> chay lai. Khong chay lai khi: sai mat khau vCenter
+    (tranh khoa tai khoan - doi o muc 3), dung bang muc 4 (chon 2), hoac da disable.
+  - Exporter van chay nhung /metrics khong tra loi 2 lan lien tiep (treo) -> restart.
+  - So lieu exporter cu hon 15 phut -> restart (toi da 1 lan / 30 phut).
+  - Prometheus / grafana-server (neu cai tren may nay va dang enable) bi dung -> chay lai.
+  - Timer tu dong dashboard / Zabbix bi dung -> bat lai.
+EOF
+  echo
+  echo "  1) Bat / cap nhat watchdog   2) Tat (go) watchdog   3) Xem nhat ky (50 dong)"
+  read -r -p "Chon (Enter = quay lai): " a
+  case "$a" in
+    1) bash "$SCRIPT/install_watchdog.sh" ;;
+    2) read -r -p "Tat watchdog? (y/N): " a; [[ "$a" =~ ^[yY] ]] && bash "$SCRIPT/install_watchdog.sh" --uninstall ;;
+    3) journalctl -u $WD_NAME.service -n 50 --no-pager -o short-iso 2>/dev/null | grep -v -e 'Starting ' -e 'Finished ' -e 'Deactivated'          | tail -30 || true
+       echo "(Khong co dong 'KHOI DONG LAI' nao = moi service van chay binh thuong)" ;;
+  esac
 }
 
 install_shortcut() {  # lenh tat: go vcenter-menu o bat ky dau de mo menu nay
@@ -678,7 +710,7 @@ item() { row "   $2$B[$(printf '%2s' "$1")]$N  $3"; }
 badge() { [ "$1" = ok ] && printf '%s' "$G$DOT $2$N" || printf '%s' "$R$DOT $2$N"; }
 
 draw_menu() {
-  local n total=0 run=0 exp auto zauto
+  local n total=0 run=0 exp auto zauto wd
   for n in $(instances); do
     total=$((total + 1))
     systemctl is-active --quiet "$SVC@$n" && run=$((run + 1))
@@ -691,6 +723,7 @@ draw_menu() {
   if [ ! -f "$ZBX_AUTO_ENV" ]; then zauto=$(badge no "Chua Cai")
   elif systemctl is-active --quiet $ZBX_AUTO_NAME.timer; then zauto=$(badge ok "Dang Bat")
   else zauto=$(badge no "Dang Tat"); fi
+  if systemctl is-active --quiet $WD_NAME.timer; then wd=$(badge ok "Dang Bat"); else wd=$(badge no "Dang Tat"); fi
 
   border "$TL" "$TR"
   center_row "$B${W}VMWARE CLUSTER HCM  $Y$DOT$N$B$W  MONITOR MENU$N"
@@ -698,6 +731,7 @@ draw_menu() {
   border "$ML" "$MR"
   row "  Exporter: $exp        Dashboard Tu Dong: $auto"
   row "                                   Zabbix Tu Dong:    $zauto"
+  row "                                   Tu Khoi Dong Lai:  $wd"
   section "$G" "EXPORTER  -  LAY SO LIEU VCENTER"
   item 1 "$G" "Cai Exporter Cho Pool / vCenter Moi"
   item 2 "$G" "Xem Trang Thai Cac Exporter"
@@ -719,6 +753,7 @@ draw_menu() {
   section "$BL" "KHAC"
   item 15 "$BL" "Cap Nhat Ban Moi Tu GitHub"
   item 16 "$BL" "Go Phan Tu Dong Dashboard"
+  item 22 "$BL" "Tu Khoi Dong Lai Service Bi Dung / Treo (Watchdog)"
   section "$R" "ZABBIX"
   item 17 "$R" "Import / Cap Nhat Template Zabbix"
   item 18 "$R" "Them Host Pool Moi Vao Zabbix"
@@ -750,7 +785,7 @@ fi
 install_shortcut 2>/dev/null || true
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-21]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-22]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
@@ -774,6 +809,7 @@ while true; do
     19) fn=m_zbx_auto; t="Cai Tu Dong Them Pool Moi Len Zabbix" ;;
     20) fn=m_zbx_auto_remove; t="Go Phan Tu Dong Zabbix" ;;
     21) fn=m_thresholds; t="Chinh Nguong Mau Dashboard" ;;
+    22) fn=m_watchdog; t="Tu Khoi Dong Lai Service (Watchdog)" ;;
     0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac
