@@ -449,6 +449,27 @@ m_arrange() {  # keo khoi len/xuong/trai/phai, doi cho, doi hang; xem so do tren
     python3 "$DASH_APP" --grafana "$GRAFANA_URL" ${GRAFANA_OPTS:-} --out /var/lib/vmware-cluster-dashboard --arrange )
 }
 
+new_grafana_token() {  # token Grafana bi tu choi -> hoi token moi, thu, luu vao $DASH_ENV (timer dung luon)
+  local t g k
+  g=$(set -a; . "$DASH_ENV"; echo "$GRAFANA_URL"); k=$(set -a; . "$DASH_ENV"; [ "${GRAFANA_OPTS:-}" = --insecure ] && echo -k)
+  echo "Grafana ($g) tu choi token dang luu (bi xoa / het han / sai)."
+  echo "Tao token moi: Grafana > Administration > Service accounts > chon (hoac tao) account role ${B}Editor${N} > Add service account token."
+  read -r -s -p "Dan token moi (go khong hien, Enter = bo qua): " t; echo
+  [ -n "$t" ] || return 1
+  [[ "$t" != *"'"* ]] || { err "Token khong duoc chua dau nhay don."; return 1; }
+  if ! curl -fsS $k --max-time 10 -H "Authorization: Bearer $t" "$g/api/search?limit=1" >/dev/null; then
+    err "Token moi cung bi tu choi (hoac khong ket noi duoc $g) - chua luu."
+    return 1
+  fi
+  if grep -q '^GRAFANA_TOKEN=' "$DASH_ENV"; then
+    t=$t perl -i -pe "s/^GRAFANA_TOKEN=.*/GRAFANA_TOKEN='\$ENV{t}'/" "$DASH_ENV"
+  else
+    printf "GRAFANA_TOKEN='%s'\n" "$t" >> "$DASH_ENV"
+  fi
+  chmod 600 "$DASH_ENV"
+  ok "Da luu token moi vao $DASH_ENV (timer tu dong cung dung token nay)."
+}
+
 m_thresholds() {  # xem / sua menu nguong mau tren dashboard (bien thr_*), day thang len Grafana
   dash_ready || return
   install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
@@ -456,6 +477,11 @@ m_thresholds() {  # xem / sua menu nguong mau tren dashboard (bien thr_*), day t
   dash_py() { ( set -a; . "$DASH_ENV"; set +a
     python3 "$DASH_APP" --grafana "$GRAFANA_URL" ${GRAFANA_OPTS:-} --out /var/lib/vmware-cluster-dashboard "$@" ); }
   mapfile -t lines < <(dash_py --thresholds 2>&1)
+  if printf '%s
+' "${lines[@]}" | grep -q '^LOI_TOKEN:'; then
+    new_grafana_token || { err "Khong doc duoc menu nguong tren Grafana (token bi tu choi)."; return; }
+    mapfile -t lines < <(dash_py --thresholds 2>&1)
+  fi
   for l in "${lines[@]}"; do
     l=${l%$'\r'}
     if [[ "$l" == thr_*$'\t'*$'\t'* ]]; then

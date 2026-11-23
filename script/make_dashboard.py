@@ -203,6 +203,17 @@ def prometheus_clusters(url):
     return data["data"]
 
 
+def grafana_auth_exit(e):
+    """Token bi Grafana tu choi -> bao ro rang thay vi traceback (menu.sh nhan ma thoat 3)."""
+    if e.code in (401, 403):
+        print("LOI_TOKEN: Grafana tu choi token (HTTP %d %s). Token trong /etc/vmware-cluster-dashboard.env "
+              "da bi xoa / het han / sai, hoac service account khong con quyen Editor. "
+              "Tao token moi: Grafana > Administration > Service accounts > (role Editor) > Add token, "
+              "roi chay lai menu muc 9 (hoac muc 21 se hoi token moi)." % (e.code, e.reason), file=sys.stderr)
+        sys.exit(3)
+    raise e
+
+
 def push_grafana(url, token, dash, n, folder_uid=None):
     body = {"dashboard": dict(dash, id=None), "overwrite": True,
             "message": "make_dashboard.py: %d cluster" % n}
@@ -210,8 +221,11 @@ def push_grafana(url, token, dash, n, folder_uid=None):
         body["folderUid"] = folder_uid
     req = urllib.request.Request(url.rstrip("/") + "/api/dashboards/db", data=json.dumps(body).encode("utf-8"),
                                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + token})
-    with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
-        return json.load(r)
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=SSL_CTX) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        grafana_auth_exit(e)
 
 
 def get_grafana(url, token, uid):
@@ -224,7 +238,7 @@ def get_grafana(url, token, uid):
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return None, None
-        raise
+        grafana_auth_exit(e)
     return data["dashboard"], data.get("meta", {}).get("folderUid") or None
 
 
