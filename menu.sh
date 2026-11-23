@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Menu quan ly VMware cluster exporter + dashboard Grafana "VMWARE CLUSTER HCM".
-#   sudo bash menu.sh
+#   sudo bash menu.sh      (lan dau chay xong, go: vcenter-menu)
 # Moi viec (cai pool moi, doi mat khau, xem trang thai, cau hinh Prometheus, them/xoa khoi tren dashboard,
 # cap nhat ban moi, import template / them host Zabbix) chon bang so. Mat khau vCenter, token Grafana / Zabbix luon tu go, khong in ra man hinh.
 # Token Zabbix chi luu tren may khi bat muc 19 (tu dong them host pool moi), file chmod 600; muc 20 go va xoa token.
@@ -449,6 +449,58 @@ m_arrange() {  # keo khoi len/xuong/trai/phai, doi cho, doi hang; xem so do tren
     python3 "$DASH_APP" --grafana "$GRAFANA_URL" ${GRAFANA_OPTS:-} --out /var/lib/vmware-cluster-dashboard --arrange )
 }
 
+m_thresholds() {  # xem / sua menu nguong mau tren dashboard (bien thr_*), day thang len Grafana
+  dash_ready || return
+  install -m 644 "$SCRIPT/make_dashboard.py" "$DASH_APP"
+  local lines=() names=() labels=() vals=() l i v sets=() y
+  dash_py() { ( set -a; . "$DASH_ENV"; set +a
+    python3 "$DASH_APP" --grafana "$GRAFANA_URL" ${GRAFANA_OPTS:-} --out /var/lib/vmware-cluster-dashboard "$@" ); }
+  mapfile -t lines < <(dash_py --thresholds 2>&1)
+  for l in "${lines[@]}"; do
+    l=${l%$'\r'}
+    if [[ "$l" == thr_*$'\t'*$'\t'* ]]; then
+      names+=("${l%%$'\t'*}"); l=${l#*$'\t'}; labels+=("${l%%$'\t'*}"); vals+=("${l#*$'\t'}")
+    else
+      echo "$l"
+    fi
+  done
+  [ ${#names[@]} -gt 0 ] || { err "Khong doc duoc menu nguong tren Grafana."; return; }
+  echo "${B}Nguong mau dang dung tren dashboard${N} (ap dung cho moi cluster):"
+  for i in "${!names[@]}"; do
+    printf "  %-34s ${C}%s${N}\n" "${labels[$i]}" "${vals[$i]}"
+  done
+  echo
+  echo "Nhap so moi cho tung nguong, Enter = giu nguyen. Vang phai nho hon do."
+  echo "Go ${B}d${N} o cau dau tien de dat lai TAT CA theo gia tri mac dinh (THRESHOLDS trong make_dashboard.py)."
+  for i in "${!names[@]}"; do
+    read -r -p "  $(printf '%-34s' "${labels[$i]}") [${vals[$i]}]: " v
+    if [ "$i" = 0 ] && [[ "$v" =~ ^[dD]$ ]]; then
+      read -r -p "Dat lai tat ca nguong ve mac dinh? (y/N): " y
+      [[ "$y" =~ ^[yY] ]] || return
+      run_dash --update-thresholds && ok "Da dat lai nguong mac dinh. Bam F5 tren dashboard."
+      return
+    fi
+    [ -z "$v" ] || [ "$v" = "${vals[$i]}" ] && continue
+    [[ "${v/,/.}" =~ ^[0-9]+([.][0-9]+)?$ ]] || { err "'$v' khong phai so - huy, chua luu gi."; return; }
+    sets+=("${names[$i]}=${v/,/.}")
+  done
+  [ ${#sets[@]} -gt 0 ] || { echo "Khong doi nguong nao."; return; }
+  echo
+  read -r -p "Luu ${#sets[@]} nguong moi len dashboard Grafana? (Y/n): " y
+  [[ "$y" =~ ^[nN] ]] && { echo "Chua luu."; return; }
+  dash_py --set-threshold "${sets[@]}" && ok "Da luu. Bam F5 tren dashboard de thay mau moi."
+}
+
+install_shortcut() {  # lenh tat: go vcenter-menu o bat ky dau de mo menu nay
+  local f=/usr/local/bin/vcenter-menu want
+  want=$(printf '#!/usr/bin/env bash\n# Mo menu VMWARE CLUSTER HCM (tao boi %s)\nexec bash %q "$@"\n' "$REPO/menu.sh" "$REPO/menu.sh")
+  [ "$(cat "$f" 2>/dev/null)" = "$want" ] && return
+  if [ -e "$f" ] && ! grep -q 'VMWARE CLUSTER HCM' "$f" 2>/dev/null; then
+    return  # da co lenh vcenter-menu khac cua nguoi dung -> khong ghi de
+  fi
+  printf '%s\n' "$want" > "$f" && chmod 755 "$f"
+}
+
 zbx_login() {  # hoi URL Zabbix (nho lai) + API token (go khong hien, khong luu) -> ZBX_URL, ZBX_OPT, ZBX_TOKEN
   local def="" ins="" u rc y
   [ -f "$ZBX_ENV" ] && { def=$(set -a; . "$ZBX_ENV"; echo "${ZBX_URL:-}"); ins=$(set -a; . "$ZBX_ENV"; echo "${ZBX_INSECURE:-}"); }
@@ -637,6 +689,7 @@ draw_menu() {
   item 12 "$M" "Xoa Khoi 1 Cluster Khoi Dashboard"
   item 13 "$M" "Sua Datasource Khoi Hien '-' (Dung Prometheus)"
   item 14 "$M" "Sap Xep Vi Tri Khoi (Xem Truoc Roi Luu)"
+  item 21 "$M" "Chinh Nguong Mau (CPU / RAM / vSAN / Uptime)"
   section "$BL" "KHAC"
   item 15 "$BL" "Cap Nhat Ban Moi Tu GitHub"
   item 16 "$BL" "Go Phan Tu Dong Dashboard"
@@ -668,9 +721,10 @@ if [ "${1:-}" = "--update-only" ]; then  # goi tu muc 15 sau git pull
   exit 0
 fi
 
+install_shortcut 2>/dev/null || true
 while true; do
   header
-  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-20]:${N} " choice || exit 0
+  read -r -p "$MARGIN   ${B}Chon Chuc Nang [0-21]:${N} " choice || exit 0
   echo
   case "$choice" in
     1) fn=m_install; t="Cai Exporter Cho Pool / vCenter Moi" ;;
@@ -693,6 +747,7 @@ while true; do
     18) fn=m_zbx_host; t="Them Host Pool Moi Vao Zabbix" ;;
     19) fn=m_zbx_auto; t="Cai Tu Dong Them Pool Moi Len Zabbix" ;;
     20) fn=m_zbx_auto_remove; t="Go Phan Tu Dong Zabbix" ;;
+    21) fn=m_thresholds; t="Chinh Nguong Mau Dashboard" ;;
     0|q|Q) echo "$MARGIN   ${Y}$COPYRIGHT${N}"; exit 0 ;;
     *) continue ;;
   esac

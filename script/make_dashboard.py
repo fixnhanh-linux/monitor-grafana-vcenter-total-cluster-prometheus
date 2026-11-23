@@ -1176,6 +1176,11 @@ ap.add_argument("--readd", nargs="*", metavar="CLUSTER",
 ap.add_argument("--update-thresholds", action="store_true",
                 help="Dat lai gia tri menu nguong tren dashboard theo THRESHOLDS (mac dinh tu lam 1 lan "
                      "moi khi THRESHOLDS_VERSION tang; mat nguong da sua tren menu Grafana)")
+ap.add_argument("--thresholds", action="store_true",
+                help="In menu nguong dang dung tren dashboard, moi dong: bien<TAB>mo ta<TAB>gia tri")
+ap.add_argument("--set-threshold", nargs="+", metavar="BIEN=SO",
+                help="Sua menu nguong tren dashboard roi day len Grafana, vd --set-threshold thr_cpu_warn=45 "
+                     "thr_cpu_crit=70 (xem ten bien: --thresholds)")
 ap.add_argument("--rows", action="store_true", help="In ten cac hang (row) tren dashboard, moi dong 1 ten")
 ap.add_argument("--move", nargs="+", metavar="CLUSTER",
                 help="Chuyen khoi cluster sang hang --row, vd --move POOL5 --row HN")
@@ -1302,6 +1307,48 @@ if args.arrange:  # sap xep vi tri khoi tren SSH, chi day len Grafana khi nguoi 
         save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
     else:
         print("Thoat, KHONG luu - dashboard tren Grafana giu nguyen.")
+    sys.exit(0)
+if args.thresholds or args.set_threshold:  # menu.sh muc 21: xem / sua menu nguong tren dashboard
+    if existing is None:
+        sys.exit("Chua co dashboard %s tren Grafana (can --grafana va GRAFANA_TOKEN)" % UID)
+    _, added = upgrade_threshold_tiles(existing)  # dashboard chua co menu -> them (giu gia tri da co)
+    cur = {v["name"]: v for v in existing["templating"]["list"] if v.get("name", "").startswith("thr_")}
+
+    def thr_value(name):
+        v = cur[name]
+        return str((v.get("current") or {}).get("value") or v.get("query") or "")
+
+    if args.set_threshold:
+        for item in args.set_threshold:
+            key, _, raw = item.partition("=")
+            if key not in cur:
+                sys.exit("Khong co bien nguong '%s'. Cac bien: %s" % (key, ", ".join(cur)))
+            try:
+                num = float(raw.replace(",", "."))
+            except ValueError:
+                sys.exit("'%s': gia tri phai la so - chua luu" % item)
+            val = "%g" % num
+            cur[key].update({"query": val, "current": {"selected": False, "text": val, "value": val},
+                             "options": [{"selected": True, "text": val, "value": val}]})
+        for name, (warn, crit) in THRESHOLDS.items():
+            c = float(thr_value(thr_var(name, "crit")))
+            if c <= 0:
+                sys.exit("%s: nguong do phai lon hon 0 - chua luu" % name)
+            if warn is not None and float(thr_value(thr_var(name, "warn"))) >= c:
+                sys.exit("%s: nguong vang (%s) phai nho hon nguong do (%s) - chua luu"
+                         % (name, thr_value(thr_var(name, "warn")), thr_value(thr_var(name, "crit"))))
+        save_and_push(existing, len(clusters_on(existing)), args.folder_uid or folder)
+        print("Nguong moi:", ", ".join("%s=%s" % (k.partition("=")[0], thr_value(k.partition("=")[0]))
+                                       for k in args.set_threshold))
+        sys.exit(0)
+    if added:
+        print("Dashboard chua co menu nguong - chay muc 10 (hoac doi timer) de them, gia tri ban dau:")
+    for name, (warn, crit) in THRESHOLDS.items():
+        unit = "ngay" if name == "Host - Uptime" else "%"
+        for level, val, color in (("warn", warn, "vang"), ("crit", crit, "do")):
+            if val is not None:
+                print("%s\t%s %s >= (%s)\t%s" % (thr_var(name, level), name, color, unit,
+                                                 thr_value(thr_var(name, level))))
     sys.exit(0)
 if args.rows:  # ten cac hang, moi dong 1 ten (menu.sh dung de cho chon)
     if existing is None:

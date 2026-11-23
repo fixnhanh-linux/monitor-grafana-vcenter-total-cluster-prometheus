@@ -89,6 +89,9 @@ Mọi việc gom vào một menu, chọn bằng số:
 sudo bash menu.sh
 ```
 
+Sau lần chạy đầu, menu tự tạo lệnh tắt `/usr/local/bin/vcenter-menu`: từ đó gõ `vcenter-menu` ở bất kỳ thư mục nào
+là mở menu (không có `sudo` thì menu tự gọi lại bằng `sudo`). Nếu máy đã có lệnh `vcenter-menu` khác thì menu không ghi đè.
+
 | Số | Việc |
 |---|---|
 | 1 | Cài exporter cho pool / vCenter mới (tự gợi ý port trống từ 9821) |
@@ -109,6 +112,7 @@ sudo bash menu.sh
 | 18 | Thêm host pool mới vào Zabbix: tên, IP, port exporter, proxy, nhóm host, lọc cluster — gắn sẵn template |
 | 19 | Cài tự động thêm host Zabbix cho pool mới (timer 10 phút + chạy ngay sau mục 1) — **lưu token Zabbix trên máy** |
 | 20 | Gỡ phần tự động Zabbix và **xoá token** khỏi máy (host trên Zabbix giữ nguyên) |
+| 21 | Chỉnh ngưỡng màu dashboard (CPU / RAM / vSAN Used, Host Uptime, CPU / RAM Host): hiện ngưỡng đang dùng, nhập số mới (Enter = giữ), kiểm tra vàng < đỏ rồi đẩy thẳng lên Grafana; gõ `d` để đặt lại mặc định |
 
 Thêm pool mới bằng menu: **1** (cài exporter) → **7** (dán vào Prometheus, reload) → **8** (kiểm tra) → **10** (lên dashboard) → **18** (thêm host Zabbix).
 Đã bật **9** và **19** thì chỉ cần **1** → **7**: dashboard và Zabbix tự có pool mới.
@@ -154,6 +158,7 @@ tự chuyển sang khung ASCII `+ = |`:
 ║   [12]  Xoa Khoi 1 Cluster Khoi Dashboard                        ║
 ║   [13]  Sua Datasource Khoi Hien '-' (Dung Prometheus)           ║
 ║   [14]  Sap Xep Vi Tri Khoi (Xem Truoc Roi Luu)                  ║
+║   [21]  Chinh Nguong Mau (CPU / RAM / vSAN / Uptime)             ║
 ╠══ KHAC ══════════════════════════════════════════════════════════╣
 ║   [15]  Cap Nhat Ban Moi Tu GitHub                               ║
 ║   [16]  Go Phan Tu Dong Dashboard                                ║
@@ -671,7 +676,8 @@ Zabbix bên dưới. vSAN Used chưa có mức vàng vì bảng yêu cầu chưa
 
 Trên cùng dashboard có hàng ô nhập ngưỡng (biến `thr_*` của Grafana), 10 ô: `CPU Used vàng ≥ (%)`, `CPU Used đỏ ≥ (%)`,
 Ram Used, CPU Host (Max), RAM Host (Max) (mỗi ô 2 mức), `vSAN Used đỏ ≥ (%)` và `Host - Uptime đỏ ≥ (ngày)`.
-Gõ số mới rồi Enter: mọi khối cluster đổi màu theo ngay. Muốn giữ cho mọi người: bấm **Save dashboard** và tick
+Gõ số mới rồi Enter: mọi khối cluster đổi màu theo ngay (hoặc trên SSH: `vcenter-menu` → **21**, lưu thẳng lên Grafana,
+không cần bấm Save). Muốn giữ cho mọi người: bấm **Save dashboard** và tick
 **Update default variable values** (Grafana cũ: "Save current variable values as dashboard default").
 Không lưu thì chỉ áp dụng cho lần xem đó.
 
